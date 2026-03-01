@@ -10,7 +10,2377 @@
 <script src="https://cdn.jsdelivr.net/npm/@supab<!DOCTYPE html>
 <html lang="fr">
 <head>
+<meta charset="UTF-8"<!DOCTYPE html>
+<html lang="fr">
+<head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinguaQuest</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg:#0a0a14;--card:#141428;--card2:#1c1c34;--card3:#222240;
+  --accent:#1a6b3a;--accent2:#25a85a;--accent3:#34d270;--accent4:#f59e0b;
+  --gold:#fbbf24;--green:#10b981;--red:#ef4444;--text:#f1f5f9;--muted:#94a3b8;--r:16px;
+}
+/* ── LIGHT THEME (crème moderne, élégant) ── */
+[data-theme="light"]{
+  --bg:#f8f7ff;--card:#ffffff;--card2:#f0effe;--card3:#e4e0fd;
+  --accent:#6d28d9;--accent2:#9333ea;--accent3:#0ea5e9;--accent4:#f59e0b;
+  --gold:#d97706;--green:#059669;--red:#dc2626;--text:#1e1b4b;--muted:#6b7280;
+}
+[data-theme="light"] body{background:var(--bg);}
+[data-theme="light"] .star{background:#6d28d9;opacity:.15!important;}
+[data-theme="light"] .top-bar{background:rgba(248,247,255,.95);border-bottom:1px solid rgba(109,40,217,.12);box-shadow:0 1px 12px rgba(109,40,217,.08);}
+[data-theme="light"] .nav-bar{background:rgba(248,247,255,.97);border-top:1px solid rgba(109,40,217,.1);box-shadow:0 -1px 12px rgba(109,40,217,.06);}
+[data-theme="light"] .coin{background:radial-gradient(circle at 35% 35%,#ffe066,#d97706 60%,#92400e);border-color:#b45309;}
+[data-theme="light"] .auth-card{box-shadow:0 8px 40px rgba(109,40,217,.12);}
+[data-theme="light"] .chapter-card{box-shadow:0 2px 12px rgba(109,40,217,.08);}
+[data-theme="light"] .stat-card{box-shadow:0 2px 8px rgba(109,40,217,.06);}
+/* ── DARK THEME (violet sombre) ── */
+[data-theme="dark"]{
+  --bg:#0a0a14;--card:#141428;--card2:#1c1c34;--card3:#222240;
+  --accent:#7c3aed;--accent2:#a855f7;--accent3:#c084fc;--accent4:#f59e0b;
+  --gold:#fbbf24;--green:#10b981;--red:#ef4444;--text:#f1f5f9;--muted:#94a3b8;
+}
+/* ── CLAUDE THEME ── */
+[data-theme="claude"]{
+  --bg:#1a1612;--card:#242018;--card2:#2e2820;--card3:#3a3228;
+  --accent:#d4845a;--accent2:#e8956d;--accent3:#f0b090;--accent4:#c4955a;
+  --gold:#d4845a;--green:#7ab87a;--red:#e06060;--text:#f5efe8;--muted:#a89880;
+}
+[data-theme="claude"] .star{background:#d4845a;opacity:.12!important;}
+[data-theme="claude"] .top-bar{background:rgba(26,22,18,.95);border-bottom:1px solid rgba(212,132,90,.15);}
+[data-theme="claude"] .nav-bar{background:rgba(26,22,18,.97);border-top:1px solid rgba(212,132,90,.12);}
+[data-theme="claude"] .coin{background:radial-gradient(circle at 35% 35%,#f0c090,#d4845a 60%,#8b5230);border-color:#a05a30;}
+[data-theme="claude"] .btn-primary{background:linear-gradient(135deg,#d4845a,#c06840);}
+[data-theme="claude"] .asset-buy-btn{background:linear-gradient(135deg,#d4845a,#c06840);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--d) ease-in-out infinite alternate;opacity:var(--o);}
+@keyframes twinkle{from{opacity:var(--o);}to{opacity:calc(var(--o)*0.15);}}
+#app{position:relative;z-index:1;}
+.screen{display:none;min-height:100vh;padding:20px 16px 80px;}
+.screen.active{display:flex;flex-direction:column;align-items:center;}
+
+/* ── TYPOGRAPHY ── */
+.logo{font-family:'Fredoka One',cursive;font-size:2.5rem;background:linear-gradient(135deg,var(--accent),var(--accent2) 50%,var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;}
+.tagline{color:var(--muted);font-size:.82rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;}
+.section-title{font-size:1.3rem;font-weight:800;margin-bottom:4px;text-align:center;width:100%;max-width:700px;}
+.section-sub{color:var(--muted);font-size:.84rem;text-align:center;margin-bottom:8px;}
+
+/* ── AUTH SCREEN ── */
+.auth-card{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px 28px;width:100%;max-width:420px;position:relative;overflow:hidden;margin-top:10px;}
+.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));}
+.auth-tabs{display:flex;gap:4px;background:rgba(255,255,255,.05);border-radius:10px;padding:4px;margin-bottom:22px;}
+.auth-tab{flex:1;padding:9px;border-radius:8px;font-family:'Nunito';font-weight:800;font-size:.88rem;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);}
+.auth-tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;}
+.auth-label{font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:block;}
+.auth-input{width:100%;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;font-family:'Nunito';font-size:.95rem;font-weight:600;color:var(--text);outline:none;transition:border-color .2s;margin-bottom:14px;}
+.auth-input:focus{border-color:var(--accent);}
+.auth-input::placeholder{color:var(--muted);}
+.auth-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;font-size:.8rem;color:#fca5a5;margin-bottom:12px;display:none;}
+.auth-error.show{display:block;}
+
+/* ── TOP BAR ── */
+.top-bar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(10,10,20,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.07);padding:10px 16px;display:flex;align-items:center;gap:12px;}
+.top-bar-logo{font-family:'Fredoka One';font-size:1.3rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.top-spacer{flex:1;}
+.coin-display{display:flex;align-items:center;gap:5px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.28);border-radius:20px;padding:5px 12px;font-weight:800;font-size:.88rem;color:var(--gold);}
+.coin-display .coin-icon{font-size:1rem;}
+.avatar-btn{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem;cursor:pointer;border:2px solid rgba(255,255,255,.15);transition:all .2s;flex-shrink:0;}
+.avatar-btn:hover{transform:scale(1.08);}
+.screen-padded{padding-top:64px;}
+
+/* ── NAV BAR (bottom) ── */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(10,10,20,.95);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-around;padding:8px 0 12px;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 10px;border-radius:10px;transition:all .2s;font-size:.68rem;font-weight:800;color:var(--muted);}
+.nav-item.active{color:var(--accent);}
+.nav-item .ni{font-size:1.3rem;}
+
+/* ── BUTTONS ── */
+.btn{font-family:'Nunito';font-weight:800;font-size:.93rem;padding:12px 22px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;letter-spacing:.4px;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.1);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid rgba(255,255,255,.1);}
+.btn-gold{background:linear-gradient(135deg,#d97706,var(--gold));color:#1a0a00;}
+.btn-lg{font-size:1.05rem;padding:14px 30px;border-radius:14px;}
+.btn-sm{font-size:.8rem;padding:8px 14px;border-radius:9px;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:20px;width:100%;max-width:700px;position:relative;overflow:hidden;}
+.card-accent::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));}
+
+/* ── PROFILE SCREEN ── */
+.profile-hero{width:100%;max-width:700px;background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(236,72,153,.15));border:1px solid rgba(124,58,237,.25);border-radius:20px;padding:24px;display:flex;align-items:center;gap:18px;margin-bottom:16px;}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;border:3px solid rgba(255,255,255,.2);flex-shrink:0;}
+.profile-name{font-size:1.4rem;font-weight:900;}
+.profile-email{font-size:.8rem;color:var(--muted);}
+.profile-joined{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:700px;margin-bottom:14px;}
+.stat-card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;text-align:center;}
+.stat-val{font-size:1.5rem;font-weight:900;}
+.stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+
+/* ── PORTFOLIO / WEALTH SCREEN ── */
+.wealth-hero{width:100%;max-width:700px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.08));border:1px solid rgba(251,191,36,.22);border-radius:20px;padding:22px;margin-bottom:14px;text-align:center;}
+.wealth-total{font-size:2.4rem;font-weight:900;color:var(--gold);}
+.wealth-sub{font-size:.8rem;color:var(--muted);margin-top:4px;}
+.dividend-banner{width:100%;max-width:700px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.div-icon{font-size:1.8rem;}
+.div-info{flex:1;}
+.div-title{font-weight:800;font-size:.95rem;color:var(--green);}
+.div-sub{font-size:.78rem;color:var(--muted);margin-top:2px;}
+.div-amount{font-size:1.1rem;font-weight:900;color:var(--green);}
+.collect-btn{background:var(--green);color:white;border:none;border-radius:10px;padding:8px 16px;font-family:'Nunito';font-weight:800;font-size:.85rem;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.collect-btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.collect-btn:disabled{opacity:.4;cursor:default;transform:none;}
+
+/* ASSET CARDS */
+.assets-grid{display:flex;flex-direction:column;gap:10px;width:100%;max-width:700px;}
+.asset-card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:16px;overflow:hidden;position:relative;}
+.asset-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;}
+.asset-card.gold::before{background:linear-gradient(to bottom,#fbbf24,#d97706);}
+.asset-card.house::before{background:linear-gradient(to bottom,#06b6d4,#0891b2);}
+.asset-card.stock::before{background:linear-gradient(to bottom,#10b981,#059669);}
+.asset-card.crypto::before{background:linear-gradient(to bottom,#7c3aed,#6d28d9);}
+.asset-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.asset-icon{font-size:2rem;width:44px;text-align:center;}
+.asset-name{font-weight:800;font-size:1rem;}
+.asset-type{font-size:.72rem;color:var(--muted);}
+.asset-value{margin-left:auto;text-align:right;}
+.asset-price{font-weight:900;font-size:1.05rem;color:var(--gold);}
+.asset-change{font-size:.72rem;color:var(--green);}
+.asset-progress{margin-bottom:10px;}
+.asset-progress-bar{height:7px;background:rgba(255,255,255,.08);border-radius:10px;overflow:hidden;margin-bottom:4px;}
+.asset-progress-fill{height:100%;border-radius:10px;transition:width .6s ease;}
+.asset-owned{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);}
+.asset-actions{display:flex;gap:8px;}
+.asset-buy-btn{flex:1;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border:none;border-radius:9px;padding:9px;font-family:'Nunito';font-weight:800;font-size:.82rem;cursor:pointer;transition:all .2s;}
+.asset-buy-btn:hover{filter:brightness(1.1);}
+.asset-buy-btn:disabled{opacity:.4;cursor:not-allowed;}
+.asset-div-info{background:rgba(16,185,129,.1);border-radius:8px;padding:6px 10px;font-size:.76rem;color:var(--green);margin-top:8px;}
+
+/* SHOP */
+.shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:700px;}
+.shop-item{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;text-align:center;position:relative;}
+.shop-item.owned{border-color:var(--green);}
+.shop-icon{font-size:2rem;margin-bottom:8px;}
+.shop-name{font-weight:800;font-size:.9rem;margin-bottom:4px;}
+.shop-desc{font-size:.72rem;color:var(--muted);margin-bottom:10px;}
+.shop-price{display:flex;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:.88rem;color:var(--gold);}
+.owned-badge{position:absolute;top:8px;right:8px;background:var(--green);border-radius:20px;padding:2px 8px;font-size:.65rem;font-weight:800;color:white;}
+
+/* LEARNING SCREEN */
+.steps-row{display:flex;align-items:center;margin-bottom:18px;width:100%;max-width:480px;}
+.step-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;flex-shrink:0;transition:all .3s;}
+.step-dot.done{background:var(--green);color:white;}
+.step-dot.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;box-shadow:0 0 14px rgba(124,58,237,.5);}
+.step-dot.pending{background:rgba(255,255,255,.07);color:var(--muted);}
+.step-line{flex:1;height:2px;background:rgba(255,255,255,.07);margin:0 3px;transition:background .3s;}
+.step-line.done{background:var(--green);}
+.lang-section{width:100%;max-width:660px;margin:6px 0;}
+.lang-section-title{font-size:.74rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:7px;display:flex;align-items:center;gap:7px;}
+.lang-section-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06);}
+.lang-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+.lang-card{background:var(--card);border:2px solid transparent;border-radius:11px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.lang-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.lang-card.selected{border-color:var(--accent);background:rgba(124,58,237,.14);}
+.lang-card.selected::after{content:'✓';position:absolute;top:3px;right:4px;font-size:.58rem;color:var(--accent);}
+.lang-card .flag{font-size:1.6rem;display:block;margin-bottom:4px;}
+.lang-card .lname{font-weight:800;font-size:.7rem;display:block;}
+.lang-card .lnative{font-size:.58rem;color:var(--muted);}
+.selected-pair{display:flex;align-items:center;justify-content:center;gap:11px;padding:10px 15px;background:rgba(124,58,237,.09);border:1px solid rgba(124,58,237,.2);border-radius:11px;margin:8px 0;width:100%;max-width:660px;flex-wrap:wrap;}
+.pair-tag{display:flex;align-items:center;gap:6px;font-weight:800;}
+.pair-swap{cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:4px 9px;font-size:.76rem;font-weight:700;transition:all .2s;font-family:'Nunito';}
+.pair-swap:hover{background:rgba(124,58,237,.18);}
+
+/* LEVEL / CHAPTERS */
+.levels-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0;width:100%;max-width:700px;}
+.level-card{background:var(--card);border:2px solid transparent;border-radius:var(--r);padding:15px;cursor:pointer;transition:all .25s;position:relative;}
+.level-card:hover:not(.locked){transform:translateY(-3px);}
+.level-card.locked{opacity:.38;cursor:not-allowed;}
+.level-card.completed{border-color:var(--green);}
+.level-card.available{border-color:rgba(124,58,237,.36);}
+.level-card.available:hover{border-color:var(--accent);background:rgba(124,58,237,.07);}
+.level-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:800;margin-bottom:4px;letter-spacing:.8px;}
+.A1 .level-badge{background:rgba(6,182,212,.16);color:var(--accent3);}
+.A2 .level-badge{background:rgba(16,185,129,.16);color:var(--green);}
+.B1 .level-badge{background:rgba(245,158,11,.16);color:var(--accent4);}
+.B2 .level-badge{background:rgba(236,72,153,.16);color:var(--accent2);}
+.C1 .level-badge{background:rgba(124,58,237,.16);color:#a78bfa;}
+.C2 .level-badge{background:rgba(239,68,68,.16);color:var(--red);}
+.level-title{font-size:.9rem;font-weight:800;margin-bottom:2px;}
+.level-desc{font-size:.68rem;color:var(--muted);}
+.level-stars{font-size:.82rem;margin-top:4px;}
+.chapters-list{width:100%;max-width:700px;display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+.chapter-item{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:11px;}
+.chapter-item:hover:not(.locked){border-color:var(--accent);background:rgba(124,58,237,.06);}
+.chapter-item.locked{opacity:.36;cursor:not-allowed;}
+.chapter-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.88rem;flex-shrink:0;}
+.chapter-item.done .chapter-num{background:rgba(16,185,129,.18);color:var(--green);}
+.chapter-item.available .chapter-num{background:rgba(124,58,237,.18);color:#a78bfa;}
+.chapter-item.locked .chapter-num{background:rgba(255,255,255,.04);color:var(--muted);}
+.game-chip{background:rgba(255,255,255,.06);border-radius:20px;padding:2px 7px;font-size:.65rem;color:var(--muted);}
+.btn-qr{background:rgba(6,182,212,.1);color:var(--accent3);border:1px solid rgba(6,182,212,.25);padding:4px 10px;border-radius:7px;font-size:.72rem;font-weight:800;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:3px;font-family:'Nunito';}
+.btn-qr:hover{background:rgba(6,182,212,.2);}
+
+/* GAME SELECT */
+.mix-badge{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(124,58,237,.16),rgba(236,72,153,.16));border:1px solid rgba(124,58,237,.26);border-radius:20px;padding:5px 11px;font-size:.78rem;font-weight:800;color:#c4b5fd;}
+.game-types{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;width:100%;max-width:700px;margin:7px 0;}
+.game-type-card{background:var(--card);border:2px solid rgba(255,255,255,.06);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .25s;text-align:center;position:relative;}
+.game-type-card:hover{transform:translateY(-3px);border-color:var(--accent);}
+.game-type-card.featured{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.05);}
+.game-type-card.featured::before{content:'★ RECOMMANDÉ';position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-size:.56rem;font-weight:800;padding:2px 9px;border-radius:0 0 7px 7px;letter-spacing:1px;}
+.game-icon{font-size:1.9rem;margin-bottom:7px;}
+.game-type-name{font-weight:800;font-size:.95rem;margin-bottom:2px;}
+.game-type-desc{font-size:.74rem;color:var(--muted);}
+/* Coin reward tag */
+.reward-tag{display:inline-flex;align-items:center;gap:3px;background:rgba(251,191,36,.1);border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:800;color:var(--gold);margin-top:5px;}
+
+/* GAME ENGINE */
+.game-header{width:100%;max-width:700px;display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.progress-bar-wrap{flex:1;background:rgba(255,255,255,.08);border-radius:20px;height:9px;overflow:hidden;}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:20px;transition:width .4s ease;}
+.score-badge{background:rgba(245,158,11,.13);color:var(--accent4);border:1px solid rgba(245,158,11,.26);padding:4px 10px;border-radius:20px;font-weight:800;font-size:.82rem;white-space:nowrap;}
+.timer-badge{background:rgba(6,182,212,.13);color:var(--accent3);border:1px solid rgba(6,182,212,.26);padding:4px 10px;border-radius:20px;font-weight:800;font-size:.82rem;min-width:56px;text-align:center;}
+.timer-badge.urgent{background:rgba(239,68,68,.13);color:var(--red);border-color:rgba(239,68,68,.26);animation:pulse .5s ease infinite alternate;}
+@keyframes pulse{from{opacity:1;}to{opacity:.35;}}
+.type-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.68rem;font-weight:800;letter-spacing:.4px;margin-bottom:8px;}
+.type-pill.quiz{background:rgba(245,158,11,.13);color:var(--accent4);border:1px solid rgba(245,158,11,.2);}
+.type-pill.fill{background:rgba(6,182,212,.13);color:var(--accent3);border:1px solid rgba(6,182,212,.2);}
+.type-pill.match{background:rgba(16,185,129,.13);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.type-pill.sort{background:rgba(236,72,153,.13);color:var(--accent2);border:1px solid rgba(236,72,153,.2);}
+.question-card{width:100%;max-width:700px;background:var(--card);border-radius:var(--r);padding:20px;text-align:center;margin-bottom:12px;border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden;}
+.question-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));}
+.q-dir{font-size:.64rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.q-num{font-size:.7rem;color:var(--muted);margin-bottom:6px;}
+.q-text{font-size:1.55rem;font-weight:800;line-height:1.3;margin-bottom:4px;}
+.q-hint{font-size:.82rem;color:var(--muted);font-style:italic;}
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:700px;}
+.answer-btn{padding:13px 14px;border-radius:12px;border:2px solid rgba(255,255,255,.08);font-family:'Nunito';font-weight:700;font-size:.88rem;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:8px;color:var(--text);background:var(--card);}
+.answer-btn:hover:not(:disabled){transform:translateY(-1px);border-color:var(--accent);background:rgba(124,58,237,.08);}
+.answer-btn .al{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;font-size:.78rem;}
+.answer-btn.correct{border-color:var(--green);background:rgba(16,185,129,.1);}
+.answer-btn.wrong{border-color:var(--red);background:rgba(239,68,68,.1);}
+.answer-btn.correct .al{background:var(--green);color:white;}
+.answer-btn.wrong .al{background:var(--red);color:white;}
+.fill-input{width:100%;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.12);border-radius:11px;padding:12px 16px;font-family:'Nunito';font-size:1.05rem;font-weight:700;color:var(--text);text-align:center;outline:none;transition:border-color .2s;margin:10px 0;}
+.fill-input:focus{border-color:var(--accent);}
+.fill-input.correct{border-color:var(--green);background:rgba(16,185,129,.06);}
+.fill-input.wrong{border-color:var(--red);background:rgba(239,68,68,.06);}
+.fill-input.close{border-color:var(--accent4);background:rgba(245,158,11,.06);}
+.fuzzy-note{font-size:.73rem;color:var(--accent4);text-align:center;margin-top:-6px;margin-bottom:7px;font-style:italic;}
+.match-container{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:700px;margin:10px 0;}
+.match-col{display:flex;flex-direction:column;gap:6px;}
+.match-col-label{font-size:.66rem;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);text-align:center;margin-bottom:2px;}
+.match-item{padding:10px 12px;border-radius:10px;border:2px solid rgba(255,255,255,.08);background:var(--card);cursor:pointer;font-weight:700;transition:all .2s;text-align:center;font-size:.88rem;}
+.match-item:hover:not(.matched){border-color:var(--accent);}
+.match-item.selected{border-color:var(--accent2);background:rgba(236,72,153,.1);}
+.match-item.matched{border-color:var(--green);background:rgba(16,185,129,.1);cursor:default;}
+.match-item.wrong-match{border-color:var(--red);animation:shake .3s ease;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+.word-bank{display:flex;flex-wrap:wrap;gap:6px;min-height:48px;padding:9px;background:rgba(255,255,255,.02);border-radius:11px;margin:7px 0;border:2px dashed rgba(255,255,255,.08);}
+.sentence-slots{display:flex;flex-wrap:wrap;gap:6px;min-height:48px;padding:9px;background:rgba(124,58,237,.03);border-radius:11px;margin:7px 0;border:2px dashed rgba(124,58,237,.2);align-items:center;}
+.word-token{padding:5px 11px;border-radius:20px;background:var(--card2);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-weight:700;font-size:.84rem;transition:all .2s;user-select:none;}
+.word-token:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+.word-token.in-sentence{background:rgba(124,58,237,.15);border-color:var(--accent);}
+.slot-placeholder{color:var(--muted);font-size:.76rem;font-style:italic;align-self:center;}
+.feedback-banner{width:100%;max-width:700px;padding:11px 14px;border-radius:11px;margin:7px 0;font-weight:800;font-size:.88rem;display:none;align-items:center;gap:9px;}
+.feedback-banner.show{display:flex;animation:slideUp .22s ease;}
+.correct-fb{background:rgba(16,185,129,.11);border:1px solid rgba(16,185,129,.24);color:#6ee7b7;}
+.wrong-fb{background:rgba(239,68,68,.11);border:1px solid rgba(239,68,68,.24);color:#fca5a5;}
+.close-fb{background:rgba(245,158,11,.11);border:1px solid rgba(245,158,11,.24);color:#fde68a;}
+@keyframes slideUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* RESULTS */
+.results-stars{font-size:2.4rem;margin:14px 0;animation:bounce .6s ease infinite alternate;}
+@keyframes bounce{from{transform:scale(1);}to{transform:scale(1.1);}}
+.results-score{font-size:2.6rem;font-weight:900;margin:4px 0;}
+.results-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%;max-width:420px;margin:10px 0 16px;}
+.stat-box{background:var(--card2);border-radius:10px;padding:11px;text-align:center;}
+/* Coin reward on results */
+.coin-reward-banner{width:100%;max-width:420px;background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.08));border:1px solid rgba(251,191,36,.28);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:14px;animation:coinPop .5s ease;}
+@keyframes coinPop{0%{transform:scale(.8);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.coin-reward-amount{font-size:1.8rem;font-weight:900;color:var(--gold);}
+
+/* XP BAR */
+.xp-mini{display:flex;align-items:center;gap:7px;width:100%;max-width:700px;margin-bottom:10px;}
+.xp-bar-wrap{flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:20px;overflow:hidden;}
+.xp-bar{height:100%;background:linear-gradient(90deg,var(--accent4),var(--accent2));border-radius:20px;transition:width .6s ease;}
+
+/* BREADCRUMB */
+.breadcrumb{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.76rem;margin-bottom:10px;width:100%;max-width:700px;flex-wrap:wrap;}
+.crumb{cursor:pointer;transition:color .15s;}
+.crumb:hover{color:var(--text);}
+.sep{opacity:.2;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal-box{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:24px;max-width:380px;width:90%;text-align:center;position:relative;}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));border-radius:20px 20px 0 0;}
+.modal-close{position:absolute;top:10px;right:12px;cursor:pointer;font-size:1.2rem;color:var(--muted);transition:color .2s;background:none;border:none;}
+.modal-close:hover{color:var(--text);}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;animation:confetti-fall linear forwards;z-index:999;}
+@keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+/* TOAST */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px 18px;font-size:.82rem;font-weight:700;z-index:300;box-shadow:0 8px 28px rgba(0,0,0,.4);white-space:nowrap;animation:slideUp .3s ease;}
+/* FLOATING COIN */
+.float-coin{position:fixed;font-size:1.4rem;font-weight:900;color:var(--gold);pointer-events:none;z-index:400;animation:floatUp 1.2s ease forwards;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-80px) scale(1.4);}}
+
+/* DIVIDEND EXPLAIN */
+.explain-card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;width:100%;max-width:700px;margin-bottom:10px;}
+.explain-title{font-weight:800;font-size:.95rem;margin-bottom:6px;display:flex;align-items:center;gap:7px;}
+.explain-body{font-size:.82rem;color:var(--muted);line-height:1.6;}
+.explain-body strong{color:var(--text);}
+.highlight{background:rgba(251,191,36,.1);border-radius:6px;padding:2px 6px;color:var(--gold);font-weight:700;}
+
+@media(max-width:600px){
+  .lang-grid{grid-template-columns:repeat(3,1fr);}
+  .levels-grid{grid-template-columns:repeat(2,1fr);}
+  .answers-grid{grid-template-columns:1fr;}
+  .game-types{grid-template-columns:1fr;}
+  .match-container{grid-template-columns:1fr;}
+  .q-text{font-size:1.25rem;}
+  .stats-grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ── CSS COIN (replaces <span class="coin"></span> emoji for desktop compatibility) ── */
+.coin{display:inline-block;width:1em;height:1em;background:radial-gradient(circle at 35% 35%,#ffe066,#f59e0b 60%,#b45309);border-radius:50%;border:2px solid #d97706;box-shadow:inset 0 1px 2px rgba(255,255,255,.5),0 1px 3px rgba(0,0,0,.3);vertical-align:middle;flex-shrink:0;position:relative;top:-0.05em;}
+.coin-sm{width:.85em;height:.85em;}
+.coin-lg{width:1.3em;height:1.3em;}
+
+/* ── LANG PICKER MODAL ── */
+.lang-picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;}
+.lang-picker-item{background:var(--card2);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;}
+.lang-picker-item:hover{border-color:var(--accent);transform:translateY(-2px);}
+.lang-picker-item.active{border-color:var(--accent);background:rgba(124,58,237,.15);}
+.lang-picker-item .lp-flag{font-size:1.8rem;display:block;margin-bottom:4px;}
+.lang-picker-item .lp-name{font-size:.78rem;font-weight:800;}
+
+/* ── TARGET WIDGET ── */
+.target-widget{background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;width:100%;max-width:700px;margin-bottom:14px;}
+.target-title{font-weight:800;font-size:.95rem;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.target-slider-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.target-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));outline:none;cursor:pointer;}
+.target-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:white;border:3px solid var(--accent);cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3);}
+.target-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:white;border:3px solid var(--accent);cursor:pointer;}
+.target-val{font-weight:900;font-size:1rem;color:var(--gold);min-width:80px;text-align:right;}
+.target-results{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.target-result-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 12px;}
+.target-result-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
+.target-result-val{font-size:1.05rem;font-weight:900;}
+.target-timeline{width:100%;margin-top:12px;position:relative;height:36px;}
+.tl-bar{height:8px;background:rgba(255,255,255,.06);border-radius:10px;position:absolute;top:14px;left:0;right:0;}
+.tl-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--green),var(--accent3));transition:width .5s ease;}
+.tl-cursor{position:absolute;top:6px;width:20px;height:20px;border-radius:50%;background:white;border:3px solid var(--accent2);transform:translateX(-50%);transition:left .5s ease;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.tl-now{position:absolute;top:28px;font-size:.62rem;color:var(--muted);transform:translateX(-50%);}
+.tl-target{position:absolute;top:28px;font-size:.62rem;color:var(--accent2);font-weight:800;right:0;}
+
+/* ── REAL MARKET PRICE BADGE ── */
+.asset-real-price{display:inline-flex;align-items:center;gap:4px;background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.15);border-radius:6px;padding:2px 7px;font-size:.7rem!important;margin-top:3px;}
+.price-up{color:var(--green)!important;}
+.price-down{color:var(--red)!important;}
+
+.asset-sell-btn{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:9px;padding:9px 14px;font-family:'Nunito';font-weight:800;font-size:.82rem;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.asset-sell-btn:hover{background:rgba(239,68,68,.28);}
+.asset-sell-btn:disabled{opacity:.3;cursor:not-allowed;}
+
+.asset-info-btn{background:rgba(6,182,212,.1);color:var(--accent3);border:1px solid rgba(6,182,212,.25);border-radius:8px;padding:6px 10px;font-family:'Nunito';font-weight:800;font-size:.75rem;cursor:pointer;transition:all .2s;margin-bottom:8px;}
+.asset-info-btn:hover{background:rgba(6,182,212,.22);}
+
+/* ── AD SLOTS ── */
+.ad-slot{width:100%;max-width:700px;min-height:60px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:10px 0;overflow:hidden;position:relative;}
+.ad-slot::before{content:'Publicité';position:absolute;top:3px;left:8px;font-size:.55rem;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:1px;}
+.ad-banner{display:block;width:100%;height:auto;}
+
+/* ── THEME BUTTONS ── */
+.theme-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:10px;font-family:'Nunito';font-weight:800;font-size:.82rem;border:2px solid rgba(255,255,255,.1);background:var(--card3);color:var(--text);cursor:pointer;transition:all .2s;}
+.theme-btn.active{border-color:var(--accent2);background:rgba(var(--accent-rgb),.15);color:var(--accent2);}
+.theme-btn:hover{filter:brightness(1.1);}
+/* fix star color for light mode */
+[data-theme="light"] .star{background:#1a6b3a;}
+[data-theme="light"] .coin{background:radial-gradient(circle at 35% 35%,#ffe066,#d97706 60%,#92400e);border-color:#b45309;}
+[data-theme="light"] .top-bar{background:rgba(240,247,242,.95);border-bottom:1px solid rgba(26,107,58,.15);}
+[data-theme="light"] .nav-bar{background:rgba(240,247,242,.97);border-top:1px solid rgba(26,107,58,.1);}
+
+/* ── ANIMATED LOGO ── */
+.lq-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px;}
+
+[data-theme="dark"] { --logo-glow: 124,58,237; }
+[data-theme="light"] { --logo-glow: 109,40,217; }
+[data-theme="claude"] { --logo-glow: 212,132,90; }
+
+/* Ring rotation */
+.logo-ring-outer { animation: logo-spin-cw 8s linear infinite; transform-origin: 50px 50px; }
+.logo-ring-inner { animation: logo-spin-ccw 5s linear infinite; transform-origin: 50px 50px; }
+.logo-core { animation: logo-pulse 3s ease-in-out infinite; transform-origin: 50px 50px; }
+.logo-particle { animation: logo-orbit var(--od) linear infinite; transform-origin: 50px 50px; }
+.logo-letter { animation: logo-gen 4s ease-in-out infinite; }
+
+@keyframes logo-spin-cw { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes logo-spin-ccw { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+@keyframes logo-pulse {
+  0%,100%{transform:scale(1);opacity:1;}
+  50%{transform:scale(1.08);opacity:.85;}
+}
+@keyframes logo-orbit {
+  from{transform:rotate(0deg) translateX(28px) rotate(0deg);}
+  to{transform:rotate(360deg) translateX(28px) rotate(-360deg);}
+}
+@keyframes logo-gen {
+  0%{opacity:0;transform:scale(.5);}
+  15%{opacity:1;transform:scale(1.1);}
+  80%{opacity:1;transform:scale(1);}
+  100%{opacity:0;transform:scale(.5);}
+}
+
+
+/* ── FLOWER OF LIFE LOGO ── */
+.lq-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px;}
+.lq-logo-canvas{width:120px;height:120px;border-radius:50%;cursor:pointer;}
+.lq-logo-canvas-mini{width:36px;height:36px;border-radius:50%;}
+</style>
+<!-- Google AdSense — remplacer ca-pub-7915647470407065 par ton vrai ID -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
+<script>
+// Apply saved theme instantly, or wait for theme picker
+(function(){
+  var t = localStorage.getItem('lq_theme');
+  if(t){
+    if(t==='auto') t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+    document.documentElement.setAttribute('data-theme',t);
+  } else {
+    // No saved theme — default dark until picker shown
+    document.documentElement.setAttribute('data-theme','dark');
+  }
+})();
+</script>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div id="app">
+
+<!-- ══════════════════ AUTH SCREEN ══════════════════ -->
+<div class="screen active" id="screen-auth" style="justify-content:center;padding-top:40px;">
+  <div style="text-align:center;margin-bottom:8px;">
+    <div class="lq-logo-wrap"><canvas class="lq-logo-canvas"></canvas><div class="logo" style="margin-bottom:0;">LinguaQuest</div><div class="tagline">Apprends. Investis. Maîtrise.</div></div>
+  </div>
+  <div class="auth-card card-accent">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Se connecter</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">S'inscrire</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="form-login">
+      <label class="auth-label">Email</label>
+      <input class="auth-input" type="email" id="login-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+      <label class="auth-label">Mot de passe</label>
+      <input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="auth-error" id="login-err"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">Se connecter →</button>
+    </div>
+    <!-- REGISTER -->
+    <div id="form-register" style="display:none;">
+      <label class="auth-label">Prénom / Pseudo</label>
+      <input class="auth-input" type="text" id="reg-name" placeholder="Marie" onkeydown="if(event.key==='Enter')doRegister()">
+      <label class="auth-label">Email</label>
+      <input class="auth-input" type="email" id="reg-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doRegister()">
+      <label class="auth-label">Mot de passe</label>
+      <input class="auth-input" type="password" id="reg-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')doRegister()">
+      <div class="auth-error" id="reg-err"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()">Créer mon compte 🚀</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+      <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">ou continuer sans compte</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;justify-content:center;gap:8px;font-size:.95rem;padding:13px;" id="btn-guest">👤 Continuer en invité</button>
+    <div style="text-align:center;margin-top:8px;font-size:.7rem;color:var(--muted);">La progression ne sera pas sauvegardée</div>
+  </div>
+</div>
+
+<!-- ══════════════════ TOP BAR (logged in) ══════════════════ -->
+<div id="top-bar" class="top-bar" style="display:none;">
+  <div style="display:flex;align-items:center;gap:8px;"><canvas class="lq-logo-canvas-mini"></canvas><span class="top-bar-logo">LQ</span></div>
+  <div class="top-spacer"></div>
+  <div class="coin-display"><span class="coin-icon"><span class="coin"></span></span><span id="tb-coins">0</span></div>
+  <div class="avatar-btn" id="avatar-btn" onclick="navTo('profile')"></div>
+</div>
+
+<!-- ══════════════════ NAV BAR ══════════════════ -->
+<div id="nav-bar" class="nav-bar" style="display:none;">
+  <div class="nav-item active" id="nav-learn" onclick="navTo('learn')"><span class="ni" style="font-size:1.1rem;font-weight:900;color:inherit;">A</span>Apprendre</div>
+  <div class="nav-item" id="nav-portfolio" onclick="navTo('portfolio')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">$</span>Portfolio</div>
+  <div class="nav-item" id="nav-shop" onclick="navTo('shop')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">★</span>Boutique</div>
+  <div class="nav-item" id="nav-profile" onclick="navTo('profile')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">◉</span>Profil</div>
+</div>
+
+<!-- ══════════════════ LEARN SCREEN ══════════════════ -->
+<div class="screen screen-padded" id="screen-learn">
+  <div style="text-align:center;margin:4px 0 12px;">
+    <div class="lq-logo-wrap"><canvas class="lq-logo-canvas"></canvas><div class="logo" style="font-size:1.9rem;margin-bottom:0;">LinguaQuest</div><div class="tagline" style="margin-bottom:0;">Choisis ta langue</div></div>
+  </div>
+  <div class="steps-row">
+    <div class="step-dot active" id="dot1">1</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-dot pending" id="dot2">2</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-dot pending" id="dot3">→</div>
+  </div>
+  <div class="lang-section">
+    <div class="lang-section-title">🧑 Je parle</div>
+    <div class="lang-grid" id="native-grid"></div>
+  </div>
+  <div style="text-align:center;font-size:1.4rem;color:var(--accent);margin:4px 0;animation:arrowPulse 1.5s ease infinite alternate;" id="lang-arrow" style="opacity:.28">↓</div>
+  <style>@keyframes arrowPulse{from{opacity:.3;transform:scale(1);}to{opacity:1;transform:scale(1.1);}}</style>
+  <div class="lang-section" id="target-section" style="opacity:.38;transition:opacity .3s;">
+    <div class="lang-section-title">🎯 Je veux apprendre</div>
+    <div class="lang-grid" id="target-grid"></div>
+  </div>
+  <div class="selected-pair" id="pair-summary" style="display:none;">
+    <div class="pair-tag" id="pair-native"></div>
+    <div style="font-size:1.2rem;color:var(--accent2)">→</div>
+    <div class="pair-tag" id="pair-target"></div>
+    <div style="flex:1"></div>
+    <button class="pair-swap" onclick="swapLangs()">⇄</button>
+  </div>
+  <button class="btn btn-primary btn-lg" onclick="goToLevels()" id="btn-start" disabled style="margin-top:12px;justify-content:center;">Commencer →</button>
+</div>
+
+<!-- ══════════════════ LEVELS ══════════════════ -->
+<div class="screen screen-padded" id="screen-levels">
+  <div class="breadcrumb">
+    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span><span id="bc-pair">Lang</span>
+  </div>
+  <div class="xp-mini">
+    <span style="font-size:.72rem;color:var(--accent4);font-weight:800;">⭐ XP</span>
+    <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
+    <span id="xp-count" style="font-size:.76rem;color:var(--accent4);font-weight:800;"></span>
+  </div>
+  <div class="section-title" id="levels-title">Niveaux</div>
+  <div class="section-sub">Chaque niveau réutilise le vocabulaire précédent</div>
+  <div class="levels-grid" id="levels-grid"></div>
+</div>
+
+<!-- ══════════════════ CHAPTERS ══════════════════ -->
+<div class="screen screen-padded" id="screen-chapters">
+  <div class="breadcrumb">
+    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span>
+    <span class="crumb" onclick="goTo('levels')" id="bc-pair2"></span><span class="sep">›</span>
+    <span id="bc-level2"></span>
+  </div>
+  <div class="section-title" id="chapters-title">Chapitres</div>
+  <div class="section-sub" id="chapters-sub"></div>
+  <div class="chapters-list" id="chapters-list"></div>
+</div>
+
+<!-- ══════════════════ GAME SELECT ══════════════════ -->
+<div class="screen screen-padded" id="screen-game-select">
+  <div class="breadcrumb">
+    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span>
+    <span class="crumb" onclick="goTo('levels')" id="bc-p3"></span><span class="sep">›</span>
+    <span class="crumb" onclick="goTo('chapters')" id="bc-l3"></span><span class="sep">›</span>
+    <span id="bc-c3"></span>
+  </div>
+  <div class="section-title" id="gsel-title">Mode de jeu</div>
+  <div class="section-sub" id="gsel-sub"></div>
+  <div style="display:flex;justify-content:flex-end;width:100%;max-width:700px;margin-bottom:7px;">
+    <span class="mix-badge">🎲 Mode Mixte recommandé</span>
+  </div>
+  <div class="game-types">
+    <div class="game-type-card featured" onclick="startGame('mixed')">
+      <div class="game-icon">🎲</div><div class="game-type-name">Mode Mixte</div>
+      <div class="game-type-desc">Tout mélangé — la meilleure façon d'apprendre</div>
+      <div class="reward-tag"><span class="coin"></span> +30 pièces max</div>
+    </div>
+    <div class="game-type-card" onclick="startGame('quiz')">
+      <div class="game-icon">⚡</div><div class="game-type-name">Quiz Rapide</div>
+      <div class="game-type-desc">4 choix · Chrono · Style Kahoot</div>
+      <div class="reward-tag"><span class="coin"></span> +15 pièces max</div>
+    </div>
+    <div class="game-type-card" onclick="startGame('fill')">
+      <div class="game-icon">✏️</div><div class="game-type-name">Compléter</div>
+      <div class="game-type-desc">Tape le mot · Accents tolérés ✨</div>
+      <div class="reward-tag"><span class="coin"></span> +20 pièces max</div>
+    </div>
+    <div class="game-type-card" onclick="startGame('match')">
+      <div class="game-icon">🔗</div><div class="game-type-name">Associer</div>
+      <div class="game-type-desc">Relie les mots et traductions</div>
+      <div class="reward-tag"><span class="coin"></span> +10 pièces max</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ GAME ENGINE ══════════════════ -->
+<div class="screen screen-padded" id="screen-game">
+  <div class="game-header">
+    <div class="timer-badge" id="g-timer">⏱ 15</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="g-progress"></div></div>
+    <div class="score-badge">⭐ <span id="g-score">0</span></div>
+  </div>
+  <div id="g-type-pill" class="type-pill quiz"></div>
+  <div class="question-card">
+    <div class="q-dir" id="g-dir"></div>
+    <div class="q-num" id="g-num"></div>
+    <div class="q-text" id="g-text"></div>
+    <div class="q-hint" id="g-hint"></div>
+  </div>
+  <div id="zone-quiz" style="width:100%;max-width:700px;"><div class="answers-grid" id="answers-grid"></div></div>
+  <div id="zone-fill" style="display:none;width:100%;max-width:700px;">
+    <input class="fill-input" type="text" id="fill-input" placeholder="Écris ta réponse…" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkCurrentQ()">
+    <div class="fuzzy-note" id="fuzzy-note" style="display:none;"></div>
+  </div>
+  <div id="zone-match" style="display:none;width:100%;max-width:700px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px;">
+      <div class="match-col-label" id="mcl-l"></div>
+      <div class="match-col-label" id="mcl-r"></div>
+    </div>
+    <div class="match-container">
+      <div class="match-col" id="match-left"></div>
+      <div class="match-col" id="match-right"></div>
+    </div>
+    <div style="color:var(--muted);font-size:.74rem;text-align:center;margin-top:3px;">✅ <span id="match-prog-txt">0/0</span> paires</div>
+  </div>
+  <div id="zone-sort" style="display:none;width:100%;max-width:700px;">
+    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;">Ta phrase :</div>
+    <div class="sentence-slots" id="sentence-slots"><span class="slot-placeholder">Clique sur les mots…</span></div>
+    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;">Mots disponibles :</div>
+    <div class="word-bank" id="word-bank"></div>
+  </div>
+  <div class="feedback-banner" id="g-fb">
+    <span id="g-fb-icon" style="font-size:1.2rem;"></span>
+    <div><div id="g-fb-title"></div><div id="g-fb-detail" style="font-weight:600;font-size:.76rem;opacity:.8;margin-top:1px;"></div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+    <button class="btn btn-primary" onclick="checkCurrentQ()" id="btn-check" style="display:none;">Vérifier ✓</button>
+    <button class="btn btn-secondary" onclick="resetSort()" id="btn-reset" style="display:none;">⟳</button>
+    <button class="btn btn-primary" onclick="nextQ()" id="btn-next" style="display:none;">Suivant →</button>
+    <button class="btn btn-secondary" onclick="skipMatch()" id="btn-skip" style="display:none;">Continuer →</button>
+  </div>
+</div>
+
+<!-- ══════════════════ RESULTS ══════════════════ -->
+<div class="screen screen-padded" id="screen-results">
+  <div style="text-align:center;width:100%;max-width:520px;padding:20px 0;">
+    <div class="results-stars" id="r-stars">★★★</div>
+    <div style="font-size:1.2rem;font-weight:800;margin-bottom:4px;" id="r-title"></div>
+    <div class="results-score" id="r-score" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></div>
+    <div style="color:var(--muted);margin-bottom:14px;" id="r-sub"></div>
+    <!-- Coin reward -->
+    <div class="coin-reward-banner" id="coin-reward-banner">
+      <div style="font-size:1.8rem;"><span class="coin"></span></div>
+      <div style="flex:1;text-align:left;">
+        <div style="font-weight:800;color:var(--gold);">Pièces gagnées !</div>
+        <div style="font-size:.78rem;color:var(--muted);">Utilise-les pour investir dans le Portfolio</div>
+      </div>
+      <div class="coin-reward-amount" id="coin-reward-amount">+0</div>
+    </div>
+    <div class="results-stats">
+      <div class="stat-box"><div class="stat-val" id="r-correct" style="color:var(--green)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">Correct</div></div>
+      <div class="stat-box"><div class="stat-val" id="r-wrong" style="color:var(--red)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">Erreurs</div></div>
+      <div class="stat-box"><div class="stat-val" id="r-xp" style="color:var(--accent4)">+0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">XP</div></div>
+    </div>
+    <div id="r-breakdown" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="playAgain()">Rejouer 🔄</button>
+      <button class="btn btn-secondary" onclick="goTo('chapters')">Chapitres</button>
+      <button class="btn btn-gold" onclick="navTo('portfolio')">$ Investir</button>
+  <!-- Ad slot — résultats -->
+  <div class="ad-slot" id="ad-results">
+    <ins class="adsbygoogle ad-banner"
+         style="display:block"
+         data-ad-client="ca-pub-7915647470407065"
+         data-ad-slot="1111111111"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PORTFOLIO SCREEN ══════════════════ -->
+<div class="screen screen-padded" id="screen-portfolio">
+  <div class="wealth-hero">
+    <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">◈ Patrimoine total</div>
+    <div class="wealth-total" id="wealth-total">0 <span class="coin"></span></div>
+    <div class="wealth-sub" id="wealth-sub"></div>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-weight:900;font-size:1.1rem;color:var(--gold)" id="pf-coins">0</div>
+        <div style="font-size:.68rem;color:var(--muted);">Pièces liquides</div>
+      </div>
+      <div style="width:1px;background:rgba(255,255,255,.1);"></div>
+      <div style="text-align:center;">
+        <div style="font-weight:900;font-size:1.1rem;color:var(--green)" id="pf-div-total">0 <span class="coin"></span>/j</div>
+        <div style="font-size:.68rem;color:var(--muted);">Dividendes / jour</div>
+      </div>
+      <div style="width:1px;background:rgba(255,255,255,.1);"></div>
+      <div style="text-align:center;">
+        <div style="font-weight:900;font-size:1.1rem;color:var(--accent3)" id="pf-invested">0</div>
+        <div style="font-size:.68rem;color:var(--muted);">Investi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dividend collect banner -->
+  <div class="dividend-banner" id="div-banner" style="display:none;">
+    <div class="div-icon" style="font-size:1.6rem;color:#10b981;font-weight:900;">↑</div>
+    <div class="div-info">
+      <div class="div-title">Dividendes disponibles !</div>
+      <div class="div-sub" id="div-banner-sub">Tes actifs ont généré des revenus</div>
+    </div>
+    <div class="div-amount" id="div-amount">+0 <span class="coin"></span></div>
+    <button class="collect-btn" id="collect-btn" onclick="collectDividends()">Collecter</button>
+  </div>
+
+  <!-- Explanation -->
+  <div class="explain-card">
+    <div class="explain-title">📖 Comment fonctionnent les dividendes ?</div>
+    <div class="explain-body">
+      Dans la vraie vie, certains <strong>actifs</strong> (or, immobilier, actions) génèrent des revenus <strong>réguliers</strong> sans que tu doives les vendre. C'est ça un <span class="highlight">dividende</span>.<br><br>
+      Ici, chaque actif que tu achètes avec tes <span class="coin"></span> pièces te rapporte automatiquement un pourcentage chaque jour. Comme dans la réalité, <strong>plus tu investis tôt, plus tu reçois</strong>. Les actifs <strong>n'ont pas de valeur négative</strong> — ils peuvent stagner ou croître, jamais disparaître.
+    </div>
+  </div>
+
+  <!-- Target Widget -->
+  <div class="target-widget" id="target-widget">
+    <div class="target-title">&#127919; Simulateur d'objectif</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Fixe un objectif en pièces et vois combien de temps il faudra pour l'atteindre avec tes dividendes actuels.</div>
+    <div class="target-slider-row">
+      <span style="font-size:.76rem;color:var(--muted);">Objectif :</span>
+      <input type="range" class="target-slider" id="target-slider" min="100" max="10000" step="50" value="1000" oninput="updateTarget()">
+      <span class="target-val" id="target-val">1 000 <span class="coin"></span></span>
+    </div>
+    <div class="target-results">
+      <div class="target-result-card">
+        <div class="target-result-label">Il manque</div>
+        <div class="target-result-val" id="tr-missing" style="color:var(--accent2);">-</div>
+      </div>
+      <div class="target-result-card">
+        <div class="target-result-label">Dividendes / jour</div>
+        <div class="target-result-val" id="tr-daily" style="color:var(--green);">-</div>
+      </div>
+      <div class="target-result-card">
+        <div class="target-result-label">Temps estimé</div>
+        <div class="target-result-val" id="tr-time" style="color:var(--accent3);">-</div>
+      </div>
+      <div class="target-result-card">
+        <div class="target-result-label">Progression actuelle</div>
+        <div class="target-result-val" id="tr-pct" style="color:var(--gold);">-</div>
+      </div>
+    </div>
+    <div class="target-timeline">
+      <div class="tl-bar"><div class="tl-fill" id="tl-fill" style="width:0%"></div></div>
+      <div class="tl-cursor" id="tl-cursor" style="left:0%"></div>
+      <div class="tl-now" id="tl-now" style="left:0%">Maintenant</div>
+      <div class="tl-target">Objectif</div>
+    </div>
+  </div>
+
+  <!-- Assets -->
+  <div class="section-title" style="text-align:left;margin-bottom:8px;">&#127970; Actifs disponibles</div>
+  <div class="assets-grid" id="assets-grid"></div>
+  <!-- Ad slot — portfolio -->
+  <div class="ad-slot" id="ad-portfolio" style="margin-top:16px;">
+    <ins class="adsbygoogle ad-banner"
+         style="display:block"
+         data-ad-client="ca-pub-7915647470407065"
+         data-ad-slot="2222222222"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+</div>
+
+<!-- ══════════════════ SHOP SCREEN ══════════════════ -->
+<div class="screen screen-padded" id="screen-shop">
+  <div class="section-title">🛍 Boutique</div>
+  <div class="section-sub">Dépense tes pièces pour des bonus et cosmétiques</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+    <div class="coin-display"><span><span class="coin"></span></span><span id="shop-coins">0</span></div>
+    <span style="font-size:.8rem;color:var(--muted);">pièces disponibles</span>
+  </div>
+  <div class="shop-grid" id="shop-grid"></div>
+</div>
+
+<!-- ══════════════════ PROFILE SCREEN ══════════════════ -->
+<div class="screen screen-padded" id="screen-profile">
+  <div class="profile-hero" id="profile-hero">
+    <div class="profile-avatar" id="prof-avatar"></div>
+    <div>
+      <div class="profile-name" id="prof-name"></div>
+      <div class="profile-email" id="prof-email"></div>
+      <div class="profile-joined" id="prof-joined"></div>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" id="ps-xp" style="color:var(--accent4)">0</div><div class="stat-lbl">XP Total</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-coins" style="color:var(--gold)">0</div><div class="stat-lbl">Pièces</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-sessions" style="color:var(--accent3)">0</div><div class="stat-lbl">Sessions</div></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" id="ps-streak" style="color:var(--accent2)">0</div><div class="stat-lbl">🔥 Jours</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-chapters" style="color:var(--green)">0</div><div class="stat-lbl">Chapitres</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-wealth" style="color:var(--gold)">0</div><div class="stat-lbl">💎 Patrimoine</div></div>
+  </div>
+  <div style="width:100%;max-width:700px;margin-top:14px;">
+    <!-- Theme toggle -->
+    <div style="width:100%;max-width:700px;background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;margin-bottom:10px;">
+      <div style="font-weight:800;margin-bottom:10px;font-size:.9rem;">Apparence</div>
+      <div style="display:flex;gap:8px;">
+        <button class="theme-btn" id="theme-btn-light" onclick="setTheme('light')">
+          <span style="font-size:1.1rem;">&#9728;</span> Clair
+        </button>
+        <button class="theme-btn" id="theme-btn-dark" onclick="setTheme('dark')">
+          <span style="font-size:1.1rem;">&#9790;</span> Sombre
+        </button>
+        <button class="theme-btn" id="theme-btn-claude" onclick="setTheme('claude')">
+          <span style="font-size:1.1rem;">🤖</span> Claude
+        </button>
+        <button class="theme-btn" id="theme-btn-auto" onclick="setTheme('auto')">
+          <span style="font-size:1.1rem;">&#9681;</span> Auto
+        </button>
+      </div>
+    </div>
+    <!-- UI Language selector -->
+    <div style="width:100%;max-width:700px;background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;margin-bottom:10px;">
+      <div style="font-weight:800;margin-bottom:10px;font-size:.9rem;">&#127760; Langue de l'interface</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;" id="ui-lang-grid"></div>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="openLangModal()">&#127919; Changer de langue d'apprentissage</button>
+    <div style="display:flex;gap:12px;justify-content:center;margin:10px 0 6px;font-size:.72rem;">
+      <a href="/privacy.html" style="color:var(--muted);text-decoration:none;" target="_blank">Confidentialité</a>
+      <span style="color:var(--muted);">·</span>
+      <a href="/legal.html" style="color:var(--muted);text-decoration:none;" target="_blank">Mentions légales</a>
+      <span style="color:var(--muted);">·</span>
+      <a href="/cdn-cgi/l/email-protection#d7b4b8b9a3b6b4a397bbbeb9b0a2b6a6a2b2a4a3f9b6a7a7" style="color:var(--muted);text-decoration:none;">Contact</a>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;justify-content:center;" onclick="doLogout()">&#128682; Se déconnecter</button>
+  </div>
+</div>
+
+<!-- ══════════════════ QR MODAL ══════════════════ -->
+<div class="modal-overlay" id="qr-modal" style="display:none;" onclick="closeQR(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeQR()">✕</button>
+    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;">📱 Partager ce chapitre</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px;" id="qr-sub"></div>
+    <div id="qr-container"></div>
+    <div style="font-size:.66rem;color:var(--muted);word-break:break-all;margin:12px 0;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:7px;" id="qr-url"></div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-primary btn-sm" onclick="copyUrl()">📋 Copier</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeQR()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════ LANG CHANGE MODAL ══════════════════ -->
+<div class="modal-overlay" id="lang-modal" style="display:none;" onclick="closeLangModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px;">
+    <button class="modal-close" onclick="closeLangModal()">&#x2715;</button>
+    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;">Changer de langue</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;">Je parle :</div>
+    <div class="lang-picker-grid" id="lp-native"></div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;margin-top:8px;">J'apprends :</div>
+    <div class="lang-picker-grid" id="lp-target"></div>
+    <div id="lp-pair" style="text-align:center;font-size:.85rem;font-weight:800;color:var(--accent3);margin:10px 0;min-height:22px;"></div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-primary btn-sm" onclick="applyLangChange()">Appliquer</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeLangModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ASSET INFO MODAL ══════════════════ -->
+<div class="modal-overlay" id="asset-modal" style="display:none;" onclick="closeAssetModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:460px;text-align:left;">
+    <button class="modal-close" onclick="closeAssetModal()">&#x2715;</button>
+    <div id="amod-icon" style="font-size:2rem;margin-bottom:6px;"></div>
+    <div id="amod-name" style="font-size:1.2rem;font-weight:900;margin-bottom:2px;"></div>
+    <div id="amod-type" style="font-size:.76rem;color:var(--muted);margin-bottom:14px;"></div>
+    <!-- Live price -->
+    <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Prix marché réel</div>
+      <div id="amod-price" style="font-size:1.4rem;font-weight:900;color:var(--accent3);">Chargement…</div>
+      <div id="amod-change" style="font-size:.8rem;margin-top:2px;"></div>
+      <div id="amod-ticker" style="font-size:.68rem;color:var(--muted);margin-top:4px;"></div>
+    </div>
+    <!-- Your position -->
+    <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Ta position</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><div style="font-size:.68rem;color:var(--muted);">Unités possédées</div><div id="amod-owned" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
+        <div><div style="font-size:.68rem;color:var(--muted);">Valeur actuelle</div><div id="amod-val" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
+        <div><div style="font-size:.68rem;color:var(--muted);">Dividendes / jour</div><div id="amod-daily" style="font-weight:900;font-size:1.1rem;color:var(--green);"></div></div>
+        <div><div style="font-size:.68rem;color:var(--muted);">Plus-value</div><div id="amod-pv" style="font-weight:900;font-size:1.1rem;"></div></div>
+      </div>
+    </div>
+    <!-- Explanation -->
+    <div style="font-size:.8rem;color:var(--muted);line-height:1.6;" id="amod-explain"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn btn-primary btn-sm" id="amod-buy-btn" onclick="">Acheter</button>
+      <button class="btn btn-secondary btn-sm" id="amod-sell-btn" onclick="">Vendre</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeAssetModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ THEME PICKER (first launch) ══════════════════ -->
+<div class="screen" id="screen-theme-picker" style="display:none;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;">
+  <div style="text-align:center;max-width:420px;width:100%;">
+    <div class="lq-logo-wrap" style="margin-bottom:0;"><canvas class="lq-logo-canvas"></canvas><div style="font-family:'Fredoka One',sans-serif;font-size:2rem;margin-bottom:0;">LinguaQuest</div></div>
+    <div style="color:var(--muted);margin-bottom:32px;font-size:.95rem;">Choisis ton apparence</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
+      <div class="theme-pick-card" onclick="pickTheme('dark')" style="background:#0a0a14;border:2px solid rgba(124,58,237,.5);border-radius:18px;padding:20px 12px;cursor:pointer;transition:all .2s;">
+        <div style="font-size:1.6rem;margin-bottom:6px;">🌙</div>
+        <div style="color:#f1f5f9;font-weight:900;font-size:.9rem;">Sombre</div>
+        <div style="color:#94a3b8;font-size:.68rem;margin-top:3px;">Violet</div>
+        <div style="display:flex;gap:3px;justify-content:center;margin-top:8px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#7c3aed;display:inline-block;"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#ec4899;display:inline-block;"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#06b6d4;display:inline-block;"></span>
+        </div>
+      </div>
+      <div class="theme-pick-card" onclick="pickTheme('light')" style="background:#f8f7ff;border:2px solid rgba(109,40,217,.3);border-radius:18px;padding:20px 12px;cursor:pointer;transition:all .2s;">
+        <div style="font-size:1.6rem;margin-bottom:6px;">☀️</div>
+        <div style="color:#1e1b4b;font-weight:900;font-size:.9rem;">Clair</div>
+        <div style="color:#6b7280;font-size:.68rem;margin-top:3px;">Crème</div>
+        <div style="display:flex;gap:3px;justify-content:center;margin-top:8px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#6d28d9;display:inline-block;"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#9333ea;display:inline-block;"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#0ea5e9;display:inline-block;"></span>
+        </div>
+      </div>
+      <div class="theme-pick-card" onclick="pickTheme('claude')" style="background:#1a1612;border:2px solid rgba(212,132,90,.5);border-radius:18px;padding:20px 12px;cursor:pointer;transition:all .2s;">
+        <div style="font-size:1.6rem;margin-bottom:6px;">🤖</div>
+        <div style="color:#f5efe8;font-weight:900;font-size:.9rem;">Claude</div>
+        <div style="color:#a89880;font-size:.68rem;margin-top:3px;">Cuivre</div>
+        <div style="display:flex;gap:3px;justify-content:center;margin-top:8px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#d4845a;display:inline-block;"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#e8956d;display:inline-block;"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:#f0b090;display:inline-block;"></span>
+        </div>
+      </div>
+    </div>
+    <div style="color:var(--muted);font-size:.76rem;">Tu pourras changer ça à tout moment dans ton profil</div>
+  </div>
+</div>
+</div><!-- #app -->
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
+// ── LANGUAGE DETECTION ──
+function detectBrowserLang(){
+  const nav = navigator.language || navigator.userLanguage || 'fr';
+  const code = nav.split('-')[0].toLowerCase();
+  const map = {fr:'fr',en:'en',es:'es',de:'de',cs:'cs',sk:'cs',cz:'cs'};
+  return map[code] || 'fr';
+}
+
+// ── APP UI LANGUAGE ──
+const UI_STRINGS = {
+  fr:{
+    learn:'Apprendre', portfolio:'Portfolio', shop:'Boutique', profile:'Profil',
+    login:'Se connecter', register:"S'inscrire", logout:'Se déconnecter',
+    start:'Commencer', levels:'Niveaux', chapters:'Chapitres',
+    iSpeak:'Je parle', iLearn:'Je veux apprendre',
+    settings:'Apparence', langChange:'Changer de langue',
+    guest:'Continuer en invité',
+    verify:'Vérifier', next:'Suivant', skip:'Passer',
+    correct:'Correct !', wrong:'Pas tout à fait !', almost:'Presque !',
+  },
+  en:{
+    learn:'Learn', portfolio:'Portfolio', shop:'Shop', profile:'Profile',
+    login:'Log in', register:'Sign up', logout:'Log out',
+    start:'Start', levels:'Levels', chapters:'Chapters',
+    iSpeak:'I speak', iLearn:'I want to learn',
+    settings:'Appearance', langChange:'Change language',
+    guest:'Continue as guest',
+    verify:'Check', next:'Next', skip:'Skip',
+    correct:'Correct!', wrong:'Not quite!', almost:'Almost!',
+  },
+  es:{
+    learn:'Aprender', portfolio:'Portafolio', shop:'Tienda', profile:'Perfil',
+    login:'Iniciar sesión', register:'Registrarse', logout:'Cerrar sesión',
+    start:'Comenzar', levels:'Niveles', chapters:'Capítulos',
+    iSpeak:'Hablo', iLearn:'Quiero aprender',
+    settings:'Apariencia', langChange:'Cambiar idioma',
+    guest:'Continuar como invitado'',
+    verify:'Verificar', next:'Siguiente', skip:'Saltar',
+    correct:'¡Correcto!', wrong:'¡No exactamente!', almost:'¡Casi!',
+  },
+  de:{
+    learn:'Lernen', portfolio:'Portfolio', shop:'Shop', profile:'Profil',
+    login:'Anmelden', register:'Registrieren', logout:'Abmelden',
+    start:'Starten', levels:'Stufen', chapters:'Kapitel',
+    iSpeak:'Ich spreche', iLearn:'Ich möchte lernen',
+    settings:'Erscheinungsbild', langChange:'Sprache ändern',
+    guest:'Als Gast fortfahren'',
+    verify:'Prüfen', next:'Weiter', skip:'Überspringen',
+    correct:'Richtig!', wrong:'Nicht ganz!', almost:'Fast!',
+  },
+  cs:{
+    learn:'Učit se', portfolio:'Portfolio', shop:'Obchod', profile:'Profil',
+    login:'Přihlásit se', register:'Registrovat se', logout:'Odhlásit se',
+    start:'Začít', levels:'Úrovně', chapters:'Kapitoly',
+    iSpeak:'Mluvím', iLearn:'Chci se naučit',
+    settings:'Vzhled', langChange:'Změnit jazyk',
+    guest:'Pokračovat jako host'',
+    verify:'Zkontrolovat', next:'Další', skip:'Přeskočit',
+    correct:'Správně!', wrong:'Skoro!', almost:'Téměř!',
+  },
+};
+
+let _uiLang = 'fr';
+
+function setUILang(code){
+  if(!UI_STRINGS[code]) code='fr';
+  _uiLang = code;
+  localStorage.setItem('lq_ui_lang', code);
+  applyUILang();
+}
+
+function t(key){ return (UI_STRINGS[_uiLang]||UI_STRINGS.fr)[key] || key; }
+
+function applyUILang(){
+  // Nav bar
+  const navMap = {learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile'};
+  const navIcons = {learn:'A',portfolio:'$',shop:'&#9733;',profile:'&#9673;'};
+  Object.entries(navMap).forEach(([key,id])=>{
+    const el = document.getElementById('nav-'+id);
+    if(el) el.innerHTML = `<span class="ni" style="font-size:1.1rem;font-weight:900;color:inherit;">${navIcons[key]}</span>${t(key)}`;
+  });
+  // Buttons
+  const btnNext = $('btn-next'); if(btnNext) btnNext.textContent = t('next')+' →';
+  const btnCheck = $('btn-check'); if(btnCheck) btnCheck.textContent = t('verify')+' ✓';
+  const btnSkip = $('btn-skip'); if(btnSkip) btnSkip.textContent = t('skip');
+  // Auth tabs
+  const tabLogin = $('tab-login'); if(tabLogin) tabLogin.textContent = t('login');
+  const tabReg = $('tab-register'); if(tabReg) tabReg.textContent = t('register');
+  // Guest/demo buttons
+  const btnGuest = $('btn-guest'); if(btnGuest) btnGuest.innerHTML = '&#128100; '+t('guest');
+}
+
+// ── THEME ──
+function setTheme(mode){
+  localStorage.setItem('lq_theme', mode);
+  _applyTheme(mode);
+  // Update active button
+  ['light','dark','claude','auto'].forEach(m=>{
+    const b = document.getElementById('theme-btn-'+m);
+    if(b) b.classList.toggle('active', m===mode);
+  });
+}
+
+function _applyTheme(mode){
+  const root = document.documentElement;
+  if(mode==='auto'){
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  } else {
+    root.setAttribute('data-theme', mode);
+  }
+}
+
+function initTheme(){
+  const saved = localStorage.getItem('lq_theme') || 'light';
+  setTheme(saved);
+}
+
+// ── 7 NEW WORDS (Czech A1 — body & daily life from izzi) ──
+// Added to WD:
+// škola=school, kniha=book, pero=pen, stůl=table, okno=window, dveře=door, židle=chair
+
+// ── RENDER UI LANG GRID ──
+function renderUILangGrid(){
+  const grid = document.getElementById('ui-lang-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  Object.entries(LANGS).forEach(([code,l])=>{
+    const btn = document.createElement('button');
+    btn.className = 'theme-btn' + (code===_uiLang?' active':'');
+    btn.style.flex = '0 0 auto';
+    btn.innerHTML = l.flag + ' ' + l.name;
+    btn.onclick = ()=>{ setUILang(code); renderUILangGrid(); };
+    grid.appendChild(btn);
+  });
+}
+
+// Patch renderProfile to also render UI lang grid & theme buttons
+const _origRenderProfile = renderProfile;
+renderProfile = function(){
+  _origRenderProfile();
+  renderUILangGrid();
+  const saved = localStorage.getItem('lq_theme') || 'light';
+  ['light','dark','claude','auto'].forEach(m=>{
+    const b = document.getElementById('theme-btn-'+m);
+    if(b) b.classList.toggle('active', m===saved);
+  });
+};
+
+// Init on load
+(function initAppExtras(){
+  // Theme
+  initTheme();
+  // UI language — detect browser lang on first visit
+  const savedLang = localStorage.getItem('lq_ui_lang');
+  if(savedLang){ setUILang(savedLang); }
+  else { setUILang(detectBrowserLang()); }
+  // Listen for system theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{
+    if(localStorage.getItem('lq_theme')==='auto') _applyTheme('auto');
+  });
+})();
+
+// ── THEME PICKER (first launch) ──
+function pickTheme(mode){
+  setTheme(mode);
+  // Hide picker, show auth
+  document.getElementById('screen-theme-picker').style.display='none';
+  goTo('auth');
+}
+
+function maybeShowThemePicker(){
+  if(!localStorage.getItem('lq_theme')){
+    // First visit — show theme picker instead of auth
+    document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
+    const picker = document.getElementById('screen-theme-picker');
+    picker.style.display='flex';
+  }
+}
+
+// ══════════════════════════════════════════════
+// FLOWER OF LIFE — Three.js 3D evolving logo
+// ══════════════════════════════════════════════
+const _FOL_instances = [];
+
+function createFlowerOfLife(canvas, size=120) {
+  if(!canvas || !window.THREE) return null;
+  const W = size, H = size;
+  canvas.width = W; canvas.height = H;
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas, antialias: true, alpha: true
+  });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+  camera.position.set(0, 0, 3.2);
+
+  // Get theme colors
+  function getThemeColors() {
+    const s = getComputedStyle(document.documentElement);
+    const toHex = v => {
+      v = v.trim();
+      if(v.startsWith('#')) return parseInt(v.slice(1), 16);
+      // parse rgb/oklch fallback
+      return 0x7c3aed;
+    };
+    return {
+      c1: toHex(s.getPropertyValue('--accent').trim()    || '#7c3aed'),
+      c2: toHex(s.getPropertyValue('--accent2').trim()   || '#ec4899'),
+      c3: toHex(s.getPropertyValue('--accent3').trim()   || '#06b6d4'),
+      gold: toHex(s.getPropertyValue('--gold').trim()    || '#fbbf24'),
+    };
+  }
+
+  let colors = getThemeColors();
+
+  // ── Flower of Life geometry ──
+  // 7 circles: center + 6 petals at radius r
+  // Each circle = torus (ring in 3D), slightly tilted
+  const R = 0.38;   // circle radius
+  const T = 0.022;  // tube radius
+
+  const positions = [[0,0,0]];
+  for(let i=0;i<6;i++){
+    const a = i * Math.PI/3;
+    positions.push([R*Math.cos(a)*1.0, R*Math.sin(a)*1.0, 0]);
+  }
+  // Second ring — 6 more circles
+  for(let i=0;i<6;i++){
+    const a = i * Math.PI/3 + Math.PI/6;
+    positions.push([R*1.73*Math.cos(a), R*1.73*Math.sin(a), 0]);
+  }
+
+  const rings = [];
+  const geo = new THREE.TorusGeometry(R, T, 6, 64);
+
+  positions.forEach((pos, idx) => {
+    const col = [colors.c1, colors.c2, colors.c3, colors.gold][idx % 4];
+    const mat = new THREE.MeshBasicMaterial({
+      color: col,
+      transparent: true,
+      opacity: idx < 7 ? 0.85 : 0.4,
+      wireframe: false,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(pos[0], pos[1], pos[2]);
+    // Tilt each ring slightly in 3D
+    mesh.rotation.x = (idx * 0.42) % (Math.PI);
+    mesh.rotation.y = (idx * 0.31) % (Math.PI);
+    scene.add(mesh);
+    rings.push({mesh, mat, basePos: [...pos], idx});
+  });
+
+  // Center sacred geometry — Metatron's cube hint
+  // Connecting lines between circle centers
+  const lineMat = new THREE.LineBasicMaterial({
+    color: colors.c3, transparent: true, opacity: 0.25
+  });
+  const innerPos = positions.slice(0,7);
+  for(let i=1;i<7;i++){
+    for(let j=i+1;j<7;j++){
+      const pts = [
+        new THREE.Vector3(...innerPos[i]),
+        new THREE.Vector3(...innerPos[j]),
+      ];
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      scene.add(new THREE.Line(lineGeo, lineMat));
+    }
+  }
+
+  // Outer glow sphere
+  const glowGeo = new THREE.SphereGeometry(0.92, 32, 32);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: colors.c1, transparent: true, opacity: 0.04, wireframe: false
+  });
+  scene.add(new THREE.Mesh(glowGeo, glowMat));
+
+  // Particle field — sacred dots
+  const particleCount = 120;
+  const pPositions = new Float32Array(particleCount * 3);
+  for(let i=0;i<particleCount;i++){
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r     = 0.7 + Math.random() * 0.4;
+    pPositions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pPositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pPositions[i*3+2] = r * Math.cos(phi);
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: colors.gold, size: 0.018, transparent: true, opacity: 0.7
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  // Evolution state
+  let t = 0;
+  let evolvePhase = 0; // 0=flat, 1=bloom 3D, 2=spiral, 3=fold back
+  let phaseT = 0;
+
+  function animate() {
+    const id = requestAnimationFrame(animate);
+    canvas._rafId = id;
+    t += 0.008;
+    phaseT += 0.004;
+    if(phaseT > Math.PI * 2) { phaseT = 0; evolvePhase = (evolvePhase+1) % 4; }
+
+    // Update theme colors periodically
+    if(Math.floor(t*10) % 300 === 0) {
+      colors = getThemeColors();
+      rings.forEach((r,i) => {
+        r.mat.color.setHex([colors.c1,colors.c2,colors.c3,colors.gold][i%4]);
+      });
+      lineMat.color.setHex(colors.c3);
+      pMat.color.setHex(colors.gold);
+    }
+
+    // Whole scene slow rotation
+    scene.rotation.z = t * 0.15;
+    scene.rotation.y = Math.sin(t * 0.07) * 0.4;
+
+    // Particles breathe
+    particles.rotation.y = t * 0.08;
+    particles.rotation.x = t * 0.05;
+    pMat.opacity = 0.4 + Math.sin(t*0.8) * 0.3;
+
+    // Each ring evolves
+    rings.forEach((r, i) => {
+      const offset = i * Math.PI * 2 / rings.length;
+
+      // Phase-based 3D bloom
+      let zBloom = 0;
+      if(evolvePhase === 1) {
+        zBloom = Math.sin(phaseT) * Math.sin(offset + phaseT) * 0.35;
+      } else if(evolvePhase === 2) {
+        // Spiral outward
+        const spiralR = 0.08 * Math.sin(phaseT * 0.5);
+        const a = offset + phaseT;
+        r.mesh.position.x = r.basePos[0] + spiralR * Math.cos(a) * i * 0.1;
+        r.mesh.position.y = r.basePos[1] + spiralR * Math.sin(a) * i * 0.1;
+      } else {
+        r.mesh.position.x += (r.basePos[0] - r.mesh.position.x) * 0.05;
+        r.mesh.position.y += (r.basePos[1] - r.mesh.position.y) * 0.05;
+      }
+      r.mesh.position.z = zBloom;
+
+      // Individual ring rotation
+      r.mesh.rotation.x = Math.sin(t * 0.3 + offset) * 0.6;
+      r.mesh.rotation.y = Math.cos(t * 0.2 + offset) * 0.6;
+
+      // Opacity pulse
+      r.mat.opacity = (r.idx < 7 ? 0.6 : 0.3) + Math.sin(t * 0.5 + offset) * 0.25;
+    });
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  // Cleanup
+  canvas._destroy = () => {
+    cancelAnimationFrame(canvas._rafId);
+    renderer.dispose();
+  };
+
+  return renderer;
+}
+
+function initAllLogos() {
+  if(!window.THREE) { setTimeout(initAllLogos, 200); return; }
+  document.querySelectorAll('.lq-logo-canvas, .lq-logo-canvas-mini').forEach(c => {
+    const size = c.classList.contains('lq-logo-canvas-mini') ? 36 : 120;
+    createFlowerOfLife(c, size);
+  });
+}
+
+// Init after DOM ready
+if(document.readyState === 'complete') { setTimeout(initAllLogos, 100); }
+else { window.addEventListener('load', () => setTimeout(initAllLogos, 100)); }
+</script><script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const LANGS={fr:{name:'Français',flag:'🇫🇷',native:'Français'},en:{name:'Anglais',flag:'🇬🇧',native:'English'},es:{name:'Espagnol',flag:'🇪🇸',native:'Español'},de:{name:'Allemand',flag:'🇩🇪',native:'Deutsch'},cs:{name:'Tchèque',flag:'🇨🇿',native:'Čeština'}};
+const LEVELS=[{id:'A1',label:'A1 — Débutant',desc:'Salutations, chiffres, couleurs'},{id:'A2',label:'A2 — Élémentaire',desc:'Famille, nourriture, maison'},{id:'B1',label:'B1 — Intermédiaire',desc:'Voyages, passé & futur'},{id:'B2',label:'B2 — Avancé',desc:'Actualité, idiomes'},{id:'C1',label:'C1 — Expert',desc:'Argumentation, registres'},{id:'C2',label:'C2 — Maîtrise',desc:'Littérature, humour'}];
+const WD={hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},goodbye:{fr:'Au revoir',en:'Goodbye',es:'Adiós',de:'Auf Wiedersehen',cs:'Na shledanou'},thanks:{fr:'Merci',en:'Thank you',es:'Gracias',de:'Danke',cs:'Děkuji'},please:{fr:'S\'il vous plaît',en:'Please',es:'Por favor',de:'Bitte',cs:'Prosím'},yes:{fr:'Oui',en:'Yes',es:'Sí',de:'Ja',cs:'Ano'},no:{fr:'Non',en:'No',es:'No',de:'Nein',cs:'Ne'},sorry:{fr:'Pardon',en:'Sorry',es:'Lo siento',de:'Entschuldigung',cs:'Promiňte'},excuse:{fr:'Excusez-moi',en:'Excuse me',es:'Permiso',de:'Verzeihung',cs:'S dovolením'},one:{fr:'Un',en:'One',es:'Uno',de:'Eins',cs:'Jeden'},two:{fr:'Deux',en:'Two',es:'Dos',de:'Zwei',cs:'Dva'},three:{fr:'Trois',en:'Three',es:'Tres',de:'Drei',cs:'Tři'},four:{fr:'Quatre',en:'Four',es:'Cuatro',de:'Vier',cs:'Čtyři'},five:{fr:'Cinq',en:'Five',es:'Cinco',de:'Fünf',cs:'Pět'},ten:{fr:'Dix',en:'Ten',es:'Diez',de:'Zehn',cs:'Deset'},twenty:{fr:'Vingt',en:'Twenty',es:'Veinte',de:'Zwanzig',cs:'Dvacet'},hundred:{fr:'Cent',en:'Hundred',es:'Cien',de:'Hundert',cs:'Sto'},red:{fr:'Rouge',en:'Red',es:'Rojo',de:'Rot',cs:'Červená'},blue:{fr:'Bleu',en:'Blue',es:'Azul',de:'Blau',cs:'Modrá'},green:{fr:'Vert',en:'Green',es:'Verde',de:'Grün',cs:'Zelená'},yellow:{fr:'Jaune',en:'Yellow',es:'Amarillo',de:'Gelb',cs:'Žlutá'},black:{fr:'Noir',en:'Black',es:'Negro',de:'Schwarz',cs:'Černá'},white:{fr:'Blanc',en:'White',es:'Blanco',de:'Weiß',cs:'Bílá'},orange:{fr:'Orange',en:'Orange',es:'Naranja',de:'Orange',cs:'Oranžová'},pink:{fr:'Rose',en:'Pink',es:'Rosa',de:'Rosa',cs:'Růžová'},father:{fr:'Père',en:'Father',es:'Padre',de:'Vater',cs:'Otec'},mother:{fr:'Mère',en:'Mother',es:'Madre',de:'Mutter',cs:'Matka'},brother:{fr:'Frère',en:'Brother',es:'Hermano',de:'Bruder',cs:'Bratr'},sister:{fr:'Sœur',en:'Sister',es:'Hermana',de:'Schwester',cs:'Sestra'},grandfather:{fr:'Grand-père',en:'Grandfather',es:'Abuelo',de:'Großvater',cs:'Dědeček'},grandmother:{fr:'Grand-mère',en:'Grandmother',es:'Abuela',de:'Großmutter',cs:'Babička'},child:{fr:'Enfant',en:'Child',es:'Hijo',de:'Kind',cs:'Dítě'},cousin:{fr:'Cousin',en:'Cousin',es:'Primo',de:'Cousin',cs:'Bratranec'},bread:{fr:'Pain',en:'Bread',es:'Pan',de:'Brot',cs:'Chléb'},water:{fr:'Eau',en:'Water',es:'Agua',de:'Wasser',cs:'Voda'},coffee:{fr:'Café',en:'Coffee',es:'Café',de:'Kaffee',cs:'Káva'},wine:{fr:'Vin',en:'Wine',es:'Vino',de:'Wein',cs:'Víno'},meat:{fr:'Viande',en:'Meat',es:'Carne',de:'Fleisch',cs:'Maso'},fish:{fr:'Poisson',en:'Fish',es:'Pescado',de:'Fisch',cs:'Ryba'},fruit:{fr:'Fruit',en:'Fruit',es:'Fruta',de:'Frucht',cs:'Ovoce'},cheese:{fr:'Fromage',en:'Cheese',es:'Queso',de:'Käse',cs:'Sýr'},plane:{fr:'Avion',en:'Plane',es:'Avión',de:'Flugzeug',cs:'Letadlo'},train:{fr:'Train',en:'Train',es:'Tren',de:'Zug',cs:'Vlak'},hotel:{fr:'Hôtel',en:'Hotel',es:'Hotel',de:'Hotel',cs:'Hotel'},passport:{fr:'Passeport',en:'Passport',es:'Pasaporte',de:'Reisepass',cs:'Pas'},ticket:{fr:'Billet',en:'Ticket',es:'Billete',de:'Fahrkarte',cs:'Jízdenka'},suitcase:{fr:'Valise',en:'Suitcase',es:'Maleta',de:'Koffer',cs:'Kufr'},airport:{fr:'Aéroport',en:'Airport',es:'Aeropuerto',de:'Flughafen',cs:'Letiště'},reservation:{fr:'Réservation',en:'Booking',es:'Reserva',de:'Buchung',cs:'Rezervace'},
+school:{fr:'École',en:'School',es:'Escuela',de:'Schule',cs:'Škola'},
+book:{fr:'Livre',en:'Book',es:'Libro',de:'Buch',cs:'Kniha'},
+pen:{fr:'Stylo',en:'Pen',es:'Bolígrafo',de:'Stift',cs:'Pero'},
+table:{fr:'Table',en:'Table',es:'Mesa',de:'Tisch',cs:'Stůl'},
+window:{fr:'Fenêtre',en:'Window',es:'Ventana',de:'Fenster',cs:'Okno'},
+door:{fr:'Porte',en:'Door',es:'Puerta',de:'Tür',cs:'Dveře'},
+chair:{fr:'Chaise',en:'Chair',es:'Silla',de:'Stuhl',cs:'Židle'}};
+const CHAPTERS={A1:[{id:'A1-1',title:{fr:'Salutations',en:'Greetings',es:'Saludos',de:'Begrüßung',cs:'Pozdravy'},subtitle:{fr:'Se présenter',en:'Meet people',es:'Presentarse',de:'Vorstellen',cs:'Predstavit se'},wids:['hello','goodbye','thanks','please','yes','no','sorry','excuse'],sents:{fr:['Je m appelle Marie','Comment tu t appelles','Enchante de te connaitre'],en:['My name is Tom','What is your name','Nice to meet you'],es:['Me llamo Carlos','Como te llamas','Encantado de conocerte'],de:['Ich heisse Klaus','Wie heisst du','Schon dich kennenzulernen'],cs:['Jmenuji se Marie','Jak se jmenujes','Rad te poznavam']}},{id:'A1-2',title:{fr:'Les Chiffres',en:'Numbers',es:'Números',de:'Zahlen',cs:'Čísla'},subtitle:{fr:'Compter de 1 à 100',en:'Count 1–100',es:'Contar 1–100',de:'Zählen 1–100',cs:'Počítat 1–100'},wids:['one','two','three','four','five','ten','twenty','hundred'],sents:{fr:['J ai vingt ans','Combien coute ce livre','Il est dix heures'],en:['I am twenty years old','How much is this book','It is ten o clock'],es:['Tengo veinte anos','Cuanto cuesta este libro','Son las diez'],de:['Ich bin zwanzig Jahre alt','Wie viel kostet dieses Buch','Es ist zehn Uhr'],cs:['Je mi dvacet let','Kolik stoji tato kniha','Je deset hodin']}},{id:'A1-3',title:{fr:'Les Couleurs',en:'Colours',es:'Colores',de:'Farben',cs:'Barvy'},subtitle:{fr:'Décrire avec les couleurs',en:'Describe with colours',es:'Describir con colores',de:'Mit Farben beschreiben',cs:'Popisovat barvami'},wids:['red','blue','green','yellow','black','white','orange','pink'],sents:{fr:['Le ciel est bleu','Ma voiture est rouge','J aime la couleur verte'],en:['The sky is blue','My car is red','I like the colour green'],es:['El cielo es azul','Mi coche es rojo','Me gusta el color verde'],de:['Der Himmel ist blau','Mein Auto ist rot','Ich mag die Farbe Grun'],cs:['Nebe je modre','Moje auto je cervene','Mam rad zelenou barvu']},{id:'A1-4',title:{fr:'La Classe',en:'Classroom',es:'La Clase',de:'Klassenzimmer',cs:'Ve třídě'},subtitle:{fr:'Objets de la classe',en:'Classroom objects',es:'Objetos del aula',de:'Schulgegenstände',cs:'Školní předměty'},wids:['school','book','pen','table','window','door','chair','water'],sents:{fr:['La porte est fermée','Ouvre le livre page dix','La fenêtre est ouverte'],en:['The door is closed','Open the book to page ten','The window is open'],es:['La puerta está cerrada','Abre el libro en la página diez','La ventana está abierta'],de:['Die Tür ist geschlossen','Öffne das Buch auf Seite zehn','Das Fenster ist offen'],cs:['Dveře jsou zavřené','Otevři knihu na straně deset','Okno je otevřené']}}],A2:[{id:'A2-1',title:{fr:'La Famille',en:'Family',es:'La Familia',de:'Familie',cs:'Rodina'},subtitle:{fr:'Parler de sa famille',en:'Talk about your family',es:'Hablar de la familia',de:'Über Familie sprechen',cs:'Mluvit o rodině'},wids:['father','mother','brother','sister','grandfather','grandmother','child','cousin'],sents:{fr:['J ai deux freres et une soeur','Mon pere est medecin','Ma famille est grande'],en:['I have two brothers and a sister','My father is a doctor','My family is big'],es:['Tengo dos hermanos y una hermana','Mi padre es medico','Mi familia es grande'],de:['Ich habe zwei Bruder und eine Schwester','Mein Vater ist Arzt','Meine Familie ist gross'],cs:['Mam dva bratry a sestru','Muj otec je lekar','Moje rodina je velka']}},{id:'A2-2',title:{fr:'La Nourriture',en:'Food & Drink',es:'Comida',de:'Essen',cs:'Jídlo'},subtitle:{fr:'Commander de la nourriture',en:'Order food',es:'Pedir comida',de:'Essen bestellen',cs:'Objednat jídlo'},wids:['bread','water','coffee','wine','meat','fish','fruit','cheese'],sents:{fr:['Je voudrais un cafe','L addition s il vous plait','Le poisson est tres bon'],en:['I would like a coffee please','The bill please','The fish is very good'],es:['Quisiera un cafe por favor','La cuenta por favor','El pescado esta muy bueno'],de:['Ich hatte gerne einen Kaffee','Die Rechnung bitte','Der Fisch ist sehr gut'],cs:['Chtel bych kavu prosim','Ucet prosim','Ryba je velmi dobra']}}],B1:[{id:'B1-1',title:{fr:'Les Voyages',en:'Travel',es:'Viajes',de:'Reisen',cs:'Cestování'},subtitle:{fr:'Voyager et se déplacer',en:'Getting around',es:'Viajar',de:'Reisen',cs:'Cestovat'},wids:['plane','train','hotel','passport','ticket','suitcase','airport','reservation'],sents:{fr:['Mon vol est retarde de deux heures','J ai reserve une chambre pour trois nuits','Ou est l aeroport'],en:['My flight is delayed by two hours','I have booked a room for three nights','Where is the airport'],es:['Mi vuelo lleva dos horas de retraso','He reservado una habitacion por tres noches','Donde esta el aeropuerto'],de:['Mein Flug hat zwei Stunden Verspatung','Ich habe ein Zimmer fur drei Nachte gebucht','Wo ist der Flughafen'],cs:['Muj let ma dvouhodinove zpozdeni','Rezervoval jsem pokoj na tri noci','Kde je letiste']}}]};
+
+// ASSETS (real-world inspired, always positive growth)
+const ASSET_DEFS=[
+  {id:'gold',name:'Or',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="url(#gi)" stroke="#b45309" stroke-width="1.5"/><text x="16" y="21" text-anchor="middle" font-size="14" font-weight="900" fill="#7c2d12">Au</text><defs><radialGradient id="gi" cx="35%" cy="35%"><stop offset="0%" stop-color="#ffe066"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs></svg>',type:'Métal précieux',class:'gold',cost:50,divRate:0.02,growthRate:0.001,desc:'L\'or conserve sa valeur depuis des millénaires. Jamais à zéro.',explain:'L\'or est un actif réel. Sa valeur augmente légèrement chaque jour. Il verse 2% de dividendes par investissement.'},
+  {id:'house',name:'Immeuble',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="16,4 28,16 24,16 24,28 8,28 8,16 4,16" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" stroke-linejoin="round"/><rect x="13" y="20" width="6" height="8" fill="#7dd3fc"/></svg>',type:'Immobilier',class:'house',cost:150,divRate:0.04,growthRate:0.0008,desc:'L\'immobilier génère des loyers réguliers. Prix jamais négatif.',explain:'Les loyers = dividendes. La valeur des biens immobiliers croît historiquement. Taux : 4%/j par niveau.'},
+  {id:'stock',name:'Actions',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="4" fill="#064e3b"/><polyline points="5,24 11,16 17,20 27,8" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="27" cy="8" r="2.5" fill="#34d399"/></svg>',type:'Marché actions',class:'stock',cost:80,divRate:0.03,growthRate:0.0012,desc:'Les grandes entreprises partagent leurs bénéfices.',explain:'Les actions versent des dividendes trimestriels. Ici, tu reçois 3% de ta mise par jour.'},
+  {id:'crypto',name:'Crypto Index',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="16,2 30,10 30,22 16,30 2,22 2,10" fill="url(#ci)" stroke="#6d28d9" stroke-width="1.5"/><text x="16" y="21" text-anchor="middle" font-size="11" font-weight="900" fill="#ede9fe">IDX</text><defs><radialGradient id="ci" cx="35%" cy="35%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#7c3aed"/></radialGradient></defs></svg>',type:'Actif digital',class:'crypto',cost:30,divRate:0.015,growthRate:0.002,desc:'Panier d\'actifs digitaux. Volatil mais toujours un plancher non nul.',explain:'Représente un indice crypto diversifié. Croissance rapide mais dividende plus faible (1.5%/j).'},
+];
+
+// SHOP ITEMS
+const SHOP_ITEMS=[
+  {id:'streak_shield',name:'Bouclier Série',icon:'🛡️',price:40,desc:'Protège ta série 1 fois si tu rates un jour',type:'consumable'},
+  {id:'xp_boost',name:'Boost XP ×2',icon:'⚡',price:60,desc:'Double tes XP pendant 3 sessions',type:'consumable'},
+  {id:'hint_pack',name:'Pack Indices',icon:'💡',price:25,desc:'5 indices gratuits pour les questions difficiles',type:'consumable'},
+  {id:'avatar_gold',name:'Avatar Doré',icon:'👑',price:100,desc:'Badge exclusif sur ton profil',type:'cosmetic'},
+  {id:'avatar_diamond',name:'Avatar Diamant',icon:'💎',price:200,desc:'Le badge le plus rare de LinguaQuest',type:'cosmetic'},
+  {id:'bonus_coins',name:'Bonus Pièces',icon:'<span class="coin"></span>',price:0,desc:'Reçois 50 pièces bonus chaque semaine',type:'premium'},
+];
+
+// ══════════════════════════════════════════════
+// STATE & STORAGE
+// ══════════════════════════════════════════════
+let U=null; // current user
+
+
+// ══════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════
+const _SB = supabase.createClient('https://luufdddauoucmjiixrax.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4');
+
+function defaultUser(name, email){
+  return {
+    name, email, pass: '',
+    joined: Date.now(),
+    xp: 0, coins: 100, sessions: 0, streak: 0, lastDay: null, chaptersCompleted: 0,
+    progress: {},
+    assets: {gold:0,house:0,stock:0,crypto:0},
+    assetValues: {gold:0,house:0,stock:0,crypto:0},
+    lastDivTime: Date.now(),
+    pendingDiv: 0, totalInvested: 0,
+    owned: [], avatar: '',
+  };
+}
+
+// Save to Supabase (upsert) + localStorage backup
+async function saveU() {
+  if (!U || U.isGuest) return;
+  // Always save locally first for instant response
+  localStorage.setItem('lq_u_' + U.email, JSON.stringify(U));
+  // Then sync to Supabase
+  try {
+    await _SB.from('users').upsert({
+      email: U.email,
+      data: U,
+      updated_at: new Date().toISOString()
+    }, {onConflict: 'email'});
+  } catch(e) { /* offline — localStorage backup is enough */ }
+}
+
+// Load user from Supabase, fallback to localStorage
+async function loadUserFromDB(email) {
+  try {
+    const { data, error } = await _SB.from('users').select('data').eq('email', email).single();
+    if (data && !error) return data.data;
+  } catch(e) {}
+  // Fallback to localStorage
+  const local = localStorage.getItem('lq_u_' + email);
+  return local ? JSON.parse(local) : null;
+}
+
+// Legacy compat shims (keep working while migrating)
+function loadUsers(){ return JSON.parse(localStorage.getItem('lq_users') || '{}'); }
+function saveUsers(u){ localStorage.setItem('lq_users', JSON.stringify(u)); }
+function loadCurrent(){ return JSON.parse(localStorage.getItem('lq_current') || 'null'); }
+function saveCurrent(id){ localStorage.setItem('lq_current', JSON.stringify(id)); }
+function clearCurrent(){ localStorage.removeItem('lq_current'); }
+function defaultUser_OLD(name,email){
+  return{
+    name,email,pass:'',
+    joined:Date.now(),
+    xp:0,coins:100,sessions:0,streak:0,lastDay:null,chaptersCompleted:0,
+    progress:{},
+    // Portfolio
+    assets:{gold:0,house:0,stock:0,crypto:0},
+    assetValues:{gold:0,house:0,stock:0,crypto:0},// accumulated value growth
+    lastDivTime:Date.now(),
+    pendingDiv:0,
+    totalInvested:0,
+    // Shop
+    owned:[],
+    // Cosmetics
+    avatar:'',
+  };
+}
+
+function saveU(){if(U&&U.isGuest)return;
+  const users=loadUsers();
+  users[U.email]=U;
+  saveUsers(users);
+}
+
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'block':'none';
+}
+
+async function doLogin(){
+  const email=$('login-email').value.trim().toLowerCase();
+  const pass=$('login-pass').value;
+  if(!email||!pass){showAuthErr('login','Remplis tous les champs.');return;}
+
+  // Show loading state
+  const btn=document.querySelector('#form-login .btn-primary');
+  const origText=btn.textContent; btn.textContent='Connexion...'; btn.disabled=true;
+
+  try {
+    // Try Supabase first
+    const {data,error} = await _SB.from('users').select('data').eq('email',email).single();
+    if(error || !data){
+      // Fallback to localStorage
+      const users=loadUsers();
+      if(!users[email]){showAuthErr('login','Compte introuvable. Inscris-toi !');return;}
+      if(users[email].pass!==btoa(pass)){showAuthErr('login','Mot de passe incorrect.');return;}
+      U=users[email];
+    } else {
+      U=data.data;
+      if(U.pass!==btoa(pass)){showAuthErr('login','Mot de passe incorrect.');return;}
+    }
+    saveCurrent(U.email);
+    afterLogin();
+  } catch(e) {
+    // Full offline fallback
+    const users=loadUsers();
+    if(!users[email]){showAuthErr('login','Compte introuvable.');return;}
+    if(users[email].pass!==btoa(pass)){showAuthErr('login','Mot de passe incorrect.');return;}
+    U=users[email]; saveCurrent(U.email); afterLogin();
+  } finally {
+    btn.textContent=origText; btn.disabled=false;
+  }
+}
+
+async function doRegister(){
+  const name=$('reg-name').value.trim();
+  const email=$('reg-email').value.trim().toLowerCase();
+  const pass=$('reg-pass').value;
+  if(!name){showAuthErr('reg','Entrez votre prénom.');return;}
+  if(!email.includes('@')){showAuthErr('reg','Email invalide.');return;}
+  if(pass.length<6){showAuthErr('reg','Mot de passe trop court (min 6).');return;}
+
+  const btn=document.querySelector('#form-register .btn-primary');
+  const origText=btn.textContent; btn.textContent='Création...'; btn.disabled=true;
+
+  try {
+    // Check if email already exists in Supabase
+    const {data:existing} = await _SB.from('users').select('email').eq('email',email).maybeSingle();
+    if(existing){showAuthErr('reg','Cet email est déjà utilisé.');return;}
+  } catch(e) {
+    // Offline — check localStorage
+    const users=loadUsers();
+    if(users[email]){showAuthErr('reg','Cet email est déjà utilisé.');return;}
+  }
+
+  U=defaultUser(name,email); U.pass=btoa(pass);
+  // Save locally immediately
+  const users=loadUsers(); users[email]=U; saveUsers(users); saveCurrent(U.email);
+  // Save to Supabase
+  await saveU();
+  afterLogin();
+  btn.textContent=origText; btn.disabled=false;
+  toast(`Bienvenue ${name} ! Tu reçois 100 <span class="coin"></span> de départ !`);
+}
+
+function demoLogin(){
+  const users=loadUsers();
+  const demo='demo'+'@'+'linguaquest.app';
+  if(!users[demo]){
+    U=defaultUser('Démo',demo);U.pass=btoa('demo123');U.coins=350;
+    U.xp=1200;U.sessions=14;U.streak=5;U.chaptersCompleted=4;
+    U.assets={gold:2,house:1,stock:3,crypto:4};
+    ASSET_DEFS.forEach(a=>{U.assetValues[a.id]=a.cost*U.assets[a.id]*0.05;});
+    U.totalInvested=ASSET_DEFS.reduce((s,a)=>s+a.cost*U.assets[a.id],0);
+    users[demo]=U;saveUsers(users);
+  } else {U=users[demo];}
+  saveCurrent(U.email);afterLogin();
+}
+
+function doLogout(){U=null;clearCurrent();goTo('auth');hideChrome();}
+
+function showAuthErr(prefix,msg){
+  const id=prefix==='login'?'login-err':'reg-err';
+  const el=$(id);el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+function afterLogin(){
+  showChrome();
+  calcDividends();
+  updateTopBar();
+  navTo('learn');
+}
+
+function showChrome(){$('top-bar').style.display='flex';$('nav-bar').style.display='flex';}
+function hideChrome(){$('top-bar').style.display='none';$('nav-bar').style.display='none';}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function goTo(sc){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('screen-'+sc).classList.add('active');
+  window.scrollTo(0,0);clearInterval(S.timer);
+}
+function navTo(tab){
+  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile'};
+  ['learn','portfolio','shop','profile'].forEach(t=>{
+    $('nav-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='portfolio') renderPortfolio();
+  if(tab==='shop') renderShop();
+  if(tab==='profile') renderProfile();
+  goTo(screens[tab]);
+}
+
+// ══════════════════════════════════════════════
+// TOP BAR
+// ══════════════════════════════════════════════
+function updateTopBar(){
+  if(!U) return;
+  $('tb-coins').textContent=Math.floor(U.coins);
+  const ab=$('avatar-btn');ab.textContent=U.name.charAt(0).toUpperCase();
+  if(U.owned.includes('avatar_diamond')) ab.style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
+  else if(U.owned.includes('avatar_gold')) ab.style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+}
+
+// ══════════════════════════════════════════════
+// DIVIDEND ENGINE
+// ══════════════════════════════════════════════
+function calcDividends(){
+  if(!U) return;
+  const now=Date.now();
+  const elapsedMs=now-U.lastDivTime;
+  const elapsedDays=elapsedMs/(1000*60*60*24);
+  let total=0;
+  ASSET_DEFS.forEach(a=>{
+    const owned=U.assets[a.id]||0;
+    if(owned>0){
+      const invested=a.cost*owned;
+      // Daily dividend rate * owned levels * elapsed days
+      const div=invested*a.divRate*elapsedDays;
+      // Also grow asset value slightly (simulates price appreciation)
+      U.assetValues[a.id]=(U.assetValues[a.id]||0)+invested*a.growthRate*elapsedDays;
+      total+=div;
+    }
+  });
+  U.pendingDiv=(U.pendingDiv||0)+total;
+  U.lastDivTime=now;
+  saveU();
+}
+
+function collectDividends(){
+  if(!U||U.pendingDiv<0.5) return;
+  const amount=Math.floor(U.pendingDiv);
+  U.coins+=amount;U.pendingDiv-=amount;
+  saveU();updateTopBar();
+  floatCoin($('collect-btn'),`+${amount} <span class="coin"></span>`);
+  renderPortfolio();
+  toast(`🌱 +${amount} <span class="coin"></span> dividendes collectés !`);
+}
+
+function getAssetWealth(){
+  if(!U) return 0;
+  return ASSET_DEFS.reduce((s,a)=>{
+    const owned=U.assets[a.id]||0;
+    if(!owned) return s;
+    const base=a.cost*owned;
+    const appreciated=base+(U.assetValues[a.id]||0);
+    return s+appreciated;
+  },0);
+}
+
+function getTotalWealth(){return Math.floor(U.coins+getAssetWealth());}
+
+function getDailyDividend(){
+  if(!U) return 0;
+  return ASSET_DEFS.reduce((s,a)=>{
+    const owned=U.assets[a.id]||0;
+    return s+a.cost*owned*a.divRate;
+  },0);
+}
+
+// ══════════════════════════════════════════════
+// PORTFOLIO SCREEN
+// ══════════════════════════════════════════════
+function renderPortfolio(){
+  if(!U) return;
+  calcDividends();
+  const wealth=getTotalWealth();
+  const daily=getDailyDividend();
+  const invested=U.totalInvested||0;
+  $('wealth-total').innerHTML=`${wealth.toLocaleString()} <span class="coin"></span>`;
+  $('wealth-sub').innerHTML=`+${daily.toFixed(1)} <span class="coin"></span> générés par jour · Patrimoine en croissance constante`;
+  $('pf-coins').innerHTML=Math.floor(U.coins).toLocaleString()+' <span class="coin"></span>';
+  $('pf-div-total').innerHTML=daily.toFixed(1)+' <span class="coin"></span>/j';
+  $('pf-invested').innerHTML=invested.toLocaleString()+' <span class="coin"></span>';
+
+  // Dividend banner
+  const pending=U.pendingDiv||0;
+  const db=$('div-banner');
+  if(pending>=1){
+    db.style.display='flex';
+    $('div-amount').innerHTML=`+${Math.floor(pending)} <span class="coin"></span>`;
+    $('div-banner-sub').innerHTML=`Temps écoulé depuis la dernière collecte · Taux journalier : ${daily.toFixed(1)} <span class="coin"></span>`;
+    $('collect-btn').disabled=false;
+  } else {db.style.display='none';}
+
+  // Render assets
+  const grid=$('assets-grid');grid.innerHTML='';
+  ASSET_DEFS.forEach(a=>{
+    const owned=U.assets[a.id]||0;
+    const base=a.cost*owned;
+    const appreciated=base+(U.assetValues[a.id]||0);
+    const scaledCost=Math.round(a.cost*(1+(owned)*0.1));const canBuy=U.coins>=scaledCost;
+    const pct=Math.min(100, owned*10);// visual fill: each unit = 10% up to 100%
+    const dailyEarn=(a.cost*owned*a.divRate).toFixed(1);
+    const growthPct=owned>0?((U.assetValues[a.id]||0)/Math.max(base,1)*100).toFixed(1):0;
+    const div=document.createElement('div');
+    div.className=`asset-card ${a.class}`;
+    div.innerHTML=`
+      <div class="asset-header">
+        <div class="asset-icon">${a.icon}</div>
+        <div><div class="asset-name">${a.name}</div><div class="asset-type">${a.type}</div><div class="asset-real-price" id="rp-${a.id}" style="font-size:.7rem;color:var(--accent3);margin-top:2px;">Chargement...</div></div>
+        <div class="asset-value">
+          <div class="asset-price">${Math.floor(appreciated)} <span class="coin"></span></div>
+          <div class="asset-change">+${growthPct}% depuis achat</div>
+        </div>
+      </div>
+      <div class="asset-progress">
+        <div class="asset-progress-bar"><div class="asset-progress-fill" style="width:${pct}%;background:${a.class==='gold'?'linear-gradient(90deg,#d97706,#fbbf24)':a.class==='house'?'linear-gradient(90deg,#0891b2,#06b6d4)':a.class==='stock'?'linear-gradient(90deg,#059669,#10b981)':'linear-gradient(90deg,#6d28d9,#7c3aed)'};"></div></div>
+        <div class="asset-owned"><span>${owned} unit${owned>1?"s":""}</span><span>${a.cost} <span class="coin"></span> / niveau</span></div>
+      </div>
+      <div class="asset-div-info">🌱 Dividende : ${a.divRate*100}%/j · Soit <strong>${dailyEarn} <span class="coin"></span>/jour</strong> au niveau actuel · Croissance : +${(a.growthRate*100).toFixed(2)}%/j</div>
+      <div style="font-size:.74rem;color:var(--muted);margin:8px 0;">${a.explain}</div>
+      <button class="asset-info-btn" onclick="openAssetInfo('${a.id}')">&#128202; Voir les données du marché</button>
+      <div class="asset-actions">
+        <button class="asset-buy-btn" onclick="buyAsset('${a.id}')" ${!canBuy?'disabled':''}>
+          ${owned===0?`Acheter (${a.cost} <span class="coin"></span>)`:`+1 unité (${Math.round(a.cost*(1+owned*0.1))} <span class="coin"></span>)`}
+        </button>
+        ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre 1 (${Math.round(a.cost*(1+(owned-1)*0.1)*0.8)} <span class="coin"></span>)</button>`:''}
+        ${owned>0?`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:8px 12px;font-size:.78rem;color:var(--green);font-weight:700;">+${dailyEarn} <span class="coin"></span>/j</div>`:''}
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function buyAsset(id){
+  const a=ASSET_DEFS.find(x=>x.id===id);
+  if(!a) return;
+  const owned=U.assets[id]||0;
+  const scaledCost=Math.round(a.cost*(1+owned*0.1));
+  if(U.coins<scaledCost) return;
+  U.coins-=scaledCost;
+  U.assets[id]=owned+1;
+  U.totalInvested=(U.totalInvested||0)+scaledCost;
+  saveU();updateTopBar();
+  floatCoin(document.getElementById('assets-grid'),`-${scaledCost} <span class="coin"></span>`);
+  renderPortfolio();
+  toast(`${a.name} x${U.assets[id]} — +${(a.divRate*100)}%/j · Prochaine unité : ${Math.round(a.cost*(1+(owned+1)*0.1))} coins`);
+}
+
+// ══════════════════════════════════════════════
+// SHOP
+// ══════════════════════════════════════════════
+function renderShop(){
+  if(!U) return;
+  $('shop-coins').textContent=Math.floor(U.coins);
+  const grid=$('shop-grid');grid.innerHTML='';
+  SHOP_ITEMS.forEach(item=>{
+    const owned=U.owned.includes(item.id);
+    const canBuy=!owned&&U.coins>=item.price;
+    const div=document.createElement('div');
+    div.className='shop-item'+(owned?' owned':'');
+    div.innerHTML=`
+      ${owned?'<div class="owned-badge">✓ Possédé</div>':''}
+      <div class="shop-icon">${item.icon}</div>
+      <div class="shop-name">${item.name}</div>
+      <div class="shop-desc">${item.desc}</div>
+      <div class="shop-price">${item.price>0?`<span class="coin"></span> ${item.price}`:'🎁 Gratuit'}</div>
+      <button class="btn btn-sm ${owned?'btn-secondary':'btn-primary'}" style="margin-top:10px;width:100%;justify-content:center;" onclick="buyShop('${item.id}')" ${owned||(!canBuy&&item.price>0)?'disabled':''}>
+        ${owned?'Possédé ✓':item.price===0?'Réclamer':'Acheter'}
+      </button>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function buyShop(id){
+  const item=SHOP_ITEMS.find(x=>x.id===id);
+  if(!item||U.owned.includes(id)) return;
+  if(item.price>0&&U.coins<item.price){toast('❌ Pas assez de pièces !');return;}
+  U.coins-=item.price;
+  U.owned.push(id);
+  saveU();updateTopBar();renderShop();
+  toast(`${item.icon} ${item.name} acheté !`);
+}
+
+// ══════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════
+function renderProfile(){
+  if(!U) return;
+  $('prof-name').textContent=U.name;
+  $('prof-email').textContent=U.email;
+  $('prof-joined').textContent='Membre depuis '+new Date(U.joined).toLocaleDateString('fr');
+  $('prof-avatar').textContent=U.name.charAt(0).toUpperCase();
+  if(U.owned.includes('avatar_diamond')) $('prof-avatar').style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
+  else if(U.owned.includes('avatar_gold')) $('prof-avatar').style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+  $('ps-xp').textContent=U.xp||0;
+  $('ps-coins').textContent=Math.floor(U.coins);
+  $('ps-sessions').textContent=U.sessions||0;
+  $('ps-streak').textContent=U.streak||0;
+  $('ps-chapters').textContent=U.chaptersCompleted||0;
+  $('ps-wealth').textContent=getTotalWealth();
+}
+
+// ══════════════════════════════════════════════
+// LANG GRIDS & LEARNING NAV
+// ══════════════════════════════════════════════
+let S={nL:null,tL:null,level:null,chap:null,gType:null,qs:[],qi:0,score:0,cor:0,wr:0,ts:{quiz:{c:0,w:0},fill:{c:0,w:0},match:{c:0,w:0},sort:{c:0,w:0}},timer:null,tLeft:0,mPairs:[],mSel:null,mDone:0,mTotal:0,mEmbed:false,sortArr:[],curType:null,curQ:null};
+
+function buildGrids(){
+  ['native-grid','target-grid'].forEach(gid=>{
+    const g=$(gid);g.innerHTML='';
+    Object.entries(LANGS).forEach(([code,l])=>{
+      const d=document.createElement('div');d.className='lang-card';d.dataset.code=code;
+      d.innerHTML=`<span class="flag">${l.flag}</span><span class="lname">${l.name}</span><span class="lnative">${l.native}</span>`;
+      d.onclick=()=>pickLang(gid,code);g.appendChild(d);
+    });
+  });
+}
+function pickLang(gid,code){
+  const nat=gid==='native-grid';
+  if(nat&&code===S.tL){S.tL=null;clrSel('target-grid');}
+  if(!nat&&code===S.nL){S.nL=null;clrSel('native-grid');}
+  if(nat) S.nL=code; else S.tL=code;
+  document.querySelectorAll(`#${gid} .lang-card`).forEach(c=>c.classList.toggle('selected',c.dataset.code===code));
+  if(nat){$('target-section').style.opacity='1';$('lang-arrow').style.opacity='1';}
+  syncPair();syncDots();
+}
+function clrSel(gid){document.querySelectorAll(`#${gid} .lang-card`).forEach(c=>c.classList.remove('selected'));}
+function swapLangs(){const t=S.nL;S.nL=S.tL;S.tL=t;clrSel('native-grid');clrSel('target-grid');if(S.nL)document.querySelector(`#native-grid [data-code="${S.nL}"]`)?.classList.add('selected');if(S.tL)document.querySelector(`#target-grid [data-code="${S.tL}"]`)?.classList.add('selected');syncPair();}
+function syncPair(){const ok=S.nL&&S.tL&&S.nL!==S.tL;$('pair-summary').style.display=ok?'flex':'none';if(ok){const N=LANGS[S.nL],T=LANGS[S.tL];$('pair-native').innerHTML=`<span style="font-size:1.2rem">${N.flag}</span> ${N.name}`;$('pair-target').innerHTML=`<span style="font-size:1.2rem">${T.flag}</span> ${T.name}`;}$('btn-start').disabled=!ok;}
+function syncDots(){const s1=!!S.nL,s2=!!(S.nL&&S.tL&&S.nL!==S.tL);$('dot1').className='step-dot '+(s1?'done':'active');$('dot2').className='step-dot '+(s2?'done':s1?'active':'pending');$('dot3').className='step-dot '+(s2?'active':'pending');$('line1').className='step-line'+(s1?' done':'');$('line2').className='step-line'+(s2?' done':'');}
+
+function goToLevels(){if(!S.nL||!S.tL)return;const N=LANGS[S.nL],T=LANGS[S.tL],pair=`${N.flag} → ${T.flag} ${T.name}`;sT('bc-pair',pair);sT('bc-pair2',pair);sT('levels-title',`${T.flag} ${T.name} — Niveaux`);renderLevels();goTo('levels');}
+function renderLevels(){
+  const g=$('levels-grid');g.innerHTML='';
+  LEVELS.forEach((lv,i)=>{
+    const has=!!CHAPTERS[lv.id],prevOk=i===0||lvDone(LEVELS[i-1].id),locked=!has||(!prevOk&&i>0),done=lvDone(lv.id),stars=lvStars(lv.id);
+    const d=document.createElement('div');d.className=`level-card ${lv.id} ${locked?'locked':done?'completed':'available'}`;
+    d.innerHTML=`${locked?'<span style="position:absolute;top:9px;right:9px;">🔒</span>':''}<span class="level-badge">${lv.id}</span><div class="level-title">${lv.label.split('—')[1].trim()}</div><div class="level-desc">${lv.desc}</div><div class="level-stars">${stHTML(stars)}</div>`;
+    if(!locked) d.onclick=()=>goToChaps(lv.id);
+    g.appendChild(d);
+  });
+}
+function lvDone(id){const cs=CHAPTERS[id]||[];return cs.length>0&&cs.every(c=>U?.progress[pk(c.id)]?.completed);}
+function lvStars(id){const cs=CHAPTERS[id]||[];if(!cs.length)return 0;return Math.round(cs.reduce((a,c)=>a+(U?.progress[pk(c.id)]?.stars||0),0)/cs.length);}
+function pk(cid){return`${S.nL}-${S.tL}-${cid}`;}
+function stHTML(n){return[0,1,2].map(i=>`<span style="color:${i<n?'var(--accent4)':'rgba(255,255,255,.1)'}">★</span>`).join('');}
+
+function goToChaps(lvId){S.level=lvId;const T=LANGS[S.tL],lv=LEVELS.find(l=>l.id===lvId);sT('bc-level2',lvId);sT('chapters-title',`${T.flag} ${lvId} — Chapitres`);sT('chapters-sub',lv.desc);renderChaps();goTo('chapters');}
+function renderChaps(){
+  const list=$('chapters-list');list.innerHTML='';
+  const cs=CHAPTERS[S.level]||[];
+  cs.forEach((ch,i)=>{
+    const p=U?.progress[pk(ch.id)],done=p?.completed,locked=i>0&&!U?.progress[pk(cs[i-1].id)]?.completed;
+    const title=ch.title[S.nL]||ch.title.fr,sub=ch.subtitle[S.nL]||ch.subtitle.fr;
+    const d=document.createElement('div');d.className=`chapter-item ${locked?'locked':done?'done':'available'}`;
+    d.innerHTML=`<div class="chapter-num">${locked?'🔒':done?'✓':(i+1)}</div>
+      <div style="flex:1"><div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${title}</div><div style="font-size:.74rem;color:var(--muted);">${sub}</div><div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;"><span class="game-chip">🎲 Mixte</span><span class="game-chip">⚡ Quiz</span><span class="game-chip">✏️ Fill</span><span class="game-chip">🔗 Match</span></div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div>${stHTML(p?.stars||0)}</div>
+        ${!locked?`<button class="btn-qr" onclick="event.stopPropagation();openQR('${ch.id}')">📱 QR</button>`:''}
+      </div>`;
+    if(!locked) d.onclick=()=>goToSel(ch.id);
+    list.appendChild(d);
+  });
+  if(!cs.length) list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;">Contenu à venir… 🚧</div>';
+}
+function goToSel(cid){S.chap=cid;const cs=CHAPTERS[S.level]||[],ch=cs.find(c=>c.id===cid);const N=LANGS[S.nL],T=LANGS[S.tL];sT('bc-p3',`${N.flag}→${T.flag}`);sT('bc-l3',S.level);sT('bc-c3',ch?.title?.[S.nL]||cid);sT('gsel-title',ch?.title?.[S.nL]||cid);sT('gsel-sub',ch?.subtitle?.[S.nL]||'');goTo('game-select');}
+
+// ══════════════════════════════════════════════
+// QR
+// ══════════════════════════════════════════════
+function openQR(cid){
+  const ch=(CHAPTERS[S.level]||[]).find(c=>c.id===cid)||{};
+  const title=ch.title?.[S.nL]||cid;
+  const N=LANGS[S.nL],T=LANGS[S.tL];
+  const base=location.href.split('?')[0].split('#')[0];
+  const url=`${base}?n=${S.nL}&t=${S.tL}&l=${S.level}&c=${cid}`;
+  sT('qr-sub',`${N.flag} → ${T.flag} · ${S.level} · ${title}`);
+  sT('qr-url',url);
+  const cont=$('qr-container');
+  cont.innerHTML='';
+  // Use QR Server API — reliable, no library needed
+  const qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(url)+'&bgcolor=ffffff&color=1a6b3a&margin=10';
+  const img=document.createElement('img');
+  img.src=qrUrl;
+  img.width=180; img.height=180;
+  img.style.borderRadius='12px';
+  img.onerror=()=>{ cont.innerHTML=`<div style="padding:14px;font-size:.74rem;color:var(--muted);word-break:break-all">${url}</div>`; };
+  cont.appendChild(img);
+  $('qr-modal').style.display='flex';
+  S._shareUrl=url;
+}
+function closeQR(e){if(!e||e.target===$('qr-modal'))$('qr-modal').style.display='none';}
+function copyUrl(){navigator.clipboard?.writeText(S._shareUrl||'').then(()=>{const btn=event.target;btn.textContent='✅ Copié !';setTimeout(()=>btn.textContent='📋 Copier',2000);}).catch(()=>prompt('Lien :',S._shareUrl));}
+
+// ══════════════════════════════════════════════
+// GAME ENGINE
+// ══════════════════════════════════════════════
+function wt(id,lang){return WD[id]?.[lang]||id;}
+function getCh(){return(CHAPTERS[S.level]||[]).find(c=>c.id===S.chap);}
+
+function startGame(type){
+  S.gType=type;S.score=0;S.cor=0;S.wr=0;S.qi=0;
+  S.ts={quiz:{c:0,w:0},fill:{c:0,w:0},match:{c:0,w:0},sort:{c:0,w:0}};
+  const ch=getCh();if(!ch)return;
+  if(type==='match'){startMatchSA(ch);return;}
+  S.qs=type==='mixed'?buildMixed(ch):type==='quiz'?buildQuizOnly(ch):buildFillOnly(ch);
+  S.qi=0;goTo('game');renderQ();
+  if(U){U.sessions=(U.sessions||0)+1;saveU();}
+}
+function buildMixed(ch){const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','fill','sort','quiz','fill','match4','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
+function buildQuizOnly(ch){return shuf([...ch.wids]).slice(0,8).map(id=>mkQQ(id,ch.wids));}
+function buildFillOnly(ch){return shuf([...ch.wids]).slice(0,6).map(id=>mkFQ(id));}
+function mkQQ(id,all){const q=wt(id,S.nL),cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));return{type:'quiz',q,correct:cor,choices:shuf([cor,...wr])};}
+function mkFQ(id){return{type:'fill',q:wt(id,S.nL),correct:wt(id,S.tL)};}
+function mkSQ(sent,nSent){return{type:'sort',q:nSent,correct:sent,words:sent.split(' ')};}
+function mkMQ(ids){return{type:'match',ids};}
+
+function startMatchSA(ch){S.mPairs=shuf([...ch.wids]).slice(0,6);S.mSel=null;S.mDone=0;S.mTotal=S.mPairs.length;S.mEmbed=false;goTo('game');setTypePill('match');showZone('match');sT('g-text','Associe les traductions');sT('g-dir',dirLbl());sT('g-num','');sT('g-hint','Clique un mot puis sa traduction');sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(S.mPairs);sT('match-prog-txt',`0/${S.mTotal}`);$('g-progress').style.width='0%';sT('g-score',0);hideFB();hideAllBtns();showBtn('btn-skip');startTimer(60);}
+
+function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi];S.curQ=q;S.curType=q.type;const tot=S.qs.length;$('g-progress').style.width=`${(S.qi/tot)*100}%`;sT('g-dir',dirLbl());sT('g-num',`${S.qi+1} / ${tot}`);sT('g-hint','');hideFB();hideAllBtns();setTypePill(q.type);showZone(q.type);$('fuzzy-note').style.display='none';if(q.type==='quiz')renderQuiz(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
+function renderQuiz(q){sT('g-text',q.q);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>pickQ(q.choices[i],btn,q);grid.appendChild(btn);});startTimer(15);}
+function renderFill(q){sT('g-text',q.q);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
+function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text','Associe les traductions !');sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
+function renderSort(q){sT('g-text',q.q);S.sortArr=[];const bank=$('word-bank');bank.innerHTML='';shuf([...q.words]).forEach(w=>{const t=document.createElement('div');t.className='word-token';t.textContent=w;t.onclick=()=>addSort(w,t);bank.appendChild(t);});$('sentence-slots').innerHTML='<span class="slot-placeholder">Clique sur les mots…</span>';showBtn('btn-check');showBtn('btn-reset');startTimer(30);}
+
+function renderMatchCols(ids){const ls=shuf(ids.map(id=>({id,text:wt(id,S.nL)}))),rs=shuf(ids.map(id=>({id,text:wt(id,S.tL)})));const lc=$('match-left'),rc=$('match-right');lc.innerHTML='';rc.innerHTML='';ls.forEach(it=>{lc.appendChild(mkMI(it,'left'));});rs.forEach(it=>{rc.appendChild(mkMI(it,'right'));});}
+function mkMI(it,side){const d=document.createElement('div');d.className='match-item';d.textContent=it.text;d.dataset.id=it.id;d.dataset.side=side;d.onclick=()=>clickMatch(d);return d;}
+function clickMatch(el){if(el.classList.contains('matched'))return;const sel=S.mSel;if(!sel){S.mSel=el;el.classList.add('selected');return;}if(sel===el){el.classList.remove('selected');S.mSel=null;return;}if(sel.dataset.side===el.dataset.side){sel.classList.remove('selected');S.mSel=el;el.classList.add('selected');return;}if(sel.dataset.id===el.dataset.id){sel.classList.remove('selected');sel.classList.add('matched');el.classList.add('matched');S.mDone++;S.cor++;S.ts.match.c++;S.score+=10;sT('g-score',S.score);sT('match-prog-txt',`${S.mDone}/${S.mTotal}`);$('g-progress').style.width=`${(S.mDone/S.mTotal)*100}%`;if(S.mDone>=S.mTotal){clearInterval(S.timer);setTimeout(()=>S.mEmbed?nextQ():showResults(),600);}}else{sel.classList.remove('selected');el.classList.add('wrong-match');setTimeout(()=>el.classList.remove('wrong-match'),360);S.wr++;S.ts.match.w++;}S.mSel=null;}
+function skipMatch(){S.mEmbed?nextQ():showResults();}
+
+function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>{b.disabled=true;if(b.querySelector('span:last-child').textContent===q.correct)b.classList.add('correct');});if(!ok)btn.classList.add('wrong');ok?(S.score+=10,S.cor++,S.ts.quiz.c++,showFB(true,'🎉 Correct !',q.correct)):(S.wr++,S.ts.quiz.w++,showFB(false,'❌ Raté !','Réponse : '+q.correct));sT('g-score',S.score);showBtn('btn-next');}
+function checkCurrentQ(){const q=S.curQ;if(q.type==='fill')doFill(q);else if(q.type==='sort')doSort(q);}
+
+// Fuzzy
+function deacc(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j;}for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);return d[m][n];}
+function fuzzy(inp,cor){const clean=s=>deacc(s.replace(/[^\w\s]/gi,''));const a=clean(inp),b=clean(cor);if(a===b||deacc(inp)===deacc(cor))return'exact';const dist=lev(a,b);return dist<=(b.length<=3?1:b.length<=7?2:3)?'close':'wrong';}
+
+function doFill(q){clearInterval(S.timer);const inp=$('fill-input'),res=fuzzy(inp.value,q.correct);inp.disabled=true;if(res==='exact'){inp.className='fill-input correct';S.score+=10;S.cor++;S.ts.fill.c++;showFB(true,'🎉 Parfait !',q.correct);}else if(res==='close'){inp.className='fill-input close';S.score+=5;S.cor++;S.ts.fill.c++;const fn=$('fuzzy-note');fn.textContent=`✨ Presque ! Réponse exacte : ${q.correct}`;fn.style.display='block';showFB('close','✨ Presque !',`Réponse exacte : ${q.correct}`);}else{inp.className='fill-input wrong';S.wr++;S.ts.fill.w++;showFB(false,'❌ Pas tout à fait !','Réponse : '+q.correct);}sT('g-score',S.score);hideBtn('btn-check');showBtn('btn-next');}
+function doSort(q){clearInterval(S.timer);const built=S.sortArr.join(' '),res=fuzzy(built,q.correct);if(res==='exact'){S.score+=10;S.cor++;S.ts.sort.c++;showFB(true,'🎉 Parfait !',q.correct);}else if(res==='close'){S.score+=5;S.cor++;S.ts.sort.c++;showFB('close','✨ Presque !',q.correct);}else{S.wr++;S.ts.sort.w++;showFB(false,'❌ Pas tout à fait !','Réponse : '+q.correct);}sT('g-score',S.score);hideBtn('btn-check');hideBtn('btn-reset');showBtn('btn-next');}
+
+function addSort(word,el){if(el.style.opacity==='0.3')return;S.sortArr.push(word);el.style.opacity='0.3';el.style.pointerEvents='none';renderSlots();}
+function renderSlots(){const slots=$('sentence-slots');if(!S.sortArr.length){slots.innerHTML='<span class="slot-placeholder">Clique sur les mots…</span>';return;}slots.innerHTML='';S.sortArr.forEach((w,i)=>{const t=document.createElement('div');t.className='word-token in-sentence';t.textContent=w;t.onclick=()=>{S.sortArr.splice(i,1);reEnable(w);renderSlots();};slots.appendChild(t);});}
+function reEnable(w){for(const t of $('word-bank').children)if(t.textContent===w&&t.style.opacity==='0.3'){t.style.opacity='1';t.style.pointerEvents='auto';break;}}
+function resetSort(){S.sortArr=[];renderSlots();document.querySelectorAll('#word-bank .word-token').forEach(t=>{t.style.opacity='1';t.style.pointerEvents='auto';});}
+function nextQ(){S.qi++;S.qi>=S.qs.length?showResults():renderQ();}
+
+function startTimer(secs){clearInterval(S.timer);S.tLeft=secs;const el=$('g-timer');tickT(el,secs);S.timer=setInterval(()=>{S.tLeft--;tickT(el,S.tLeft);if(S.tLeft<=0){clearInterval(S.timer);onTimeout();}},1000);}
+function tickT(el,t){if(!el)return;el.textContent=`⏱ ${t}`;el.className='timer-badge'+(t<=5?' urgent':'');}
+function onTimeout(){const q=S.curQ;if(S.curType==='quiz'){S.wr++;S.ts.quiz.w++;showFB(false,'⏱ Temps écoulé !','');document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>b.disabled=true);showBtn('btn-next');}else if(S.curType==='fill')doFill(q);else if(S.curType==='sort')doSort(q);else if(S.curType==='match'){S.mEmbed?nextQ():showResults();}}
+
+function showFB(ok,title,detail){const b=$('g-fb'),cls=ok===true?'correct-fb':ok==='close'?'close-fb':'wrong-fb';b.className=`feedback-banner show ${cls}`;sT('g-fb-icon',ok===true?'✅':ok==='close'?'✨':'❌');sT('g-fb-title',title);sT('g-fb-detail',detail);}
+function hideFB(){const b=$('g-fb');if(b)b.className='feedback-banner';}
+function showZone(type){['quiz','fill','match','sort'].forEach(z=>{const el=document.getElementById('zone-'+z);if(el)el.style.display=z===type?'block':'none';});}
+function setTypePill(type){const labels={quiz:'⚡ Quiz',fill:'✏️ Compléter',match:'🔗 Associer',sort:'🧩 Ordonner'};const p=$('g-type-pill');p.className=`type-pill ${type}`;p.textContent=labels[type]||type;}
+function hideAllBtns(){['btn-check','btn-reset','btn-next','btn-skip'].forEach(id=>hideBtn(id));}
+function showBtn(id){const e=$(id);if(e)e.style.display='inline-flex';}
+function hideBtn(id){const e=$(id);if(e)e.style.display='none';}
+
+// ══════════════════════════════════════════════
+// RESULTS + COIN REWARD
+// ══════════════════════════════════════════════
+function showResults(){
+  clearInterval(S.timer);
+  const tot=S.cor+S.wr||1,pct=Math.round(S.cor/tot*100);
+  const stars=pct>=90?3:pct>=60?2:pct>=30?1:0;
+  const xpE=S.cor*15;
+
+  // Coin reward based on game type and performance
+  const coinMultipliers={mixed:3,quiz:1.5,fill:2,match:1};
+  const baseCoin=Math.floor(S.cor*(coinMultipliers[S.gType]||1));
+  const coinsEarned=Math.min(baseCoin,{mixed:30,quiz:15,fill:20,match:10}[S.gType]||20);
+
+  if(U){
+    const key=pk(S.chap),prev=U.progress[key]||{};
+    U.progress[key]={completed:stars>0,stars:Math.max(prev.stars||0,stars)};
+    U.xp=(U.xp||0)+xpE;U.coins+=coinsEarned;
+    if(stars>0&&!prev.completed) U.chaptersCompleted=(U.chaptersCompleted||0)+1;
+    // Streak
+    const today=new Date().toDateString();
+    if(U.lastDay!==today){U.streak=(U.lastDay===new Date(Date.now()-86400000).toDateString()?U.streak:0)+1;U.lastDay=today;}
+    saveU();updateTopBar();
+    // Update XP bar
+    $('xp-bar').style.width=((U.xp%500)/5)+'%';sT('xp-count',U.xp+' XP');
+  }
+
+  const msgs=['Continue d\'essayer !','Bon effort !','Bien joué !','Excellent ! 🎊'];
+  sT('r-stars',['☆☆☆','★☆☆','★★☆','★★★'][stars]);
+  sT('r-title',msgs[stars]);
+  sT('r-score',pct+'%');
+  sT('r-sub',`${S.cor} bonne${S.cor>1?'s':''} réponse${S.cor>1?'s':''} sur ${tot}`);
+  sT('r-correct',S.cor);sT('r-wrong',S.wr);sT('r-xp','+'+xpE);
+  sT('coin-reward-amount','+'+coinsEarned);
+  const bd=$('r-breakdown');bd.innerHTML='';
+  const tdef={quiz:{i:'⚡',l:'Quiz'},fill:{i:'✏️',l:'Fill'},match:{i:'🔗',l:'Match'},sort:{i:'🧩',l:'Ordre'}};
+  Object.entries(S.ts).forEach(([k,v])=>{if(v.c+v.w===0)return;const p2=Math.round(v.c/(v.c+v.w)*100);const d=document.createElement('div');d.style.cssText='background:var(--card2);border-radius:9px;padding:7px 12px;text-align:center;min-width:56px;';d.innerHTML=`<div style="font-size:.95rem">${tdef[k].i}</div><div style="font-weight:800;font-size:.76rem;">${tdef[k].l}</div><div style="font-size:.74rem;color:${p2>=70?'var(--green)':'var(--red)'};">${p2}%</div>`;bd.appendChild(d);});
+  goTo('results');
+  if(stars>=2)confetti();
+  if(coinsEarned>0) floatCoin($('coin-reward-amount'),`+${coinsEarned} <span class="coin"></span>`);
+}
+function playAgain(){startGame(S.gType);}
+
+// ══════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════
+function dirLbl(){const N=LANGS[S.nL],T=LANGS[S.tL];return`${N.flag} ${N.native}  →  ${T.flag} ${T.native}`;}
+function shuf(a){return[...a].sort(()=>Math.random()-.5);}
+function $(id){return document.getElementById(id);}
+function sT(id,v){const e=$(id);if(e)e.textContent=v;}
+
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+function floatCoin(anchor,text){
+  const el=document.createElement('div');el.className='float-coin';el.innerHTML=text;
+  const rect=anchor?.getBoundingClientRect?anchor.getBoundingClientRect():{top:window.innerHeight/2,left:window.innerWidth/2};
+  el.style.cssText=`top:${rect.top}px;left:${rect.left}px;`;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1300);
+}
+
+function confetti(){const cols=['#7c3aed','#ec4899','#06b6d4','#f59e0b','#10b981'];for(let i=0;i<55;i++){const el=document.createElement('div');el.className='confetti-piece';const s=5+Math.random()*9;el.style.cssText=`left:${Math.random()*100}%;width:${s}px;height:${s*1.4}px;background:${cols[i%5]};animation-duration:${1.3+Math.random()*1.3}s;animation-delay:${Math.random()*.4}s;border-radius:${Math.random()>.5?'50%':'3px'};`;document.body.appendChild(el);setTimeout(()=>el.remove(),3200);}}
+
+function mkStars(){const c=$('stars');for(let i=0;i<130;i++){const s=document.createElement('div');s.className='star';const z=Math.random()*2.4+.4;s.style.cssText=`width:${z}px;height:${z}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.06+Math.random()*.5};`;c.appendChild(s);}}
+
+// URL params (shared quiz)
+function readParams(){const p=new URLSearchParams(location.search);const n=p.get('n'),t=p.get('t'),l=p.get('l'),c=p.get('c');if(n&&t&&l&&c&&LANGS[n]&&LANGS[t]&&n!==t&&CHAPTERS[l]){S.nL=n;S.tL=t;S.level=l;S.chap=c;}}
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+mkStars();buildGrids();readParams();
+// Auto-login if session exists
+// Auto-login: Supabase first, localStorage fallback
+maybeShowThemePicker();
+(async function(){
+  const saved=loadCurrent();
+  if(saved){
+    try{
+      const loaded=await loadUserFromDB(saved);
+      if(loaded){U=loaded;afterLogin();return;}
+    }catch(e){}
+    const users=loadUsers();
+    if(users[saved]){U=users[saved];afterLogin();return;}
+  }
+})();
+// Dividend tick every 60s while app is open
+setInterval(()=>{if(U){calcDividends();const db=$('div-banner');if(U.pendingDiv>=1&&db) db.style.display='flex';}},60000);
+
+// ── GUEST LOGIN ──
+function guestLogin(){
+  U=defaultUser('Invité','guest@local');
+  U.isGuest=true;
+  afterLogin();
+  toast('👤 Mode invité — la progression ne sera pas sauvegardée');
+}
+
+// ── WIRE BUTTONS THAT CAN'T USE onclick (avoids CF injection issues) ──
+(function(){
+  function wire(id,fn){var el=document.getElementById(id);if(el)el.addEventListener('click',fn);}
+  wire('btn-guest', guestLogin);
+})();
+
+// ══════════════════════════════════════════════
+// LANGUAGE CHANGE MODAL
+// ══════════════════════════════════════════════
+let _lpNative=null, _lpTarget=null;
+
+function openLangModal(){
+  _lpNative=S.nL||null;
+  _lpTarget=S.tL||null;
+  buildLangPicker();
+  $('lang-modal').style.display='flex';
+}
+
+function closeLangModal(e){
+  if(!e||e.target===$('lang-modal')) $('lang-modal').style.display='none';
+}
+
+function buildLangPicker(){
+  ['lp-native','lp-target'].forEach((gid,side)=>{
+    const g=$(gid); g.innerHTML='';
+    Object.entries(LANGS).forEach(([code,l])=>{
+      const active=side===0?(code===_lpNative):(code===_lpTarget);
+      const d=document.createElement('div');
+      d.className='lang-picker-item'+(active?' active':'');
+      d.innerHTML=`<span class="lp-flag">${l.flag}</span><span class="lp-name">${l.name}</span>`;
+      d.onclick=()=>{
+        if(side===0){
+          _lpNative=code;
+          if(_lpTarget===code) _lpTarget=null;
+        } else {
+          _lpTarget=code;
+          if(_lpNative===code) _lpNative=null;
+        }
+        buildLangPicker();
+        updateLpPair();
+      };
+      g.appendChild(d);
+    });
+  });
+  updateLpPair();
+}
+
+function updateLpPair(){
+  const el=$('lp-pair');
+  if(_lpNative&&_lpTarget&&_lpNative!==_lpTarget){
+    const N=LANGS[_lpNative],T=LANGS[_lpTarget];
+    el.innerHTML=`${N.flag} ${N.name} &rarr; ${T.flag} ${T.name}`;
+    el.style.color='var(--accent3)';
+  } else if(_lpNative===_lpTarget&&_lpNative){
+    el.textContent='Choisis deux langues différentes';
+    el.style.color='var(--red)';
+  } else {
+    el.textContent='';
+  }
+}
+
+function applyLangChange(){
+  if(!_lpNative||!_lpTarget||_lpNative===_lpTarget){
+    toast('Choisis deux langues différentes !');
+    return;
+  }
+  S.nL=_lpNative; S.tL=_lpTarget;
+  // Reset level/chapter selection
+  S.level=null; S.chap=null;
+  // Update native/target grids on learn screen
+  clrSel('native-grid'); clrSel('target-grid');
+  const nn=document.querySelector('#native-grid [data-code="'+S.nL+'"]');
+  const tn=document.querySelector('#target-grid [data-code="'+S.tL+'"]');
+  if(nn) nn.classList.add('selected');
+  if(tn) tn.classList.add('selected');
+  $('target-section').style.opacity='1';
+  syncPair(); syncDots();
+  $('lang-modal').style.display='none';
+  const N=LANGS[S.nL],T=LANGS[S.tL];
+  toast(N.flag+' '+N.name+' → '+T.flag+' '+T.name+' sélectionné !');
+  navTo('learn');
+}
+
+// ══════════════════════════════════════════════
+// TARGET / TIME SIMULATOR
+// ══════════════════════════════════════════════
+function updateTarget(){
+  const slider=$('target-slider');
+  if(!slider) return;
+  const target=parseInt(slider.value);
+
+  // Format target value
+  $('target-val').innerHTML=target.toLocaleString()+' <span class="coin"></span>';
+
+  const coins=Math.floor(U?U.coins:0);
+  const daily=getDailyDividend();
+  const wealth=getTotalWealth();
+  const missing=Math.max(0, target-wealth);
+  const pct=Math.min(100, Math.round(wealth/target*100));
+
+  // Missing
+  const misEl=$('tr-missing');
+  if(misEl) misEl.innerHTML=(missing>0?missing.toLocaleString()+' <span class="coin"></span>':'<span style="color:var(--green)">Objectif atteint !</span>');
+
+  // Daily
+  const dEl=$('tr-daily');
+  if(dEl) dEl.innerHTML=daily>0?daily.toFixed(1)+' <span class="coin"></span>':'<span style="color:var(--muted)">Aucun actif</span>';
+
+  // Time
+  const tEl=$('tr-time');
+  if(tEl){
+    if(missing<=0){
+      tEl.innerHTML='<span style="color:var(--green)">&#10003; Atteint !</span>';
+    } else if(daily<=0){
+      tEl.textContent="Investis d'abord";
+      tEl.style.color='var(--muted)';
+    } else {
+      const days=missing/daily;
+      if(days<1) tEl.textContent=Math.round(days*24)+'h';
+      else if(days<30) tEl.textContent=Math.round(days)+' jours';
+      else if(days<365) tEl.textContent=Math.round(days/30.4)+' mois';
+      else tEl.textContent=(days/365).toFixed(1)+' ans';
+      tEl.style.color='var(--accent3)';
+    }
+  }
+
+  // Percent
+  const pEl=$('tr-pct');
+  if(pEl) pEl.textContent=pct+'%';
+
+  // Timeline
+  const fill=$('tl-fill');
+  const cursor=$('tl-cursor');
+  const nowLbl=$('tl-now');
+  if(fill) fill.style.width=pct+'%';
+  if(cursor){ cursor.style.left=pct+'%'; }
+  if(nowLbl){ nowLbl.style.left=pct+'%'; }
+}
+
+// updateTarget is now called inside the market data wrapper below
+
+// ══════════════════════════════════════════════
+// REAL MARKET DATA
+// ══════════════════════════════════════════════
+// Maps asset id → real-world ticker/id for price display
+const MARKET_IDS = {
+  gold:   { source:'yahoo',  ticker:'GC=F',    label:'Or (XAU)',   unit:'USD/oz'  },
+  house:  { source:'yahoo',  ticker:'VNQ',     label:'REIT Index', unit:'USD'     },
+  stock:  { source:'yahoo',  ticker:'SPY',     label:'S&P 500 ETF',unit:'USD'     },
+  crypto: { source:'coingecko', id:'bitcoin',  label:'Bitcoin',    unit:'USD'     },
+};
+
+// Cache prices to avoid hammering APIs
+const _priceCache = {};
+let _lastFetch = 0;
+
+async function fetchMarketPrices() {
+  const now = Date.now();
+  if (now - _lastFetch < 5 * 60 * 1000 && Object.keys(_priceCache).length > 0) {
+    updatePriceDisplay(); return;
+  }
+  _lastFetch = now;
+
+  // ── CoinGecko via cors proxy (Bitcoin) ──
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', {mode:'cors'});
+    if(r.ok){
+      const d = await r.json();
+      if(d.bitcoin) _priceCache.crypto = {price: d.bitcoin.usd, change: d.bitcoin.usd_24h_change};
+    }
+  } catch(e) {}
+
+  // ── Open Exchange / Metals API for Gold via corsproxy.io ──
+  // Use AllOrigins as CORS proxy for Yahoo Finance
+  const tickers = [{t:'GC%3DF',id:'gold'},{t:'SPY',id:'stock'},{t:'VNQ',id:'house'}];
+  for(const {t,id} of tickers){
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${t}?interval=1d&range=2d`;
+      const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const r = await fetch(proxy);
+      if(r.ok){
+        const wrapper = await r.json();
+        const d = JSON.parse(wrapper.contents);
+        const res = d?.chart?.result?.[0];
+        if(res){
+          const meta = res.meta;
+          const price = meta.regularMarketPrice;
+          const prev = meta.chartPreviousClose || meta.previousClose;
+          const change = prev ? ((price-prev)/prev*100) : 0;
+          _priceCache[id] = {price, change};
+        }
+      }
+    } catch(e) {}
+  }
+
+  updatePriceDisplay();
+}
+
+function updatePriceDisplay() {
+  Object.entries(MARKET_IDS).forEach(([id, info]) => {
+    const el = document.getElementById('rp-' + id);
+    if (!el) return;
+    const cached = _priceCache[id];
+    if (!cached) {
+      el.textContent = info.label + ' — données indisponibles';
+      el.style.color = 'var(--muted)';
+      return;
+    }
+    const changeStr = (cached.change >= 0 ? '+' : '') + cached.change.toFixed(2) + '%';
+    const changeColor = cached.change >= 0 ? 'var(--green)' : 'var(--red)';
+    el.innerHTML = `${info.label}: <strong>$${cached.price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong> <span style="color:${changeColor}">${changeStr} 24h</span>`;
+    el.style.color = 'var(--accent3)';
+  });
+}
+
+// Wrap renderPortfolio to also fetch prices
+const __origRP = renderPortfolio;
+renderPortfolio = function() {
+  __origRP();
+  setTimeout(updateTarget, 0);
+  fetchMarketPrices();
+};
+
+// ── GLOBAL ENTER KEY: Suivant / Vérifier ──
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  const activeScreen = document.querySelector('.screen.active');
+  if(!activeScreen || activeScreen.id !== 'screen-game') return;
+  const btnNext = $('btn-next');
+  const btnCheck = $('btn-check');
+  // If "Suivant" is visible → go next
+  if(btnNext && btnNext.style.display !== 'none'){
+    e.preventDefault();
+    nextQ();
+    return;
+  }
+  // If "Vérifier" is visible and we're NOT in fill mode (fill handles its own Enter)
+  if(btnCheck && btnCheck.style.display !== 'none' && S.curType !== 'fill'){
+    e.preventDefault();
+    checkCurrentQ();
+  }
+});
+
+function sellAsset(id){
+  const a = ASSET_DEFS.find(x=>x.id===id);
+  if(!a) return;
+  const owned = U.assets[id]||0;
+  if(owned <= 0) return;
+  // Sell price = 80% of what the last unit cost (simulates market spread)
+  const lastCost = Math.round(a.cost*(1+(owned-1)*0.1));
+  const sellPrice = Math.round(lastCost * 0.8);
+  U.coins += sellPrice;
+  U.assets[id] = owned - 1;
+  // Reduce invested amount proportionally
+  U.totalInvested = Math.max(0, (U.totalInvested||0) - lastCost);
+  // Remove a bit of appreciation
+  if(U.assetValues[id]) U.assetValues[id] = Math.max(0, U.assetValues[id] - lastCost*0.05);
+  saveU(); updateTopBar();
+  floatCoin(document.getElementById('assets-grid'), `+${sellPrice} <span class="coin"></span>`);
+  renderPortfolio();
+  toast(`Vendu 1 unité de ${a.name} pour ${sellPrice} coins (80% du prix d'achat)`);
+}
+
+// ══════════════════════════════════════════════
+// ASSET INFO MODAL
+// ══════════════════════════════════════════════
+let _currentAssetId = null;
+
+function openAssetInfo(id){
+  const a = ASSET_DEFS.find(x=>x.id===id);
+  if(!a) return;
+  _currentAssetId = id;
+  const owned = U.assets[id]||0;
+  const base = a.cost*owned;
+  const appreciated = base + (U.assetValues[id]||0);
+  const pv = appreciated - base;
+  const daily = (a.cost*owned*a.divRate).toFixed(1);
+  const mInfo = {
+    gold:   {ticker:'GC=F (Or/USD)',  what:"L'or physique est un actif refuge. Les banques centrales en détiennent des tonnes. Sa valeur monte en période d'incertitude économique."},
+    house:  {ticker:'VNQ (REIT ETF)', what:"L'immobilier génère des loyers. Le VNQ est un fonds qui possède des centaines d'immeubles. Tu touches ta part des loyers comme dividende."},
+    stock:  {ticker:'SPY (S&P 500)',  what:"Le S&P 500 regroupe les 500 plus grandes entreprises américaines. Apple, Microsoft, Amazon… Investir dedans = posséder un morceau de l'économie mondiale."},
+    crypto: {ticker:'BTC/USD',        what:"Bitcoin est la première cryptomonnaie. Sa quantité est limitée à 21 millions. De plus en plus d'institutions financières l'intègrent à leur bilan."},
+  };
+  const info = mInfo[id]||{ticker:'',what:''};
+
+  $('amod-icon').innerHTML = a.icon;
+  $('amod-name').textContent = a.name;
+  $('amod-type').textContent = a.type + ' · ' + info.ticker;
+  $('amod-owned').textContent = owned + ' unité' + (owned>1?'s':'');
+  $('amod-val').innerHTML = Math.floor(appreciated) + ' <span class="coin"></span>';
+  $('amod-daily').innerHTML = daily + ' <span class="coin"></span>/j';
+  const pvColor = pv >= 0 ? 'var(--green)' : 'var(--red)';
+  $('amod-pv').innerHTML = `<span style="color:${pvColor}">${pv>=0?'+':''}${Math.floor(pv)} <span class="coin"></span></span>`;
+  $('amod-explain').textContent = info.what;
+
+  // Live price
+  const cached = _priceCache[id];
+  if(cached){
+    $('amod-price').textContent = '$' + cached.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const chg = cached.change;
+    $('amod-change').innerHTML = `<span style="color:${chg>=0?'var(--green)':'var(--red)'}">${chg>=0?'+':''}${chg.toFixed(2)}% sur 24h</span>`;
+    $('amod-ticker').textContent = info.ticker;
+  } else {
+    $('amod-price').textContent = 'Prix non disponible';
+    $('amod-change').textContent = 'Active la connexion pour voir le prix live';
+  }
+
+  // Wire buy/sell buttons
+  const scaledCost = Math.round(a.cost*(1+owned*0.1));
+  $('amod-buy-btn').innerHTML = 'Acheter (' + scaledCost + ')';
+  $('amod-buy-btn').onclick = ()=>{buyAsset(id); openAssetInfo(id);};
+  $('amod-buy-btn').disabled = U.coins < scaledCost;
+  const sellPrice = Math.round(a.cost*(1+(owned-1)*0.1)*0.8);
+  $('amod-sell-btn').innerHTML = owned>0 ? 'Vendre ('+sellPrice+')' : 'Vendre';
+  $('amod-sell-btn').onclick = ()=>{if(owned>0){sellAsset(id);closeAssetModal();}};
+  $('amod-sell-btn').disabled = owned <= 0;
+
+  $('asset-modal').style.dis>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LinguaQuest</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
