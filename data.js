@@ -1,0 +1,115 @@
+// ═══════════════════════════════════════════
+// DATA.JS — Toutes les données statiques
+// Langues, Vocabulaire, Chapitres, Assets, Shop
+// ═══════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const LANGS={
+  fr:{name:'Français',flag:'🇫🇷',native:'Français'},
+  en:{name:'Anglais',flag:'🇬🇧',native:'English'},
+  es:{name:'Espagnol',flag:'🇪🇸',native:'Español'},
+  de:{name:'Allemand',flag:'🇩🇪',native:'Deutsch'},
+  cs:{name:'Tchèque',flag:'🇨🇿',native:'Čeština'}
+};
+
+const LEVELS=[
+  {id:'A1',label:'A1 — Débutant',desc:'Salutations, chiffres, couleurs'},
+  {id:'A2',label:'A2 — Élémentaire',desc:'Famille, nourriture, maison'},
+  {id:'B1',label:'B1 — Intermédiaire',desc:'Voyages, passé & futur'},
+  {id:'B2',label:'B2 — Avancé',desc:'Actualité, idiomes'},
+  {id:'C1',label:'C1 — Expert',desc:'Argumentation, registres'},
+  {id:'C2',label:'C2 — Maîtrise',desc:'Littérature, humour'}
+];
+
+const WD={
+  hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},
+  goodbye:{fr:'Au revoir',en:'Goodbye',es:'Adiós',de:'Auf Wiedersehen',cs:'Na shledanou'},
+  thanks:{fr:'Merci',en:'Thank you',es:'Gracias',de:'Danke',cs:'Děkuji'},
+  please:{fr:"S'il vous plaît",en:'Please',es:'Por favor',de:'Bitte',cs:'Prosím'},
+  yes:{fr:'Oui',en:'Yes',es:'Sí',de:'Ja',cs:'Ano'},
+  no:{fr:'Non',en:'No',es:'No',de:'Nein',cs:'Ne'},
+  sorry:{fr:'Pardon',en:'Sorry',es:'Lo siento',de:'Entschuldigung',cs:'Promiňte'},
+  excuse:{fr:'Excusez-moi',en:'Excuse me',es:'Permiso',de:'Verzeihung',cs:'S dovolením'},
+  one:{fr:'Un',en:'One',es:'Uno',de:'Eins',cs:'Jeden'},
+  two:{fr:'Deux',en:'Two',es:'Dos',de:'Zwei',cs:'Dva'},
+  three:{fr:'Trois',en:'Three',es:'Tres',de:'Drei',cs:'Tři'},
+  four:{fr:'Quatre',en:'Four',es:'Cuatro',de:'Vier',cs:'Čtyři'},
+  five:{fr:'Cinq',en:'Five',es:'Cinco',de:'Fünf',cs:'Pět'},
+  ten:{fr:'Dix',en:'Ten',es:'Diez',de:'Zehn',cs:'Deset'},
+  twenty:{fr:'Vingt',en:'Twenty',es:'Veinte',de:'Zwanzig',cs:'Dvacet'},
+  hundred:{fr:'Cent',en:'Hundred',es:'Cien',de:'Hundert',cs:'Sto'},
+  red:{fr:'Rouge',en:'Red',es:'Rojo',de:'Rot',cs:'Červená'},
+  blue:{fr:'Bleu',en:'Blue',es:'Azul',de:'Blau',cs:'Modrá'},
+  green:{fr:'Vert',en:'Green',es:'Verde',de:'Grün',cs:'Zelená'},
+  yellow:{fr:'Jaune',en:'Yellow',es:'Amarillo',de:'Gelb',cs:'Žlutá'},
+  black:{fr:'Noir',en:'Black',es:'Negro',de:'Schwarz',cs:'Černá'},
+  white:{fr:'Blanc',en:'White',es:'Blanco',de:'Weiß',cs:'Bílá'},
+  orange:{fr:'Orange',en:'Orange',es:'Naranja',de:'Orange',cs:'Oranžová'},
+  pink:{fr:'Rose',en:'Pink',es:'Rosa',de:'Rosa',cs:'Růžová'},
+  father:{fr:'Père',en:'Father',es:'Padre',de:'Vater',cs:'Otec'},
+  mother:{fr:'Mère',en:'Mother',es:'Madre',de:'Mutter',cs:'Matka'},
+  brother:{fr:'Frère',en:'Brother',es:'Hermano',de:'Bruder',cs:'Bratr'},
+  sister:{fr:'Sœur',en:'Sister',es:'Hermana',de:'Schwester',cs:'Sestra'},
+  grandfather:{fr:'Grand-père',en:'Grandfather',es:'Abuelo',de:'Großvater',cs:'Dědeček'},
+  grandmother:{fr:'Grand-mère',en:'Grandmother',es:'Abuela',de:'Großmutter',cs:'Babička'},
+  child:{fr:'Enfant',en:'Child',es:'Hijo',de:'Kind',cs:'Dítě'},
+  cousin:{fr:'Cousin',en:'Cousin',es:'Primo',de:'Cousin',cs:'Bratranec'},
+  bread:{fr:'Pain',en:'Bread',es:'Pan',de:'Brot',cs:'Chléb'},
+  water:{fr:'Eau',en:'Water',es:'Agua',de:'Wasser',cs:'Voda'},
+  coffee:{fr:'Café',en:'Coffee',es:'Café',de:'Kaffee',cs:'Káva'},
+  wine:{fr:'Vin',en:'Wine',es:'Vino',de:'Wein',cs:'Víno'},
+  meat:{fr:'Viande',en:'Meat',es:'Carne',de:'Fleisch',cs:'Maso'},
+  fish:{fr:'Poisson',en:'Fish',es:'Pescado',de:'Fisch',cs:'Ryba'},
+  fruit:{fr:'Fruit',en:'Fruit',es:'Fruta',de:'Frucht',cs:'Ovoce'},
+  cheese:{fr:'Fromage',en:'Cheese',es:'Queso',de:'Käse',cs:'Sýr'},
+  plane:{fr:'Avion',en:'Plane',es:'Avión',de:'Flugzeug',cs:'Letadlo'},
+  train:{fr:'Train',en:'Train',es:'Tren',de:'Zug',cs:'Vlak'},
+  hotel:{fr:'Hôtel',en:'Hotel',es:'Hotel',de:'Hotel',cs:'Hotel'},
+  passport:{fr:'Passeport',en:'Passport',es:'Pasaporte',de:'Reisepass',cs:'Pas'},
+  ticket:{fr:'Billet',en:'Ticket',es:'Billete',de:'Fahrkarte',cs:'Jízdenka'},
+  suitcase:{fr:'Valise',en:'Suitcase',es:'Maleta',de:'Koffer',cs:'Kufr'},
+  airport:{fr:'Aéroport',en:'Airport',es:'Aeropuerto',de:'Flughafen',cs:'Letiště'},
+  reservation:{fr:'Réservation',en:'Booking',es:'Reserva',de:'Buchung',cs:'Rezervace'},
+  school:{fr:'École',en:'School',es:'Escuela',de:'Schule',cs:'Škola'},
+  book:{fr:'Livre',en:'Book',es:'Libro',de:'Buch',cs:'Kniha'},
+  pen:{fr:'Stylo',en:'Pen',es:'Bolígrafo',de:'Stift',cs:'Pero'},
+  table:{fr:'Table',en:'Table',es:'Mesa',de:'Tisch',cs:'Stůl'},
+  window:{fr:'Fenêtre',en:'Window',es:'Ventana',de:'Fenster',cs:'Okno'},
+  door:{fr:'Porte',en:'Door',es:'Puerta',de:'Tür',cs:'Dveře'},
+  chair:{fr:'Chaise',en:'Chair',es:'Silla',de:'Stuhl',cs:'Židle'}
+};
+
+const CHAPTERS={
+  A1:[
+    {id:'A1-1',title:{fr:'Salutations',en:'Greetings',es:'Saludos',de:'Begrüßung',cs:'Pozdravy'},subtitle:{fr:'Se présenter',en:'Meet people',es:'Presentarse',de:'Vorstellen',cs:'Predstavit se'},wids:['hello','goodbye','thanks','please','yes','no','sorry','excuse'],sents:{fr:['Je m appelle Marie','Comment tu t appelles','Enchante de te connaitre'],en:['My name is Tom','What is your name','Nice to meet you'],es:['Me llamo Carlos','Como te llamas','Encantado de conocerte'],de:['Ich heisse Klaus','Wie heisst du','Schon dich kennenzulernen'],cs:['Jmenuji se Marie','Jak se jmenujes','Rad te poznavam']}},
+    {id:'A1-2',title:{fr:'Les Chiffres',en:'Numbers',es:'Números',de:'Zahlen',cs:'Čísla'},subtitle:{fr:'Compter de 1 à 100',en:'Count 1–100',es:'Contar 1–100',de:'Zählen 1–100',cs:'Počítat 1–100'},wids:['one','two','three','four','five','ten','twenty','hundred'],sents:{fr:['J ai vingt ans','Combien coute ce livre','Il est dix heures'],en:['I am twenty years old','How much is this book','It is ten o clock'],es:['Tengo veinte anos','Cuanto cuesta este libro','Son las diez'],de:['Ich bin zwanzig Jahre alt','Wie viel kostet dieses Buch','Es ist zehn Uhr'],cs:['Je mi dvacet let','Kolik stoji tato kniha','Je deset hodin']}},
+    {id:'A1-3',title:{fr:'Les Couleurs',en:'Colours',es:'Colores',de:'Farben',cs:'Barvy'},subtitle:{fr:'Décrire avec les couleurs',en:'Describe with colours',es:'Describir con colores',de:'Mit Farben beschreiben',cs:'Popisovat barvami'},wids:['red','blue','green','yellow','black','white','orange','pink'],sents:{fr:['Le ciel est bleu','Ma voiture est rouge','J aime la couleur verte'],en:['The sky is blue','My car is red','I like the colour green'],es:['El cielo es azul','Mi coche es rojo','Me gusta el color verde'],de:['Der Himmel ist blau','Mein Auto ist rot','Ich mag die Farbe Grun'],cs:['Nebe je modre','Moje auto je cervene','Mam rad zelenou barvu']}},
+    {id:'A1-4',title:{fr:'La Classe',en:'Classroom',es:'La Clase',de:'Klassenzimmer',cs:'Ve třídě'},subtitle:{fr:'Objets de la classe',en:'Classroom objects',es:'Objetos del aula',de:'Schulgegenstände',cs:'Školní předměty'},wids:['school','book','pen','table','window','door','chair','water'],sents:{fr:['La porte est fermée','Ouvre le livre page dix','La fenêtre est ouverte'],en:['The door is closed','Open the book to page ten','The window is open'],es:['La puerta está cerrada','Abre el libro en la página diez','La ventana está abierta'],de:['Die Tür ist geschlossen','Öffne das Buch auf Seite zehn','Das Fenster ist offen'],cs:['Dveře jsou zavřené','Otevři knihu na straně deset','Okno je otevřené']}}
+  ],
+  A2:[
+    {id:'A2-1',title:{fr:'La Famille',en:'Family',es:'La Familia',de:'Familie',cs:'Rodina'},subtitle:{fr:'Parler de sa famille',en:'Talk about your family',es:'Hablar de la familia',de:'Über Familie sprechen',cs:'Mluvit o rodině'},wids:['father','mother','brother','sister','grandfather','grandmother','child','cousin'],sents:{fr:['J ai deux freres et une soeur','Mon pere est medecin','Ma famille est grande'],en:['I have two brothers and a sister','My father is a doctor','My family is big'],es:['Tengo dos hermanos y una hermana','Mi padre es medico','Mi familia es grande'],de:['Ich habe zwei Bruder und eine Schwester','Mein Vater ist Arzt','Meine Familie ist gross'],cs:['Mam dva bratry a sestru','Muj otec je lekar','Moje rodina je velka']}},
+    {id:'A2-2',title:{fr:'La Nourriture',en:'Food & Drink',es:'Comida',de:'Essen',cs:'Jídlo'},subtitle:{fr:'Commander de la nourriture',en:'Order food',es:'Pedir comida',de:'Essen bestellen',cs:'Objednat jídlo'},wids:['bread','water','coffee','wine','meat','fish','fruit','cheese'],sents:{fr:['Je voudrais un cafe','L addition s il vous plait','Le poisson est tres bon'],en:['I would like a coffee please','The bill please','The fish is very good'],es:['Quisiera un cafe por favor','La cuenta por favor','El pescado esta muy bueno'],de:['Ich hatte gerne einen Kaffee','Die Rechnung bitte','Der Fisch ist sehr gut'],cs:['Chtel bych kavu prosim','Ucet prosim','Ryba je velmi dobra']}}
+  ],
+  B1:[
+    {id:'B1-1',title:{fr:'Les Voyages',en:'Travel',es:'Viajes',de:'Reisen',cs:'Cestování'},subtitle:{fr:'Voyager et se déplacer',en:'Getting around',es:'Viajar',de:'Reisen',cs:'Cestovat'},wids:['plane','train','hotel','passport','ticket','suitcase','airport','reservation'],sents:{fr:['Mon vol est retarde de deux heures','J ai reserve une chambre pour trois nuits','Ou est l aeroport'],en:['My flight is delayed by two hours','I have booked a room for three nights','Where is the airport'],es:['Mi vuelo lleva dos horas de retraso','He reservado una habitacion por tres noches','Donde esta el aeropuerto'],de:['Mein Flug hat zwei Stunden Verspatung','Ich habe ein Zimmer fur drei Nachte gebucht','Wo ist der Flughafen'],cs:['Muj let ma dvouhodinove zpozdeni','Rezervoval jsem pokoj na tri noci','Kde je letiste']}}
+  ]
+};
+
+const ASSET_DEFS=[
+  {id:'gold',name:'Or',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/><text x="16" y="21" text-anchor="middle" font-size="14" font-weight="900" fill="#7c2d12">Au</text></svg>',type:'Métal précieux',class:'gold',cost:50,divRate:0.02,growthRate:0.001,desc:"L'or conserve sa valeur depuis des millénaires.",explain:"L'or est un actif réel. Il verse 2% de dividendes par investissement."},
+  {id:'house',name:'Immeuble',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="16,4 28,16 24,16 24,28 8,28 8,16 4,16" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5"/><rect x="13" y="20" width="6" height="8" fill="#7dd3fc"/></svg>',type:'Immobilier',class:'house',cost:150,divRate:0.04,growthRate:0.0008,desc:"L'immobilier génère des loyers réguliers.",explain:"Les loyers = dividendes. Taux : 4%/j par niveau."},
+  {id:'stock',name:'Actions',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="4" fill="#064e3b"/><polyline points="5,24 11,16 17,20 27,8" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round"/></svg>',type:'Marché actions',class:'stock',cost:80,divRate:0.03,growthRate:0.0012,desc:"Les grandes entreprises partagent leurs bénéfices.",explain:"Les actions versent des dividendes. Tu reçois 3% de ta mise par jour."},
+  {id:'crypto',name:'Crypto Index',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="16,2 30,10 30,22 16,30 2,22 2,10" fill="#a78bfa" stroke="#6d28d9" stroke-width="1.5"/><text x="16" y="21" text-anchor="middle" font-size="11" font-weight="900" fill="#ede9fe">IDX</text></svg>',type:'Actif digital',class:'crypto',cost:30,divRate:0.015,growthRate:0.002,desc:"Panier d'actifs digitaux.",explain:"Représente un indice crypto diversifié. Croissance rapide, dividende 1.5%/j."}
+];
+
+const SHOP_ITEMS=[
+  {id:'xp_boost',name:'Boost XP x2',desc:'Double ton XP pendant 1 session',icon:'⚡',price:50,type:'consumable'},
+  {id:'hint_pack',name:'Pack Indices',desc:'5 indices supplémentaires',icon:'💡',price:30,type:'consumable'},
+  {id:'timer_off',name:'Sans Chrono',desc:'Désactive le timer pour 1 session',icon:'⏸',price:40,type:'consumable'},
+  {id:'avatar_gold',name:'Avatar Or',desc:'Avatar doré exclusif',icon:'👑',price:200,type:'cosmetic'},
+  {id:'avatar_diamond',name:'Avatar Diamant',desc:'Avatar diamant premium',icon:'💎',price:500,type:'cosmetic'},
+  {id:'streak_shield',name:'Bouclier Streak',desc:'Protège ta série 1 jour',icon:'🛡',price:80,type:'consumable'}
+];
+
