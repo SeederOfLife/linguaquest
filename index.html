@@ -6,7 +6,2221 @@
     <title>LinguaQuest</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
+    <style><!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LinguaQuest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
+<style>
+/* ══ RESET ══ */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;width:100%;overflow-x:hidden;}
+
+/* ══ THEMES ══ */
+:root,[data-theme="dark"]{
+  --bg:#080812;--card:#10101e;--card2:#181830;--card3:#1e1e38;
+  --accent:#7c3aed;--accent2:#ec4899;--accent3:#06b6d4;--gold:#fbbf24;
+  --green:#10b981;--red:#ef4444;--text:#f1f5f9;--muted:#64748b;
+  --border:rgba(255,255,255,.07);--shadow:rgba(0,0,0,.4);
+  --nav-bg:rgba(8,8,18,.96);--top-bg:rgba(8,8,18,.94);
+}
+[data-theme="light"]{
+  --bg:#f8f7ff;--card:#fff;--card2:#f0effe;--card3:#e4e0fd;
+  --accent:#6d28d9;--accent2:#db2777;--accent3:#0891b2;--gold:#d97706;
+  --green:#059669;--red:#dc2626;--text:#1e1b4b;--muted:#6b7280;
+  --border:rgba(109,40,217,.12);--shadow:rgba(109,40,217,.1);
+  --nav-bg:rgba(248,247,255,.97);--top-bg:rgba(248,247,255,.95);
+}
+[data-theme="claude"]{
+  --bg:#1a1108;--card:#221a0e;--card2:#2a2010;--card3:#332615;
+  --accent:#c8621a;--accent2:#d4845a;--accent3:#e8a87c;--gold:#f0b429;
+  --green:#5a9a6e;--red:#c0392b;--text:#f5e6d0;--muted:#9a8060;
+  --border:rgba(212,132,90,.15);--shadow:rgba(0,0,0,.4);
+  --nav-bg:rgba(26,17,8,.97);--top-bg:rgba(26,17,8,.94);
+}
+[data-theme="auto"]{
+  color-scheme:light dark;
+}
+
+/* ══ BASE ══ */
+body{
+  font-family:'Nunito',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;
+}
+#app{position:relative;z-index:1;width:100%;}
+
+/* ══ STARS ══ */
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:calc(var(--o,.3)*.3)}50%{opacity:var(--o,.3)}}
+
+/* ══ SCREENS ══ */
+.screen{display:none;width:100%;padding:72px 16px 90px;}
+.screen.active{display:flex;flex-direction:column;align-items:center;}
+.screen-inner{width:100%;max-width:680px;display:flex;flex-direction:column;align-items:center;}
+
+/* ══ TOP BAR ══ */
+.top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:var(--top-bg);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:0 16px;height:58px;
+  display:none;align-items:center;gap:10px;
+}
+.top-bar.show{display:flex;}
+.top-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.top-logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.top-spacer{flex:1;}
+.coin-pill{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);
+  border-radius:20px;padding:5px 12px;font-weight:800;font-size:.85rem;color:var(--gold);
+}
+.avatar-btn{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:2px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.85rem;color:#fff;
+}
+
+/* ══ NAV BAR ══ */
+.nav-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:var(--nav-bg);backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:none;justify-content:space-around;
+  padding:8px 0 max(12px,env(safe-area-inset-bottom));
+}
+.nav-bar.show{display:flex;}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;padding:4px 16px;border-radius:10px;
+  transition:color .2s;font-size:.65rem;font-weight:800;
+  color:var(--muted);border:none;background:none;font-family:'Nunito',sans-serif;
+}
+.nav-item.active{color:var(--accent);}
+.nav-item svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;}
+
+/* ══ BUTTONS ══ */
+.btn{
+  font-family:'Nunito';font-weight:800;font-size:.92rem;
+  padding:12px 22px;border:none;border-radius:12px;
+  cursor:pointer;transition:all .2s;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-gold{background:linear-gradient(135deg,#d97706,#fbbf24);color:#1a0a00;}
+.btn-full{width:100%;}
+.btn-sm{padding:7px 14px;font-size:.78rem;}
+
+/* ══ CARDS ══ */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:18px;width:100%;
+  box-shadow:0 2px 16px var(--shadow);
+}
+.card+.card{margin-top:12px;}
+
+/* ══ LOGO SVG ══ */
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:12px;width:100%;}
+.logo-svg{width:100px;height:100px;animation:logo-breathe 4s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(245,158,11,.5));}
+.logo-svg-mini{width:30px;height:30px;filter:drop-shadow(0 0 6px rgba(245,158,11,.45));}
+.logo-ring{animation:logo-spin 18s linear infinite;transform-origin:50px 50px;}
+.logo-star{animation:logo-ccw 10s linear infinite;transform-origin:50px 50px;}
+.logo-ring-mini{animation:logo-spin 18s linear infinite;transform-origin:15px 15px;}
+.logo-star-mini{animation:logo-ccw 10s linear infinite;transform-origin:15px 15px;}
+@keyframes logo-breathe{0%,100%{filter:drop-shadow(0 0 12px rgba(245,158,11,.4))}50%{filter:drop-shadow(0 0 28px rgba(245,158,11,.75))}}
+@keyframes logo-spin{to{transform:rotate(360deg)}}
+@keyframes logo-ccw{to{transform:rotate(-360deg)}}
+
+/* ══ AUTH SCREEN ══ */
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:420px;}
+.auth-tabs{display:flex;gap:6px;margin-bottom:22px;background:var(--card2);border-radius:12px;padding:4px;}
+.auth-tab{flex:1;padding:9px;border:none;border-radius:9px;font-family:'Nunito';font-weight:800;font-size:.88rem;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s;}
+.auth-tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 6px var(--shadow);}
+.auth-label{display:block;font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:14px;}
+.auth-input{
+  width:100%;padding:12px 14px;border-radius:10px;
+  background:var(--card2);border:1.5px solid var(--border);
+  color:var(--text);font-family:'Nunito';font-size:.92rem;outline:none;
+  transition:border-color .2s;
+}
+.auth-input:focus{border-color:var(--accent);}
+.auth-err{color:var(--red);font-size:.8rem;font-weight:700;margin-top:6px;display:none;}
+.auth-err.show{display:block;}
+.auth-divider{text-align:center;color:var(--muted);font-size:.8rem;margin:14px 0;}
+.guest-btn{
+  width:100%;padding:13px;border-radius:12px;
+  background:var(--card2);border:1px solid var(--border);
+  color:var(--text);font-family:'Nunito';font-weight:800;font-size:.92rem;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.guest-btn:hover{background:var(--card3);}
+
+/* ══ APP TITLE ══ */
+.app-title{font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;text-align:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;}
+.app-sub{text-align:center;color:var(--muted);font-size:.8rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;}
+
+/* ══ LANG SELECTOR ══ */
+.steps-row{display:flex;align-items:center;width:100%;max-width:360px;margin:0 auto 20px;}
+.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex-shrink:0;transition:all .3s;}
+.step-dot.active{background:var(--accent);color:#fff;}
+.step-dot.done{background:var(--green);color:#fff;}
+.step-dot.pending{background:var(--card2);color:var(--muted);}
+.step-line{flex:1;height:2px;background:var(--card2);transition:background .3s;}
+.step-line.done{background:var(--green);}
+.lang-section{width:100%;}
+.lang-section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:8px;font-weight:800;}
+.lang-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.lang-btn{
+  padding:10px 6px;border-radius:12px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;transition:all .2s;
+  font-family:'Nunito';font-weight:800;font-size:.82rem;color:var(--text);
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.lang-btn:hover{border-color:var(--accent);background:var(--card2);}
+.lang-btn.selected{border-color:var(--accent);background:rgba(124,58,237,.12);color:var(--accent);}
+.lang-flag{font-size:1.4rem;}
+.selected-pair{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:12px 18px;background:rgba(124,58,237,.08);
+  border:1px solid rgba(124,58,237,.2);border-radius:12px;
+  margin:12px 0;width:100%;flex-wrap:wrap;
+}
+.pair-tag{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.9rem;}
+.swap-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.2rem;transition:transform .3s;}
+.swap-btn:hover{transform:rotate(180deg);color:var(--accent);}
+
+/* ══ LEVELS ══ */
+.levels-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;}
+.level-card{
+  padding:14px;border-radius:14px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;transition:all .2s;position:relative;
+}
+.level-card:hover:not(.locked){border-color:var(--accent);transform:translateY(-2px);}
+.level-card.locked{opacity:.5;cursor:not-allowed;}
+.level-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.7rem;font-weight:800;letter-spacing:1px;margin-bottom:6px;}
+.level-title{font-weight:800;font-size:.9rem;margin-bottom:3px;}
+.level-desc{font-size:.75rem;color:var(--muted);}
+.level-stars{margin-top:6px;}
+.star-icon{color:var(--gold);}
+.star-icon.empty{color:rgba(255,255,255,.1);}
+
+/* ══ CHAPTERS ══ */
+.chapter-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:13px;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:12px;width:100%;
+}
+.chapter-item:hover:not(.locked){border-color:var(--accent);background:var(--card2);}
+.chapter-item.locked{opacity:.5;cursor:not-allowed;}
+.chapter-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;}
+.chapter-info{flex:1;}
+.chapter-title{font-weight:800;font-size:.9rem;}
+.chapter-sub{font-size:.75rem;color:var(--muted);}
+.chapter-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.btn-qr{
+  background:rgba(6,182,212,.1);color:var(--accent3);
+  border:1px solid rgba(6,182,212,.25);padding:4px 10px;
+  border-radius:7px;font-size:.7rem;font-weight:800;cursor:pointer;
+  transition:all .2s;font-family:'Nunito';
+}
+
+/* ══ GAME SELECT ══ */
+.game-types{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:10px;}
+.game-type-btn{
+  padding:14px 10px;border-radius:14px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;transition:all .2s;
+  font-family:'Nunito';text-align:center;
+}
+.game-type-btn:hover{border-color:var(--accent);background:var(--card2);}
+.game-type-btn:nth-child(5){grid-column:1/-1;}
+.game-type-icon{font-size:1.6rem;margin-bottom:5px;}
+.game-type-name{font-weight:800;font-size:.85rem;}
+.game-type-desc{font-size:.72rem;color:var(--muted);margin-top:2px;}
+
+/* ══ GAME SCREEN ══ */
+.game-header{width:100%;max-width:680px;display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.back-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:8px;}
+.back-btn:hover{color:var(--text);background:var(--card2);}
+.progress-bar-wrap{flex:1;height:6px;background:var(--card2);border-radius:3px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .3s;}
+.timer-badge{
+  padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:800;
+  background:var(--card2);color:var(--text);min-width:55px;text-align:center;
+}
+.timer-badge.urgent{background:rgba(239,68,68,.15);color:var(--red);}
+.type-pill{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
+  border-radius:20px;font-size:.65rem;font-weight:800;letter-spacing:.5px;
+  background:rgba(124,58,237,.1);color:var(--accent);border:1px solid rgba(124,58,237,.2);
+  margin-bottom:6px;
+}
+.game-num{font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.game-dir{font-size:.7rem;color:var(--accent3);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.game-text{font-size:1.2rem;font-weight:800;text-align:center;margin-bottom:16px;line-height:1.4;}
+.game-hint{font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:10px;}
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:580px;}
+.answer-btn{
+  padding:12px;border-radius:12px;border:2px solid var(--border);
+  font-family:'Nunito';font-weight:700;font-size:.88rem;cursor:pointer;
+  transition:all .2s;text-align:left;display:flex;align-items:center;gap:8px;
+  color:var(--text);background:var(--card);
+}
+.answer-btn:hover:not(:disabled){border-color:var(--accent);background:var(--card2);}
+.answer-btn .al{
+  width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.72rem;flex-shrink:0;
+}
+.answer-btn.correct{border-color:var(--green);background:rgba(16,185,129,.12);color:var(--green);}
+.answer-btn.wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red);}
+.fill-input{
+  width:100%;padding:14px;border-radius:12px;font-size:1rem;font-family:'Nunito';font-weight:700;
+  background:var(--card2);border:2px solid var(--border);color:var(--text);outline:none;
+  transition:border-color .2s;text-align:center;
+}
+.fill-input:focus{border-color:var(--accent);}
+.fill-input.correct{border-color:var(--green);}
+.fill-input.wrong{border-color:var(--red);}
+.word-bank{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.word-token{
+  padding:7px 13px;border-radius:8px;background:var(--card2);
+  border:1.5px solid var(--border);cursor:pointer;font-weight:700;
+  font-size:.85rem;transition:all .2s;
+}
+.word-token:hover{border-color:var(--accent);background:var(--card3);}
+.word-token.in-sentence{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.3);}
+.sentence-slots{
+  display:flex;flex-wrap:wrap;gap:6px;min-height:44px;padding:8px;
+  background:rgba(124,58,237,.04);border-radius:10px;
+  border:2px dashed rgba(124,58,237,.2);align-items:center;margin-bottom:10px;
+}
+.slot-placeholder{color:var(--muted);font-size:.8rem;}
+.match-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;}
+.match-item{
+  padding:10px 12px;border-radius:10px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;font-weight:700;font-size:.85rem;
+  transition:all .2s;text-align:center;
+}
+.match-item:hover{border-color:var(--accent);}
+.match-item.selected{border-color:var(--accent);background:rgba(124,58,237,.12);}
+.match-item.matched{border-color:var(--green);background:rgba(16,185,129,.1);opacity:.7;cursor:default;}
+.match-item.wrong-flash{border-color:var(--red);background:rgba(239,68,68,.1);}
+.feedback-banner{
+  width:100%;max-width:580px;padding:12px 16px;border-radius:12px;
+  margin:8px 0;font-weight:800;font-size:.88rem;
+  display:none;align-items:center;gap:9px;
+}
+.feedback-banner.show{display:flex;}
+.feedback-banner.correct{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--green);}
+.feedback-banner.wrong{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--red);}
+.feedback-banner.close{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:var(--gold);}
+.game-score{font-size:.88rem;font-weight:800;color:var(--gold);}
+.game-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center;}
+
+/* ══ RESULTS ══ */
+.results-stars{display:flex;justify-content:center;gap:8px;font-size:2.5rem;margin:16px 0;}
+.results-score{text-align:center;font-size:2.5rem;font-weight:900;color:var(--accent);}
+.results-sub{text-align:center;color:var(--muted);margin-bottom:20px;}
+.xp-badge{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);
+  border-radius:12px;padding:12px 18px;margin-bottom:10px;width:100%;
+}
+
+/* ══ PORTFOLIO ══ */
+.wealth-hero{
+  background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(236,72,153,.1));
+  border:1px solid rgba(124,58,237,.25);border-radius:16px;
+  padding:20px;width:100%;margin-bottom:12px;text-align:center;
+}
+.wealth-label{font-size:.72rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:800;}
+.wealth-value{font-size:2rem;font-weight:900;color:var(--text);margin:4px 0;}
+.div-banner{
+  background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
+  border-radius:12px;padding:12px 16px;display:none;
+  align-items:center;gap:12px;margin-bottom:12px;width:100%;cursor:pointer;
+}
+.div-banner.show{display:flex;}
+.assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.asset-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;
+}
+.asset-card.gold{border-color:rgba(251,191,36,.2);}
+.asset-card.house{border-color:rgba(14,165,233,.2);}
+.asset-card.stock{border-color:rgba(16,185,129,.2);}
+.asset-card.crypto{border-color:rgba(167,139,250,.2);}
+.asset-icon{font-size:1.6rem;margin-bottom:6px;}
+.asset-name{font-weight:800;font-size:.88rem;}
+.asset-type{font-size:.7rem;color:var(--muted);}
+.asset-owned{font-size:1.3rem;font-weight:900;color:var(--accent);margin:4px 0;}
+.asset-div{font-size:.72rem;color:var(--green);font-weight:700;}
+.asset-price-live{font-size:.7rem;color:var(--muted);}
+.asset-btns{display:flex;gap:6px;margin-top:8px;}
+.asset-buy{flex:1;padding:7px;border:none;border-radius:8px;font-family:'Nunito';font-weight:800;font-size:.78rem;cursor:pointer;background:var(--accent);color:#fff;transition:opacity .2s;}
+.asset-buy:disabled{opacity:.4;cursor:not-allowed;}
+.asset-info{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:none;cursor:pointer;color:var(--muted);font-size:.78rem;font-family:'Nunito';}
+
+/* ══ SHOP ══ */
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+.shop-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:14px;position:relative;
+}
+.shop-item.owned{border-color:rgba(16,185,129,.3);}
+.shop-item-icon{font-size:1.8rem;margin-bottom:6px;}
+.shop-item-name{font-weight:800;font-size:.85rem;}
+.shop-item-desc{font-size:.72rem;color:var(--muted);margin:3px 0 8px;}
+.owned-badge{
+  position:absolute;top:8px;right:8px;
+  background:rgba(16,185,129,.15);color:var(--green);
+  border-radius:20px;padding:2px 8px;font-size:.65rem;font-weight:800;
+}
+
+/* ══ PROFILE ══ */
+.profile-hero{
+  background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(236,72,153,.1));
+  border:1px solid rgba(124,58,237,.2);border-radius:16px;
+  padding:20px;width:100%;display:flex;align-items:center;gap:16px;margin-bottom:12px;
+}
+.profile-avatar{
+  width:60px;height:60px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;font-weight:900;color:#fff;border:3px solid rgba(255,255,255,.2);
+}
+.profile-name{font-weight:900;font-size:1.1rem;}
+.profile-email{font-size:.78rem;color:var(--muted);}
+.profile-joined{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;margin-bottom:12px;}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:12px;text-align:center;
+}
+.stat-val{font-size:1.4rem;font-weight:900;}
+.stat-lbl{font-size:.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800;}
+.section-title{font-weight:900;font-size:.88rem;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.theme-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:4px;}
+.theme-btn{
+  padding:9px 6px;border-radius:10px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;font-family:'Nunito';
+  font-weight:800;font-size:.78rem;color:var(--text);transition:all .2s;
+}
+.theme-btn:hover{border-color:var(--accent);}
+.theme-btn.active{border-color:var(--accent);background:rgba(124,58,237,.12);color:var(--accent);}
+.lang-btns{display:flex;flex-wrap:wrap;gap:6px;}
+.lang-ui-btn{
+  padding:7px 14px;border-radius:10px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;font-family:'Nunito';
+  font-weight:800;font-size:.82rem;color:var(--text);transition:all .2s;
+}
+.lang-ui-btn:hover{border-color:var(--accent);}
+.lang-ui-btn.active{border-color:var(--accent);background:rgba(124,58,237,.12);color:var(--accent);}
+
+/* ══ MODALS ══ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.modal-overlay.show{display:flex;}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:24px;width:100%;max-width:400px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.modal-title{font-weight:900;font-size:1.1rem;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.3rem;line-height:1;}
+
+/* ══ TOAST ══ */
+.toast{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-8px);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:10px 18px;font-weight:700;font-size:.85rem;z-index:300;
+  opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 20px var(--shadow);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ══ FLOAT COIN ══ */
+.float-coin{
+  position:fixed;font-size:1.3rem;font-weight:900;color:var(--gold);
+  pointer-events:none;z-index:300;animation:float-up .9s ease-out forwards;
+}
+@keyframes float-up{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-60px)}}
+
+/* ══ BREADCRUMB ══ */
+.breadcrumb{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.75rem;margin-bottom:10px;width:100%;flex-wrap:wrap;}
+.bc-sep{color:var(--card3);}
+.bc-link{cursor:pointer;font-weight:700;}
+.bc-link:hover{color:var(--text);}
+
+/* ══ SECTION HEADERS ══ */
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;width:100%;margin-bottom:4px;}
+.page-sub{color:var(--muted);font-size:.82rem;margin-bottom:16px;width:100%;}
+
+/* ══ MATCH PROGRESS ══ */
+.match-prog{font-size:.78rem;color:var(--muted);font-weight:700;text-align:center;margin-bottom:8px;}
+.match-col-labels{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+.match-col-label{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800;text-align:center;}
+
+/* ══ QR MODAL ══ */
+#qr-img img{border-radius:12px;display:block;}
+.qr-url{font-size:.68rem;color:var(--muted);word-break:break-all;margin-top:8px;cursor:pointer;}
+.qr-url:hover{color:var(--text);}
+
+/* ══ THEME PICKER ══ */
+#screen-theme-picker{min-height:100vh;justify-content:center;}
+.theme-pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:400px;}
+.theme-pick-btn{
+  padding:18px;border-radius:16px;border:2px solid var(--border);
+  background:var(--card);cursor:pointer;transition:all .2s;text-align:center;
+  font-family:'Nunito';
+}
+.theme-pick-btn:hover{border-color:var(--accent);transform:translateY(-2px);}
+.theme-pick-icon{font-size:2rem;margin-bottom:8px;}
+.theme-pick-name{font-weight:800;font-size:.9rem;}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:400px){
+  .answers-grid{grid-template-columns:1fr;}
+  .assets-grid{grid-template-columns:1fr;}
+  .shop-grid{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:repeat(3,1fr);}
+  .theme-btns{grid-template-columns:repeat(2,1fr);}
+}
+@media(min-width:600px){
+  .game-text{font-size:1.4rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- STARS -->
+<div id="stars"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- TOP BAR -->
+<div class="top-bar" id="top-bar">
+  <div class="top-logo">
+    <svg class="logo-svg-mini" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="gm" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
+      <g class="logo-ring-mini">
+        <circle cx="15" cy="15" r="8.5" fill="none" stroke="url(#gm)" stroke-width=".9" opacity=".6"/>
+        <circle cx="15" cy="8.5" r="6.5" fill="none" stroke="url(#gm)" stroke-width=".7" opacity=".45"/>
+        <circle cx="15" cy="21.5" r="6.5" fill="none" stroke="url(#gm)" stroke-width=".7" opacity=".45"/>
+        <circle cx="9.4" cy="11.75" r="6.5" fill="none" stroke="url(#gm)" stroke-width=".7" opacity=".45"/>
+        <circle cx="20.6" cy="11.75" r="6.5" fill="none" stroke="url(#gm)" stroke-width=".7" opacity=".45"/>
+        <circle cx="9.4" cy="18.25" r="6.5" fill="none" stroke="url(#gm)" stroke-width=".7" opacity=".45"/>
+        <circle cx="20.6" cy="18.25" r="6.5" fill="none" stroke="url(#gm)" stroke-width=".7" opacity=".45"/>
+      </g>
+      <g class="logo-star-mini">
+        <polygon points="15,7.5 16.5,12.2 21.5,12.2 17.5,15 19,19.7 15,17 11,19.7 12.5,15 8.5,12.2 13.5,12.2" fill="url(#gm)" fill-opacity=".25" stroke="url(#gm)" stroke-width=".6"/>
+      </g>
+      <circle cx="15" cy="15" r="1.5" fill="url(#gm)"/>
+    </svg>
+    <span class="top-logo-text">LQ</span>
+  </div>
+  <div class="top-spacer"></div>
+  <div class="coin-pill"><span>🪙</span><span id="tb-coins">0</span></div>
+  <div class="avatar-btn" id="avatar-btn" onclick="navTo('profile')">?</div>
+</div>
+
+<!-- NAV BAR -->
+<nav class="nav-bar" id="nav-bar">
+  <button class="nav-item active" id="nav-learn" onclick="navTo('learn')">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    <span id="nav-learn-lbl">Apprendre</span>
+  </button>
+  <button class="nav-item" id="nav-portfolio" onclick="navTo('portfolio')">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <span id="nav-portfolio-lbl">Portfolio</span>
+  </button>
+  <button class="nav-item" id="nav-shop" onclick="navTo('shop')">
+    <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    <span id="nav-shop-lbl">Boutique</span>
+  </button>
+  <button class="nav-item" id="nav-profile" onclick="navTo('profile')">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span id="nav-profile-lbl">Profil</span>
+  </button>
+</nav>
+
+<div id="app">
+
+<!-- ══ THEME PICKER ══ -->
+<div class="screen active" id="screen-theme-picker" style="padding-top:0;">
+  <div style="width:100%;max-width:400px;text-align:center;padding:40px 16px 0;">
+    <div class="logo-wrap">
+      <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="ga" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
+        <g class="logo-ring">
+          <circle cx="50" cy="50" r="28" fill="none" stroke="url(#ga)" stroke-width="1.2" opacity=".7"/>
+          <circle cx="50" cy="22" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/>
+          <circle cx="50" cy="78" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/>
+          <circle cx="31" cy="39" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/>
+          <circle cx="69" cy="39" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/>
+          <circle cx="31" cy="61" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/>
+          <circle cx="69" cy="61" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="url(#ga)" stroke-width=".8" stroke-dasharray="4 5" opacity=".3"/>
+        </g>
+        <g class="logo-star">
+          <polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#ga)" fill-opacity=".15" stroke="url(#ga)" stroke-width="1"/>
+        </g>
+        <circle cx="50" cy="50" r="4" fill="url(#ga)" opacity=".9"/>
+        <circle cx="50" cy="50" r="2" fill="#fff" opacity=".8"/>
+      </svg>
+      <div class="app-title">LinguaQuest</div>
+      <div class="app-sub">Apprends. Investis. Maîtrise.</div>
+    </div>
+    <p style="font-weight:800;font-size:1rem;margin-bottom:16px;">Choisis ton thème</p>
+    <div class="theme-pick-grid">
+      <button class="theme-pick-btn" onclick="pickTheme('dark')">
+        <div class="theme-pick-icon">🌙</div>
+        <div class="theme-pick-name">Sombre</div>
+      </button>
+      <button class="theme-pick-btn" onclick="pickTheme('light')">
+        <div class="theme-pick-icon">☀️</div>
+        <div class="theme-pick-name">Clair</div>
+      </button>
+      <button class="theme-pick-btn" onclick="pickTheme('claude')">
+        <div class="theme-pick-icon" style="font-size:1.5rem;">🤖</div>
+        <div class="theme-pick-name">Claude</div>
+      </button>
+      <button class="theme-pick-btn" onclick="pickTheme('auto')">
+        <div class="theme-pick-icon">⚙️</div>
+        <div class="theme-pick-name">Auto</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div class="screen" id="screen-auth">
+  <div class="screen-inner">
+    <div class="logo-wrap">
+      <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="gb" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
+        <g class="logo-ring"><circle cx="50" cy="50" r="28" fill="none" stroke="url(#gb)" stroke-width="1.2" opacity=".7"/><circle cx="50" cy="22" r="22" fill="none" stroke="url(#gb)" stroke-width="1" opacity=".5"/><circle cx="50" cy="78" r="22" fill="none" stroke="url(#gb)" stroke-width="1" opacity=".5"/><circle cx="31" cy="39" r="22" fill="none" stroke="url(#gb)" stroke-width="1" opacity=".5"/><circle cx="69" cy="39" r="22" fill="none" stroke="url(#gb)" stroke-width="1" opacity=".5"/><circle cx="31" cy="61" r="22" fill="none" stroke="url(#gb)" stroke-width="1" opacity=".5"/><circle cx="69" cy="61" r="22" fill="none" stroke="url(#gb)" stroke-width="1" opacity=".5"/><circle cx="50" cy="50" r="44" fill="none" stroke="url(#gb)" stroke-width=".8" stroke-dasharray="4 5" opacity=".3"/></g>
+        <g class="logo-star"><polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#gb)" fill-opacity=".15" stroke="url(#gb)" stroke-width="1"/></g>
+        <circle cx="50" cy="50" r="4" fill="url(#gb)" opacity=".9"/><circle cx="50" cy="50" r="2" fill="#fff" opacity=".8"/>
+      </svg>
+      <div class="app-title">LinguaQuest</div>
+      <div class="app-sub">Apprends. Investis. Maîtrise.</div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Se connecter</button>
+        <button class="auth-tab" id="tab-register" onclick="switchTab('register')">S'inscrire</button>
+      </div>
+      <!-- LOGIN -->
+      <div id="form-login">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" type="email" id="login-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+        <label class="auth-label">Mot de passe</label>
+        <input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="auth-err" id="login-err"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="doLogin()">Se connecter →</button>
+      </div>
+      <!-- REGISTER -->
+      <div id="form-register" style="display:none;">
+        <label class="auth-label">Prénom</label>
+        <input class="auth-input" type="text" id="reg-name" placeholder="Marie" onkeydown="if(event.key==='Enter')doRegister()">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" type="email" id="reg-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doRegister()">
+        <label class="auth-label">Mot de passe</label>
+        <input class="auth-input" type="password" id="reg-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')doRegister()">
+        <div class="auth-err" id="reg-err"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:16px;" onclick="doRegister()">Créer mon compte 🚀</button>
+      </div>
+      <div class="auth-divider">ou continuer sans compte</div>
+      <button class="guest-btn" onclick="guestLogin()">👤 Continuer en invité</button>
+      <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:8px;">La progression ne sera pas sauvegardée</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEARN SCREEN ══ -->
+<div class="screen" id="screen-learn">
+  <div class="screen-inner">
+    <div class="page-title" id="learn-title">Choisir les langues</div>
+    <div class="page-sub" id="learn-sub">Sélectionne ta langue de départ et celle que tu veux apprendre</div>
+    <div class="steps-row">
+      <div class="step-dot active" id="dot1">1</div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot pending" id="dot2">2</div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot pending" id="dot3">→</div>
+    </div>
+    <div class="selected-pair" id="selected-pair" style="display:none;">
+      <div class="pair-tag" id="pair-native"></div>
+      <button class="swap-btn" onclick="swapLangs()" title="Inverser">⇄</button>
+      <div class="pair-tag" id="pair-target"></div>
+    </div>
+    <div class="lang-section" id="lang-section-native">
+      <div class="lang-section-title" id="lbl-speak">🗣 Je parle</div>
+      <div class="lang-grid" id="grid-native"></div>
+    </div>
+    <div class="lang-section" id="lang-section-target" style="display:none;margin-top:16px;">
+      <div class="lang-section-title" id="lbl-learn">📚 Je veux apprendre</div>
+      <div class="lang-grid" id="grid-target"></div>
+    </div>
+    <div style="width:100%;margin-top:18px;" id="start-btn-wrap" style="display:none;">
+      <button class="btn btn-primary btn-full" id="start-btn" onclick="goToLevels()" style="display:none;">Commencer →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LEVELS SCREEN ══ -->
+<div class="screen" id="screen-levels">
+  <div class="screen-inner">
+    <div class="breadcrumb"><span class="bc-link" onclick="navTo('learn')" id="bc-l1">Langues</span><span class="bc-sep">›</span><span id="bc-l2"></span></div>
+    <div class="page-title" id="levels-title">Niveaux</div>
+    <div class="page-sub" id="levels-sub">Choisis ton niveau</div>
+    <div class="levels-grid" id="levels-grid"></div>
+  </div>
+</div>
+
+<!-- ══ CHAPTERS SCREEN ══ -->
+<div class="screen" id="screen-chapters">
+  <div class="screen-inner">
+    <div class="breadcrumb">
+      <span class="bc-link" onclick="navTo('learn')" id="bc-c1">Langues</span>
+      <span class="bc-sep">›</span>
+      <span class="bc-link" onclick="goToLevels()" id="bc-c2"></span>
+      <span class="bc-sep">›</span>
+      <span id="bc-c3"></span>
+    </div>
+    <div class="page-title" id="chapters-title">Chapitres</div>
+    <div class="page-sub" id="chapters-sub"></div>
+    <div id="chapters-list" style="width:100%;display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
+<!-- ══ GAME SELECT ══ -->
+<div class="screen" id="screen-game-select">
+  <div class="screen-inner">
+    <div class="breadcrumb">
+      <span class="bc-link" onclick="goToLevels()" id="bc-gs1"></span>
+      <span class="bc-sep">›</span>
+      <span class="bc-link" onclick="goToChaps()" id="bc-gs2"></span>
+      <span class="bc-sep">›</span>
+      <span id="bc-gs3"></span>
+    </div>
+    <div class="page-title" id="gsel-title">Chapitre</div>
+    <div class="page-sub" id="gsel-sub"></div>
+    <div class="game-types">
+      <button class="game-type-btn" onclick="startGame('mixed')">
+        <div class="game-type-icon">🎲</div>
+        <div class="game-type-name" id="gtype-mixed">Mixte</div>
+        <div class="game-type-desc" id="gtype-mixed-d">Tous les types mélangés</div>
+      </button>
+      <button class="game-type-btn" onclick="startGame('quiz')">
+        <div class="game-type-icon">🔤</div>
+        <div class="game-type-name" id="gtype-quiz">QCM</div>
+        <div class="game-type-desc" id="gtype-quiz-d">4 choix, 1 bonne réponse</div>
+      </button>
+      <button class="game-type-btn" onclick="startGame('fill')">
+        <div class="game-type-icon">✏️</div>
+        <div class="game-type-name" id="gtype-fill">Compléter</div>
+        <div class="game-type-desc" id="gtype-fill-d">Tape la traduction</div>
+      </button>
+      <button class="game-type-btn" onclick="startGame('sort')">
+        <div class="game-type-icon">🔀</div>
+        <div class="game-type-name" id="gtype-sort">Assembler</div>
+        <div class="game-type-desc" id="gtype-sort-d">Remets les mots en ordre</div>
+      </button>
+      <button class="game-type-btn" onclick="startGame('match')">
+        <div class="game-type-icon">🔗</div>
+        <div class="game-type-name" id="gtype-match">Associer</div>
+        <div class="game-type-desc" id="gtype-match-d">Associe les paires</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div class="screen" id="screen-game">
+  <div class="game-header" style="max-width:680px;">
+    <button class="back-btn" onclick="goToSel()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="g-progress" style="width:0%"></div></div>
+    <div class="timer-badge" id="g-timer">⏱ —</div>
+    <div class="game-score">🪙 <span id="g-score">0</span></div>
+  </div>
+  <div style="width:100%;max-width:680px;">
+    <div class="type-pill" id="g-type-pill">QCM</div>
+    <div class="game-num" id="g-num"></div>
+    <div class="game-dir" id="g-dir"></div>
+    <div class="game-text" id="g-text"></div>
+    <div class="game-hint" id="g-hint"></div>
+    <!-- QUIZ zone -->
+    <div id="zone-quiz" style="display:none;">
+      <div class="answers-grid" id="answers-grid"></div>
+    </div>
+    <!-- FILL zone -->
+    <div id="zone-fill" style="display:none;">
+      <input class="fill-input" type="text" id="fill-input" placeholder="Tape ta réponse…" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')doFill()">
+      <div id="fuzzy-note" style="display:none;text-align:center;font-size:.75rem;color:var(--gold);margin-top:6px;font-weight:700;"></div>
+    </div>
+    <!-- SORT zone -->
+    <div id="zone-sort" style="display:none;">
+      <div class="sentence-slots" id="sentence-slots"><span class="slot-placeholder" id="sort-placeholder">Clique sur les mots…</span></div>
+      <div class="word-bank" id="word-bank"></div>
+    </div>
+    <!-- MATCH zone -->
+    <div id="zone-match" style="display:none;">
+      <div class="match-col-labels"><div class="match-col-label" id="mcl-l"></div><div class="match-col-label" id="mcl-r"></div></div>
+      <div class="match-prog" id="match-prog-txt"></div>
+      <div class="match-cols"><div id="match-left"></div><div id="match-right"></div></div>
+    </div>
+    <!-- Feedback -->
+    <div class="feedback-banner" id="g-feedback">
+      <span id="g-feedback-icon">✓</span>
+      <div><div id="g-feedback-msg"></div><div id="g-feedback-ans" style="font-size:.8rem;opacity:.8;margin-top:2px;font-weight:600;"></div></div>
+    </div>
+    <!-- Buttons -->
+    <div class="game-btns">
+      <button class="btn btn-ghost btn-sm" id="btn-skip" style="display:none;" onclick="onTimeout()">Passer</button>
+      <button class="btn btn-primary" id="btn-check" style="display:none;" onclick="checkCurrentQ()">Vérifier</button>
+      <button class="btn btn-primary" id="btn-next" style="display:none;" onclick="nextQ()">Suivant →</button>
+      <button class="btn btn-gold btn-sm" id="btn-reset" style="display:none;" onclick="resetSort()">↩ Effacer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULTS SCREEN ══ -->
+<div class="screen" id="screen-results">
+  <div class="screen-inner">
+    <div class="results-stars" id="r-stars">⭐⭐⭐</div>
+    <div class="results-score" id="r-score">10/10</div>
+    <div class="results-sub" id="r-sub">Excellent !</div>
+    <div class="xp-badge">
+      <span style="font-size:1.5rem;">⚡</span>
+      <div><div style="font-weight:800;">+<span id="r-xp">0</span> XP</div><div style="font-size:.75rem;color:var(--muted);">+<span id="r-coins">0</span> pièces</div></div>
+    </div>
+    <div id="r-breakdown" style="width:100%;margin:8px 0;"></div>
+    <div style="display:flex;gap:8px;width:100%;flex-wrap:wrap;">
+      <button class="btn btn-primary" style="flex:1;" onclick="playAgain()">Rejouer</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="goToChaps()">Chapitres</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PORTFOLIO SCREEN ══ -->
+<div class="screen" id="screen-portfolio">
+  <div class="screen-inner">
+    <div class="page-title" id="port-title">Portfolio</div>
+    <div class="wealth-hero">
+      <div class="wealth-label" id="port-wealth-lbl">Patrimoine total</div>
+      <div class="wealth-value">🏆 <span id="wealth-total">0</span> <span style="font-size:1rem;">pièces</span></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:4px;" id="port-coins-lbl">Solde: <span id="portfolio-coins">0</span> 🪙</div>
+    </div>
+    <div class="div-banner" id="div-banner" onclick="collectDiv()">
+      <span style="font-size:1.4rem;">💰</span>
+      <div style="flex:1"><div style="font-weight:800;" id="div-lbl">Dividendes disponibles !</div><div style="font-size:.75rem;color:var(--muted);">Clique pour collecter</div></div>
+      <div style="font-weight:900;color:var(--green);">+<span id="div-amount">0</span></div>
+    </div>
+    <div class="assets-grid" id="assets-grid"></div>
+  </div>
+</div>
+
+<!-- ══ SHOP SCREEN ══ -->
+<div class="screen" id="screen-shop">
+  <div class="screen-inner">
+    <div class="page-title" id="shop-title">Boutique</div>
+    <div class="page-sub" id="shop-sub">Dépense tes pièces pour des bonus</div>
+    <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px;font-weight:800;">
+      <span>🪙</span> <span id="shop-coins">0</span>
+    </div>
+    <div class="shop-grid" id="shop-grid"></div>
+  </div>
+</div>
+
+<!-- ══ PROFILE SCREEN ══ -->
+<div class="screen" id="screen-profile">
+  <div class="screen-inner">
+    <div class="profile-hero">
+      <div class="profile-avatar" id="prof-avatar">?</div>
+      <div>
+        <div class="profile-name" id="prof-name"></div>
+        <div class="profile-email" id="prof-email"></div>
+        <div class="profile-joined" id="prof-joined"></div>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val" id="stat-xp" style="color:var(--accent);">0</div><div class="stat-lbl">XP Total</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-coins" style="color:var(--gold);">0</div><div class="stat-lbl">Pièces</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-sessions" style="color:var(--accent3);">0</div><div class="stat-lbl">Sessions</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-streak" style="color:var(--red);">0 🔥</div><div class="stat-lbl">Jours</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-chaps" style="color:var(--green);">0</div><div class="stat-lbl">Chapitres</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-wealth" style="color:var(--accent2);">0</div><div class="stat-lbl">Patrimoine</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">🎨 Apparence</div>
+      <div class="theme-btns">
+        <button class="theme-btn" id="theme-btn-light" onclick="setTheme('light')">☀️ Clair</button>
+        <button class="theme-btn" id="theme-btn-dark" onclick="setTheme('dark')">🌙 Sombre</button>
+        <button class="theme-btn" id="theme-btn-claude" onclick="setTheme('claude')">🤖 Claude</button>
+        <button class="theme-btn" id="theme-btn-auto" onclick="setTheme('auto')">⚙️ Auto</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">🌐 Langue de l'interface</div>
+      <div class="lang-btns" id="ui-lang-btns"></div>
+    </div>
+    <div style="margin-top:4px;font-size:.7rem;text-align:center;color:var(--muted);">
+      <a href="/privacy.html" style="color:inherit;margin:0 6px;">Confidentialité</a>·
+      <a href="/legal.html" style="color:inherit;margin:0 6px;">Mentions légales</a>
+    </div>
+    <button class="btn btn-ghost btn-full" style="margin-top:8px;" onclick="doLogout()">🚪 Se déconnecter</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- ══ MODAL: ASSET INFO ══ -->
+<div class="modal-overlay" id="asset-modal">
+  <div class="modal">
+    <div class="modal-title">
+      <span><span id="amod-icon"></span> <span id="amod-name"></span></span>
+      <button class="modal-close" onclick="closeAssetModal()">✕</button>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px;" id="amod-type"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div class="stat-card"><div class="stat-val" id="amod-owned" style="color:var(--accent);">0</div><div class="stat-lbl">Possédés</div></div>
+      <div class="stat-card"><div class="stat-val" id="amod-daily" style="color:var(--green);">0</div><div class="stat-lbl">Dividende/j</div></div>
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;line-height:1.5;" id="amod-explain"></p>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;" id="amod-buy-btn">Acheter</button>
+      <button class="btn btn-ghost" id="amod-sell-btn">Vendre</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: QR CODE ══ -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-title">
+      <span id="qr-title">Partager ce chapitre</span>
+      <button class="modal-close" onclick="closeQR()">✕</button>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px;" id="qr-sub"></div>
+    <div id="qr-img" style="display:flex;justify-content:center;margin-bottom:12px;"></div>
+    <div class="qr-url" id="qr-url-text" onclick="copyUrl()">Copier le lien</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════
+const LANGS = {
+  fr:{name:'Français', flag:'🇫🇷', native:'Français'},
+  en:{name:'Anglais',  flag:'🇬🇧', native:'English'},
+  es:{name:'Espagnol', flag:'🇪🇸', native:'Español'},
+  de:{name:'Allemand', flag:'🇩🇪', native:'Deutsch'},
+  cs:{name:'Tchèque',  flag:'🇨🇿', native:'Čeština'}
+};
+
+const UI_STRINGS = {
+  fr:{learn:'Apprendre',portfolio:'Portfolio',shop:'Boutique',profile:'Profil',
+      speak:'🗣 Je parle',learnLbl:'📚 Je veux apprendre',start:'Commencer →',
+      levels:'Niveaux',chapters:'Chapitres',mixed:'Mixte',quiz:'QCM',fill:'Compléter',
+      sort:'Assembler',match:'Associer',correct:'Correct !',wrong:'Pas tout à fait',
+      almost:'Presque !',next:'Suivant →',skip:'Passer',check:'Vérifier',
+      wealth:'Patrimoine total',dividends:'Dividendes disponibles !',
+      collect:'Clique pour collecter',logout:'Se déconnecter',appearance:'🎨 Apparence',
+      langUI:'🌐 Langue de l\'interface'},
+  en:{learn:'Learn',portfolio:'Portfolio',shop:'Shop',profile:'Profile',
+      speak:'🗣 I speak',learnLbl:'📚 I want to learn',start:'Start →',
+      levels:'Levels',chapters:'Chapters',mixed:'Mixed',quiz:'Quiz',fill:'Fill in',
+      sort:'Sort',match:'Match',correct:'Correct!',wrong:'Not quite',
+      almost:'Almost!',next:'Next →',skip:'Skip',check:'Check',
+      wealth:'Total wealth',dividends:'Dividends available!',
+      collect:'Click to collect',logout:'Log out',appearance:'🎨 Appearance',
+      langUI:'🌐 Interface language'},
+  es:{learn:'Aprender',portfolio:'Portafolio',shop:'Tienda',profile:'Perfil',
+      speak:'🗣 Hablo',learnLbl:'📚 Quiero aprender',start:'Empezar →',
+      levels:'Niveles',chapters:'Capítulos',mixed:'Mixto',quiz:'Test',fill:'Rellenar',
+      sort:'Ordenar',match:'Asociar',correct:'¡Correcto!',wrong:'No exactamente',
+      almost:'¡Casi!',next:'Siguiente →',skip:'Saltar',check:'Verificar',
+      wealth:'Patrimonio total',dividends:'¡Dividendos disponibles!',
+      collect:'Toca para cobrar',logout:'Cerrar sesión',appearance:'🎨 Apariencia',
+      langUI:'🌐 Idioma de la interfaz'},
+  de:{learn:'Lernen',portfolio:'Portfolio',shop:'Shop',profile:'Profil',
+      speak:'🗣 Ich spreche',learnLbl:'📚 Ich lerne',start:'Starten →',
+      levels:'Niveaus',chapters:'Kapitel',mixed:'Gemischt',quiz:'Quiz',fill:'Ergänzen',
+      sort:'Sortieren',match:'Zuordnen',correct:'Richtig!',wrong:'Nicht ganz',
+      almost:'Fast!',next:'Weiter →',skip:'Überspringen',check:'Prüfen',
+      wealth:'Gesamtvermögen',dividends:'Dividenden verfügbar!',
+      collect:'Klicken zum Einsammeln',logout:'Abmelden',appearance:'🎨 Erscheinungsbild',
+      langUI:'🌐 Oberflächensprache'},
+  cs:{learn:'Učit se',portfolio:'Portfolio',shop:'Obchod',profile:'Profil',
+      speak:'🗣 Mluvím',learnLbl:'📚 Chci se učit',start:'Začít →',
+      levels:'Úrovně',chapters:'Kapitoly',mixed:'Smíšený',quiz:'Kvíz',fill:'Doplnit',
+      sort:'Seřadit',match:'Přiřadit',correct:'Správně!',wrong:'Není přesné',
+      almost:'Skoro!',next:'Další →',skip:'Přeskočit',check:'Zkontrolovat',
+      wealth:'Celkové jmění',dividends:'Dividendy dostupné!',
+      collect:'Klikni pro výběr',logout:'Odhlásit se',appearance:'🎨 Vzhled',
+      langUI:'🌐 Jazyk rozhraní'}
+};
+
+const WD = {
+  // Greetings
+  hello:    {fr:'Bonjour',   en:'Hello',       es:'Hola',      de:'Hallo',          cs:'Ahoj'},
+  goodbye:  {fr:'Au revoir', en:'Goodbye',     es:'Adiós',     de:'Auf Wiedersehen', cs:'Na shledanou'},
+  thanks:   {fr:'Merci',     en:'Thank you',   es:'Gracias',   de:'Danke',          cs:'Děkuji'},
+  please:   {fr:'S\'il vous plaît',en:'Please',es:'Por favor', de:'Bitte',          cs:'Prosím'},
+  yes:      {fr:'Oui',       en:'Yes',         es:'Sí',        de:'Ja',             cs:'Ano'},
+  no:       {fr:'Non',       en:'No',          es:'No',        de:'Nein',           cs:'Ne'},
+  sorry:    {fr:'Pardon',    en:'Sorry',       es:'Lo siento', de:'Entschuldigung', cs:'Promiňte'},
+  excuse:   {fr:'Excusez-moi',en:'Excuse me', es:'Permiso',   de:'Verzeihung',     cs:'S dovolením'},
+  // Numbers
+  one:      {fr:'Un',        en:'One',         es:'Uno',       de:'Eins',           cs:'Jeden'},
+  two:      {fr:'Deux',      en:'Two',         es:'Dos',       de:'Zwei',           cs:'Dva'},
+  three:    {fr:'Trois',     en:'Three',       es:'Tres',      de:'Drei',           cs:'Tři'},
+  four:     {fr:'Quatre',    en:'Four',        es:'Cuatro',    de:'Vier',           cs:'Čtyři'},
+  five:     {fr:'Cinq',      en:'Five',        es:'Cinco',     de:'Fünf',           cs:'Pět'},
+  ten:      {fr:'Dix',       en:'Ten',         es:'Diez',      de:'Zehn',           cs:'Deset'},
+  twenty:   {fr:'Vingt',     en:'Twenty',      es:'Veinte',    de:'Zwanzig',        cs:'Dvacet'},
+  hundred:  {fr:'Cent',      en:'Hundred',     es:'Cien',      de:'Hundert',        cs:'Sto'},
+  // Colors
+  red:      {fr:'Rouge',     en:'Red',         es:'Rojo',      de:'Rot',            cs:'Červená'},
+  blue:     {fr:'Bleu',      en:'Blue',        es:'Azul',      de:'Blau',           cs:'Modrá'},
+  green:    {fr:'Vert',      en:'Green',       es:'Verde',     de:'Grün',           cs:'Zelená'},
+  yellow:   {fr:'Jaune',     en:'Yellow',      es:'Amarillo',  de:'Gelb',           cs:'Žlutá'},
+  black:    {fr:'Noir',      en:'Black',       es:'Negro',     de:'Schwarz',        cs:'Černá'},
+  white:    {fr:'Blanc',     en:'White',       es:'Blanco',    de:'Weiß',           cs:'Bílá'},
+  orange:   {fr:'Orange',    en:'Orange',      es:'Naranja',   de:'Orange',         cs:'Oranžová'},
+  pink:     {fr:'Rose',      en:'Pink',        es:'Rosa',      de:'Rosa',           cs:'Růžová'},
+  // Family
+  father:   {fr:'Père',      en:'Father',      es:'Padre',     de:'Vater',          cs:'Otec'},
+  mother:   {fr:'Mère',      en:'Mother',      es:'Madre',     de:'Mutter',         cs:'Matka'},
+  brother:  {fr:'Frère',     en:'Brother',     es:'Hermano',   de:'Bruder',         cs:'Bratr'},
+  sister:   {fr:'Sœur',      en:'Sister',      es:'Hermana',   de:'Schwester',      cs:'Sestra'},
+  grandfather:{fr:'Grand-père',en:'Grandfather',es:'Abuelo',  de:'Großvater',      cs:'Dědeček'},
+  grandmother:{fr:'Grand-mère',en:'Grandmother',es:'Abuela',  de:'Großmutter',     cs:'Babička'},
+  child:    {fr:'Enfant',    en:'Child',       es:'Hijo',      de:'Kind',           cs:'Dítě'},
+  cousin:   {fr:'Cousin',    en:'Cousin',      es:'Primo',     de:'Cousin',         cs:'Bratranec'},
+  // Food
+  bread:    {fr:'Pain',      en:'Bread',       es:'Pan',       de:'Brot',           cs:'Chléb'},
+  water:    {fr:'Eau',       en:'Water',       es:'Agua',      de:'Wasser',         cs:'Voda'},
+  coffee:   {fr:'Café',      en:'Coffee',      es:'Café',      de:'Kaffee',         cs:'Káva'},
+  wine:     {fr:'Vin',       en:'Wine',        es:'Vino',      de:'Wein',           cs:'Víno'},
+  meat:     {fr:'Viande',    en:'Meat',        es:'Carne',     de:'Fleisch',        cs:'Maso'},
+  fish:     {fr:'Poisson',   en:'Fish',        es:'Pescado',   de:'Fisch',          cs:'Ryba'},
+  fruit:    {fr:'Fruit',     en:'Fruit',       es:'Fruta',     de:'Frucht',         cs:'Ovoce'},
+  cheese:   {fr:'Fromage',   en:'Cheese',      es:'Queso',     de:'Käse',           cs:'Sýr'},
+  // Travel
+  plane:    {fr:'Avion',     en:'Plane',       es:'Avión',     de:'Flugzeug',       cs:'Letadlo'},
+  train:    {fr:'Train',     en:'Train',       es:'Tren',      de:'Zug',            cs:'Vlak'},
+  hotel:    {fr:'Hôtel',     en:'Hotel',       es:'Hotel',     de:'Hotel',          cs:'Hotel'},
+  passport: {fr:'Passeport', en:'Passport',    es:'Pasaporte', de:'Reisepass',      cs:'Pas'},
+  ticket:   {fr:'Billet',    en:'Ticket',      es:'Billete',   de:'Fahrkarte',      cs:'Jízdenka'},
+  suitcase: {fr:'Valise',    en:'Suitcase',    es:'Maleta',    de:'Koffer',         cs:'Kufr'},
+  airport:  {fr:'Aéroport',  en:'Airport',     es:'Aeropuerto',de:'Flughafen',      cs:'Letiště'},
+  reservation:{fr:'Réservation',en:'Booking', es:'Reserva',   de:'Buchung',        cs:'Rezervace'},
+  // Classroom
+  school:   {fr:'École',     en:'School',      es:'Escuela',   de:'Schule',         cs:'Škola'},
+  book:     {fr:'Livre',     en:'Book',        es:'Libro',     de:'Buch',           cs:'Kniha'},
+  pen:      {fr:'Stylo',     en:'Pen',         es:'Bolígrafo', de:'Stift',          cs:'Pero'},
+  table:    {fr:'Table',     en:'Table',       es:'Mesa',      de:'Tisch',          cs:'Stůl'},
+  window:   {fr:'Fenêtre',   en:'Window',      es:'Ventana',   de:'Fenster',        cs:'Okno'},
+  door:     {fr:'Porte',     en:'Door',        es:'Puerta',    de:'Tür',            cs:'Dveře'},
+  chair:    {fr:'Chaise',    en:'Chair',       es:'Silla',     de:'Stuhl',          cs:'Židle'},
+};
+
+const CHAPTERS = {
+  A1:[
+    {id:'A1-1',
+     title:{fr:'Salutations',en:'Greetings',es:'Saludos',de:'Begrüßung',cs:'Pozdravy'},
+     sub:{fr:'Se présenter',en:'Meet people',es:'Presentarse',de:'Vorstellen',cs:'Představení'},
+     wids:['hello','goodbye','thanks','please','yes','no','sorry','excuse'],
+     sents:{
+       fr:['Bonjour, je m\'appelle Marie','Comment allez-vous ?','Enchanté de vous rencontrer'],
+       en:['Hello, my name is Tom','How are you?','Nice to meet you'],
+       es:['Hola, me llamo Carlos','¿Cómo estás?','Encantado de conocerte'],
+       de:['Hallo, ich heiße Klaus','Wie geht es Ihnen?','Schön, Sie kennenzulernen'],
+       cs:['Ahoj, jmenuji se Marie','Jak se máte?','Rád vás poznávám']
+     }},
+    {id:'A1-2',
+     title:{fr:'Les Chiffres',en:'Numbers',es:'Números',de:'Zahlen',cs:'Čísla'},
+     sub:{fr:'Compter de 1 à 100',en:'Count 1–100',es:'Contar 1–100',de:'Zählen 1–100',cs:'Počítat 1–100'},
+     wids:['one','two','three','four','five','ten','twenty','hundred'],
+     sents:{
+       fr:['J\'ai vingt ans','Combien coûte ce livre ?','Il est dix heures'],
+       en:['I am twenty years old','How much is this book?','It is ten o\'clock'],
+       es:['Tengo veinte años','¿Cuánto cuesta este libro?','Son las diez'],
+       de:['Ich bin zwanzig Jahre alt','Wie viel kostet dieses Buch?','Es ist zehn Uhr'],
+       cs:['Je mi dvacet let','Kolik stojí tato kniha?','Je deset hodin']
+     }},
+    {id:'A1-3',
+     title:{fr:'Les Couleurs',en:'Colours',es:'Colores',de:'Farben',cs:'Barvy'},
+     sub:{fr:'Décrire avec les couleurs',en:'Describe with colours',es:'Describir con colores',de:'Mit Farben beschreiben',cs:'Popisovat barvami'},
+     wids:['red','blue','green','yellow','black','white','orange','pink'],
+     sents:{
+       fr:['Le ciel est bleu','Ma voiture est rouge','J\'aime la couleur verte'],
+       en:['The sky is blue','My car is red','I like the colour green'],
+       es:['El cielo es azul','Mi coche es rojo','Me gusta el color verde'],
+       de:['Der Himmel ist blau','Mein Auto ist rot','Ich mag die Farbe Grün'],
+       cs:['Nebe je modré','Moje auto je červené','Mám rád zelenou barvu']
+     }},
+    {id:'A1-4',
+     title:{fr:'La Classe',en:'Classroom',es:'La Clase',de:'Klassenzimmer',cs:'Ve třídě'},
+     sub:{fr:'Objets de la classe',en:'Classroom objects',es:'Objetos del aula',de:'Schulgegenstände',cs:'Školní předměty'},
+     wids:['school','book','pen','table','window','door','chair','water'],
+     sents:{
+       fr:['La porte est fermée','Ouvre le livre page dix','La fenêtre est ouverte'],
+       en:['The door is closed','Open the book to page ten','The window is open'],
+       es:['La puerta está cerrada','Abre el libro en la página diez','La ventana está abierta'],
+       de:['Die Tür ist geschlossen','Öffne das Buch auf Seite zehn','Das Fenster ist offen'],
+       cs:['Dveře jsou zavřené','Otevři knihu na straně deset','Okno je otevřené']
+     }},
+  ],
+  A2:[
+    {id:'A2-1',
+     title:{fr:'La Famille',en:'Family',es:'La Familia',de:'Familie',cs:'Rodina'},
+     sub:{fr:'Parler de sa famille',en:'Talk about your family',es:'Hablar de la familia',de:'Über Familie sprechen',cs:'Mluvit o rodině'},
+     wids:['father','mother','brother','sister','grandfather','grandmother','child','cousin'],
+     sents:{
+       fr:['J\'ai deux frères et une sœur','Mon père est médecin','Ma famille est grande'],
+       en:['I have two brothers and a sister','My father is a doctor','My family is big'],
+       es:['Tengo dos hermanos y una hermana','Mi padre es médico','Mi familia es grande'],
+       de:['Ich habe zwei Brüder und eine Schwester','Mein Vater ist Arzt','Meine Familie ist groß'],
+       cs:['Mám dva bratry a sestru','Můj otec je lékař','Moje rodina je velká']
+     }},
+    {id:'A2-2',
+     title:{fr:'La Nourriture',en:'Food & Drink',es:'Comida',de:'Essen & Trinken',cs:'Jídlo a pití'},
+     sub:{fr:'Commander de la nourriture',en:'Order food',es:'Pedir comida',de:'Essen bestellen',cs:'Objednat jídlo'},
+     wids:['bread','water','coffee','wine','meat','fish','fruit','cheese'],
+     sents:{
+       fr:['Je voudrais un café','L\'addition s\'il vous plaît','Le poisson est très bon'],
+       en:['I would like a coffee please','The bill please','The fish is very good'],
+       es:['Quisiera un café por favor','La cuenta por favor','El pescado está muy bueno'],
+       de:['Ich hätte gerne einen Kaffee','Die Rechnung bitte','Der Fisch ist sehr gut'],
+       cs:['Chtěl bych kávu prosím','Účet prosím','Ryba je velmi dobrá']
+     }},
+  ],
+  B1:[
+    {id:'B1-1',
+     title:{fr:'Les Voyages',en:'Travel',es:'Viajes',de:'Reisen',cs:'Cestování'},
+     sub:{fr:'Voyager et se déplacer',en:'Getting around',es:'Viajar',de:'Unterwegs sein',cs:'Cestovat'},
+     wids:['plane','train','hotel','passport','ticket','suitcase','airport','reservation'],
+     sents:{
+       fr:['Mon vol est retardé de deux heures','J\'ai réservé une chambre pour trois nuits','Où est l\'aéroport ?'],
+       en:['My flight is delayed by two hours','I have booked a room for three nights','Where is the airport?'],
+       es:['Mi vuelo lleva dos horas de retraso','He reservado una habitación por tres noches','¿Dónde está el aeropuerto?'],
+       de:['Mein Flug hat zwei Stunden Verspätung','Ich habe ein Zimmer für drei Nächte gebucht','Wo ist der Flughafen?'],
+       cs:['Můj let má dvouhodinové zpoždění','Rezervoval jsem pokoj na tři noci','Kde je letiště?']
+     }},
+  ],
+};
+
+const ASSET_DEFS = [
+  {id:'gold',   name:'Or',          icon:'🥇', type:'Métal précieux', cls:'gold',
+   cost:50,  divRate:0.02,  desc:'L\'or conserve sa valeur depuis des millénaires.',
+   explain:'L\'or est un actif réel et refuge. Sa rareté en fait une valeur sûre en période d\'incertitude. Tu reçois 2% de dividendes par jour par niveau.'},
+  {id:'house',  name:'Immeuble',    icon:'🏢', type:'Immobilier',      cls:'house',
+   cost:150, divRate:0.04,  desc:'L\'immobilier génère des loyers réguliers.',
+   explain:'Les loyers = dividendes. Comparable au VNQ (REIT ETF). Plus tu possèdes d\'immeubles, plus tes revenus passifs augmentent. Taux : 4%/j.'},
+  {id:'stock',  name:'Actions',     icon:'📈', type:'Marché actions',  cls:'stock',
+   cost:80,  divRate:0.03,  desc:'Les grandes entreprises partagent leurs bénéfices.',
+   explain:'Comparable au S&P 500 ETF (SPY). Investir dans les 500 plus grandes entreprises américaines. Dividende : 3%/j par niveau.'},
+  {id:'crypto', name:'Crypto Index',icon:'💎', type:'Actif digital',   cls:'crypto',
+   cost:30,  divRate:0.015, desc:'Panier d\'actifs numériques diversifié.',
+   explain:'Représente un indice crypto (Bitcoin + altcoins). Volatile mais forte croissance. Dividende : 1.5%/j. Idéal pour commencer.'},
+];
+
+const SHOP_ITEMS = [
+  {id:'xp_boost',     name:'Boost XP ×2',    desc:'Double ton XP pendant 1 session', icon:'⚡', price:50,  type:'consumable'},
+  {id:'hint_pack',    name:'Pack Indices',    desc:'5 indices supplémentaires',       icon:'💡', price:30,  type:'consumable'},
+  {id:'timer_off',    name:'Sans Chrono',     desc:'Désactive le timer 1 session',    icon:'⏸', price:40,  type:'consumable'},
+  {id:'streak_shield',name:'Bouclier Streak', desc:'Protège ta série 1 jour',         icon:'🛡', price:80,  type:'consumable'},
+  {id:'avatar_gold',  name:'Avatar Or',       desc:'Avatar doré exclusif',            icon:'👑', price:200, type:'cosmetic'},
+  {id:'avatar_diamond',name:'Avatar Diamant', desc:'Avatar diamant premium',          icon:'💎', price:500, type:'cosmetic'},
+];
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+var U = null;        // current user
+var _uiLang = 'fr';  // interface language
+
+var S = {            // game state
+  nL:'fr', tL:'cs', level:'A1', chap:null,
+  qs:[], qi:0, cor:0, wr:0, score:0,
+  curQ:null, curType:null, timerInt:null, timerLeft:0,
+  mPairs:[], mSel:null, mDone:0, mTotal:0,
+  sortArr:[], xpBoost:false
+};
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════
+function $(id){ return document.getElementById(id); }
+function sT(id, html){ var e=$(id); if(e) e.innerHTML=html; }
+function shuf(a){ for(var i=a.length-1;i>0;i--){var j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a; }
+function t(key){ return (UI_STRINGS[_uiLang]||UI_STRINGS.fr)[key]||key; }
+
+function toast(msg, dur){
+  dur=dur||2500;
+  var el=$('toast'); el.textContent=msg; el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, dur);
+}
+
+function floatCoin(txt, x, y){
+  var el=document.createElement('div'); el.className='float-coin'; el.textContent=txt;
+  el.style.left=(x||window.innerWidth/2-20)+'px';
+  el.style.top=(y||window.innerHeight/2)+'px';
+  document.body.appendChild(el);
+  setTimeout(function(){ el.remove(); }, 1000);
+}
+
+function mkStars(){
+  var c=$('stars'); if(!c) return; c.innerHTML='';
+  for(var i=0;i<140;i++){
+    var s=document.createElement('div'); s.className='star';
+    var size=(Math.random()*2.5+0.5).toFixed(1);
+    s.style.cssText='left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;width:'+size+'px;height:'+size+'px;--o:'+(0.08+Math.random()*0.45).toFixed(2)+';--d:'+(2+Math.random()*5).toFixed(1)+'s;animation-delay:'+(Math.random()*6).toFixed(1)+'s;';
+    c.appendChild(s);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════════════════
+var _SB = null;
+(function(){
+  try{
+    if(window.supabase){
+      _SB = window.supabase.createClient(
+        'https://luufdddauoucmjiixrax.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4'
+      );
+    }
+  }catch(e){ console.warn('Supabase init failed'); }
+})();
+
+// ══════════════════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════════════════
+function applyTheme(mode){
+  document.documentElement.setAttribute('data-theme', mode==='auto'?
+    (window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light') : mode);
+}
+
+function setTheme(mode){
+  localStorage.setItem('lq_theme', mode);
+  applyTheme(mode);
+  ['light','dark','claude','auto'].forEach(function(m){
+    var b=$('theme-btn-'+m);
+    if(b) b.classList.toggle('active', m===mode);
+  });
+}
+
+function initTheme(){
+  var saved = localStorage.getItem('lq_theme');
+  if(saved) applyTheme(saved);
+}
+
+function pickTheme(mode){
+  setTheme(mode);
+  goTo('auth');
+}
+
+// ══════════════════════════════════════════════════════════
+// UI LANGUAGE
+// ══════════════════════════════════════════════════════════
+function setUILang(code){
+  if(!LANGS[code]) return;
+  _uiLang = code;
+  localStorage.setItem('lq_ui_lang', code);
+  applyUILang();
+}
+
+function applyUILang(){
+  // Nav labels
+  sT('nav-learn-lbl',     t('learn'));
+  sT('nav-portfolio-lbl', t('portfolio'));
+  sT('nav-shop-lbl',      t('shop'));
+  sT('nav-profile-lbl',   t('profile'));
+  // Learn screen
+  sT('lbl-speak',  t('speak'));
+  sT('lbl-learn',  t('learnLbl'));
+  // Game types
+  sT('gtype-mixed',  t('mixed'));   sT('gtype-mixed-d',  'Tous les types mélangés');
+  sT('gtype-quiz',   t('quiz'));    sT('gtype-quiz-d',   '4 choix, 1 bonne réponse');
+  sT('gtype-fill',   t('fill'));    sT('gtype-fill-d',   'Tape la traduction');
+  sT('gtype-sort',   t('sort'));    sT('gtype-sort-d',   'Remets les mots en ordre');
+  sT('gtype-match',  t('match'));   sT('gtype-match-d',  'Associe les paires');
+  // Portfolio
+  sT('port-wealth-lbl', t('wealth'));
+  sT('div-lbl', t('dividends'));
+  // Shop
+  sT('shop-title', t('shop'));
+  // Profile
+  var profCard = document.querySelector('#screen-profile .card .section-title');
+  if(profCard) profCard.innerHTML = t('appearance');
+  renderUILangGrid();
+}
+
+function renderUILangGrid(){
+  var wrap = $('ui-lang-btns');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  Object.entries(LANGS).forEach(function(entry){
+    var code=entry[0], l=entry[1];
+    var btn=document.createElement('button');
+    btn.className='lang-ui-btn'+(code===_uiLang?' active':'');
+    btn.innerHTML=l.flag+' '+l.native;
+    btn.onclick=function(){ setUILang(code); renderUILangGrid(); };
+    wrap.appendChild(btn);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
+function goTo(screenId){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el=$('screen-'+screenId);
+  if(el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function navTo(tab){
+  goTo(tab);
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var ni=$('nav-'+tab); if(ni) ni.classList.add('active');
+  if(tab==='portfolio') renderPortfolio();
+  else if(tab==='shop')      renderShop();
+  else if(tab==='profile')   renderProfile();
+  else if(tab==='learn')     renderLearn();
+}
+
+function showChrome(){
+  $('top-bar').classList.add('show');
+  $('nav-bar').classList.add('show');
+}
+
+function hideChrome(){
+  $('top-bar').classList.remove('show');
+  $('nav-bar').classList.remove('show');
+}
+
+function updateTopBar(){
+  if(!U) return;
+  sT('tb-coins', Math.floor(U.coins));
+  var ab=$('avatar-btn');
+  if(!ab) return;
+  ab.textContent = U.name.charAt(0).toUpperCase();
+  if(U.owned && U.owned.includes('avatar_diamond'))
+    ab.style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
+  else if(U.owned && U.owned.includes('avatar_gold'))
+    ab.style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+  else
+    ab.style.background='linear-gradient(135deg,var(--accent),var(--accent2))';
+}
+
+// ══════════════════════════════════════════════════════════
+// AUTH — localStorage helpers
+// ══════════════════════════════════════════════════════════
+function defaultUser(name, email){
+  return {name:name, email:email, joined:Date.now(),
+    coins:100, xp:0, streak:0, sessions:0, chaptersCompleted:0,
+    lastSession:null, progress:{},
+    assets:{gold:0,house:0,stock:0,crypto:0},
+    pendingDiv:0, lastDivTime:Date.now(), owned:[], pass:''};
+}
+function loadUsers(){ try{return JSON.parse(localStorage.getItem('lq_users')||'{}');}catch(e){return{};} }
+function saveUsers(u){ localStorage.setItem('lq_users',JSON.stringify(u)); }
+function loadCurrent(){ return localStorage.getItem('lq_current'); }
+function saveCurrent(e){ localStorage.setItem('lq_current',e); }
+function clearCurrent(){ localStorage.removeItem('lq_current'); }
+
+async function saveU(){
+  if(!U) return;
+  var users=loadUsers(); users[U.email]=U; saveUsers(users);
+  if(_SB){ try{ await _SB.from('users').upsert({email:U.email,data:U},{onConflict:'email'}); }catch(e){} }
+}
+
+async function loadUserFromDB(email){
+  if(!_SB) return null;
+  try{ var r=await _SB.from('users').select('data').eq('email',email).single(); return r.data?r.data.data:null; }
+  catch(e){ return null; }
+}
+
+function switchTab(tab){
+  $('tab-login').classList.toggle('active',tab==='login');
+  $('tab-register').classList.toggle('active',tab==='register');
+  $('form-login').style.display=tab==='login'?'block':'none';
+  $('form-register').style.display=tab==='register'?'block':'none';
+}
+
+function showAuthErr(id,msg){
+  var el=$(id); if(!el) return;
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); },4000);
+}
+
+async function doLogin(){
+  var email=($('login-email').value||'').trim().toLowerCase();
+  var pass=$('login-pass').value||'';
+  if(!email||!pass){showAuthErr('login-err','Remplis tous les champs.');return;}
+  var btn=document.querySelector('#form-login .btn-primary');
+  if(btn){btn.textContent='Connexion...';btn.disabled=true;setTimeout(function(){btn.textContent='Se connecter →';btn.disabled=false;},4000);}
+  try{
+    var row=null;
+    if(_SB){ try{ var r=await _SB.from('users').select('data').eq('email',email).single(); if(!r.error&&r.data) row=r.data.data; }catch(e){} }
+    if(!row){ var users=loadUsers(); row=users[email]||null; }
+    if(!row){showAuthErr('login-err','Compte introuvable. Inscris-toi !');return;}
+    if(row.pass!==btoa(pass)){showAuthErr('login-err','Mot de passe incorrect.');return;}
+    U=row; saveCurrent(U.email); afterLogin();
+  }catch(e){showAuthErr('login-err','Erreur de connexion.');}
+}
+
+async function doRegister(){
+  var name=($('reg-name').value||'').trim();
+  var email=($('reg-email').value||'').trim().toLowerCase();
+  var pass=$('reg-pass').value||'';
+  if(!name){showAuthErr('reg-err','Entre ton prénom.');return;}
+  if(!email.includes('@')){showAuthErr('reg-err','Email invalide.');return;}
+  if(pass.length<6){showAuthErr('reg-err','Mot de passe trop court (min 6).');return;}
+  var users=loadUsers();
+  if(users[email]){showAuthErr('reg-err','Cet email est déjà utilisé.');return;}
+  U=defaultUser(name,email); U.pass=btoa(pass);
+  users[email]=U; saveUsers(users); saveCurrent(email);
+  await saveU();
+  afterLogin();
+  toast('🎉 Bienvenue '+name+' ! Tu as 100 pièces de départ !');
+}
+
+function doLogout(){
+  U=null; clearCurrent();
+  hideChrome(); goTo('auth');
+}
+
+function guestLogin(){
+  U=defaultUser('Invité','guest@local'); U.isGuest=true;
+  afterLogin();
+  toast('👤 Mode invité — progression non sauvegardée');
+}
+
+function afterLogin(){
+  calcDividends();
+  updateTopBar();
+  showChrome();
+  applyUILang();
+  navTo('learn');
+}
+
+// ══════════════════════════════════════════════════════════
+// LEARN — Language selector
+// ══════════════════════════════════════════════════════════
+function renderLearn(){
+  buildGrids();
+  syncPair();
+  syncDots();
+}
+
+function buildGrids(){
+  var gn=$('grid-native'), gt=$('grid-target');
+  if(!gn||!gt) return;
+  gn.innerHTML=''; gt.innerHTML='';
+  Object.entries(LANGS).forEach(function(entry){
+    var code=entry[0], l=entry[1];
+    // Native
+    var bn=document.createElement('button'); bn.className='lang-btn'+(code===S.nL?' selected':'');
+    bn.innerHTML='<span class="lang-flag">'+l.flag+'</span><span>'+l.native+'</span>';
+    bn.onclick=function(){ pickLang('n',code); }; gn.appendChild(bn);
+    // Target
+    var bt=document.createElement('button'); bt.className='lang-btn'+(code===S.tL?' selected':'');
+    if(code===S.nL) bt.disabled=true, bt.style.opacity='.4';
+    bt.innerHTML='<span class="lang-flag">'+l.flag+'</span><span>'+l.native+'</span>';
+    bt.onclick=function(){ pickLang('t',code); }; gt.appendChild(bt);
+  });
+}
+
+function pickLang(type, code){
+  if(type==='n'){
+    S.nL=code;
+    if(S.tL===code) S.tL=code==='fr'?'cs':'fr';
+    var ls=$('lang-section-target'); if(ls) ls.style.display='block';
+  } else {
+    S.tL=code;
+  }
+  buildGrids(); syncPair(); syncDots();
+}
+
+function swapLangs(){
+  var tmp=S.nL; S.nL=S.tL; S.tL=tmp;
+  buildGrids(); syncPair(); syncDots();
+}
+
+function syncPair(){
+  var sp=$('selected-pair');
+  if(!sp) return;
+  if(S.nL&&S.tL&&S.nL!==S.tL){
+    sp.style.display='flex';
+    sT('pair-native', LANGS[S.nL].flag+' '+LANGS[S.nL].native);
+    sT('pair-target', LANGS[S.tL].flag+' '+LANGS[S.tL].native);
+    var sb=$('start-btn'); if(sb) sb.style.display='block';
+  } else {
+    sp.style.display='none';
+    var sb=$('start-btn'); if(sb) sb.style.display='none';
+  }
+}
+
+function syncDots(){
+  var d1=$('dot1'),d2=$('dot2'),d3=$('dot3'),l1=$('line1'),l2=$('line2');
+  if(!d1) return;
+  var hasN=!!S.nL, hasT=!!(S.nL&&S.tL&&S.nL!==S.tL);
+  d1.className='step-dot '+(hasN?'done':'active');
+  d2.className='step-dot '+(hasT?'done':hasN?'active':'pending');
+  d3.className='step-dot '+(hasT?'active':'pending');
+  if(l1) l1.className='step-line'+(hasN?' done':'');
+  if(l2) l2.className='step-line'+(hasT?' done':'');
+}
+
+// ══════════════════════════════════════════════════════════
+// LEVELS
+// ══════════════════════════════════════════════════════════
+function goToLevels(){
+  sT('bc-l2', LANGS[S.nL].flag+' → '+LANGS[S.tL].flag);
+  sT('bc-c1', t('learn'));
+  renderLevels(); goTo('levels');
+}
+
+function renderLevels(){
+  var grid=$('levels-grid'); if(!grid) return; grid.innerHTML='';
+  var levels=['A1','A2','B1','B2','C1','C2'];
+  var colors={A1:'#7c3aed',A2:'#6d28d9',B1:'#0891b2',B2:'#0e7490',C1:'#059669',C2:'#065f46'};
+  levels.forEach(function(lv){
+    var chaps=CHAPTERS[lv]||[];
+    var done=0;
+    if(U&&U.progress) chaps.forEach(function(c){if(U.progress[c.id]) done++;});
+    var stars=done>=chaps.length&&chaps.length>0?3:done>0?1:0;
+    var locked=lv!=='A1'&&!CHAPTERS[lv];
+    var d=document.createElement('div');
+    d.className='level-card'+(locked?' locked':'');
+    d.innerHTML='<div class="level-badge" style="background:'+colors[lv]+'22;color:'+colors[lv]+';">'+lv+'</div>'+
+      '<div class="level-title">'+['Débutant','Élémentaire','Intermédiaire','Avancé','Expert','Maîtrise'][levels.indexOf(lv)]+'</div>'+
+      '<div class="level-desc">'+(chaps.length?chaps.length+' chapitre'+(chaps.length>1?'s':''):'Bientôt')+'</div>'+
+      '<div class="level-stars">'+[0,1,2].map(function(i){return '<span class="star-icon'+(i<stars?'':' empty')+'">★</span>';}).join('')+'</div>';
+    if(!locked) d.onclick=function(){ S.level=lv; goToChaps(); };
+    grid.appendChild(d);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// CHAPTERS
+// ══════════════════════════════════════════════════════════
+function goToChaps(){
+  S.chap=null;
+  var chaps=CHAPTERS[S.level]||[];
+  sT('bc-c2', S.level);
+  sT('bc-c3', LANGS[S.nL].flag+' → '+LANGS[S.tL].flag);
+  sT('chapters-title', t('chapters'));
+  sT('chapters-sub', LANGS[S.nL].native+' → '+LANGS[S.tL].native);
+  var list=$('chapters-list'); if(!list) return; list.innerHTML='';
+  if(!chaps.length){ list.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;">Bientôt disponible</div>'; goTo('chapters'); return; }
+  chaps.forEach(function(ch, i){
+    var done=U&&U.progress&&U.progress[ch.id];
+    var item=document.createElement('div'); item.className='chapter-item';
+    item.innerHTML=
+      '<div class="chapter-num" style="background:var(--accent);color:#fff;">'+(i+1)+'</div>'+
+      '<div class="chapter-info">'+
+        '<div class="chapter-title">'+(ch.title[S.nL]||ch.title.fr)+'</div>'+
+        '<div class="chapter-sub">'+(ch.sub[S.nL]||ch.sub.fr)+'</div>'+
+      '</div>'+
+      '<div class="chapter-actions">'+
+        (done?'<span style="color:var(--green);font-size:.8rem;font-weight:800;">✓</span>':'')+
+        '<button class="btn-qr" onclick="event.stopPropagation();openQR(\''+ch.id+'\')">📱 QR</button>'+
+      '</div>';
+    item.onclick=function(){ goToSel(ch.id); };
+    list.appendChild(item);
+  });
+  goTo('chapters');
+}
+
+function goToSel(cid){
+  S.chap=cid;
+  var chaps=CHAPTERS[S.level]||[];
+  var ch=chaps.find(function(c){return c.id===cid;});
+  if(!ch) return;
+  sT('bc-gs1', S.level);
+  sT('bc-gs2', ch.title[S.nL]||ch.title.fr);
+  sT('bc-gs3', LANGS[S.nL].flag+' → '+LANGS[S.tL].flag);
+  sT('gsel-title', ch.title[S.nL]||ch.title.fr);
+  sT('gsel-sub', ch.sub[S.nL]||ch.sub.fr);
+  goTo('game-select');
+}
+
+// ══════════════════════════════════════════════════════════
+// GAME — build questions
+// ══════════════════════════════════════════════════════════
+function wt(wid, lang){ return (WD[wid]&&WD[wid][lang])||wid; }
+
+function getCh(){
+  var chaps=CHAPTERS[S.level]||[];
+  return chaps.find(function(c){return c.id===S.chap;})||chaps[0];
+}
+
+function startGame(type){
+  var ch=getCh(); if(!ch) return;
+  S.qi=0; S.cor=0; S.wr=0; S.score=0; S.curQ=null; S.curType=null;
+  S.xpBoost=U&&U.owned&&U.owned.includes('xp_boost');
+  if(U){ U.sessions=(U.sessions||0)+1; saveU(); }
+
+  if(type==='match'){ startMatchGame(ch); return; }
+
+  var wids=ch.wids;
+  var qs=[];
+  var types= type==='mixed'?['quiz','fill','sort']:
+             type==='quiz'?['quiz']:
+             type==='fill'?['fill']:['sort'];
+
+  wids.forEach(function(wid,i){
+    var qtype=types[i%types.length];
+    if(qtype==='quiz')  qs.push(mkQQ(wid,wids));
+    else if(qtype==='fill') qs.push(mkFQ(wid));
+    else                qs.push(mkSQ(wid,ch));
+  });
+
+  S.qs=shuf(qs); S.qi=0;
+  goTo('game');
+  renderQ();
+}
+
+function mkQQ(wid, allWids){
+  var correct=wt(wid,S.tL);
+  var distractors=allWids.filter(function(w){return w!==wid;}).map(function(w){return wt(w,S.tL);});
+  shuf(distractors);
+  var choices=shuf([correct].concat(distractors.slice(0,3)));
+  return {type:'quiz', q:wt(wid,S.nL), wid:wid, answer:correct, choices:choices};
+}
+
+function mkFQ(wid){
+  return {type:'fill', q:wt(wid,S.nL), wid:wid, answer:wt(wid,S.tL)};
+}
+
+function mkSQ(wid, ch){
+  // Sort a sentence from the chapter
+  var sents=ch.sents&&ch.sents[S.tL]||[];
+  var sent=sents[Math.floor(Math.random()*sents.length)]||wt(wid,S.tL);
+  var words=sent.split(/\s+/);
+  return {type:'sort', q:wt(wid,S.nL), wid:wid, answer:sent, words:words};
+}
+
+function startMatchGame(ch){
+  S.mPairs=shuf(ch.wids.slice()).slice(0,6);
+  S.mSel=null; S.mDone=0; S.mTotal=S.mPairs.length;
+  S.qi=0; S.cor=0; S.wr=0; S.score=0;
+  goTo('game');
+  setTypePill(t('match'));
+  showZone('match');
+  sT('g-text','Associe les traductions');
+  sT('g-dir',LANGS[S.nL].flag+' → '+LANGS[S.tL].flag);
+  sT('g-num','');
+  sT('g-hint','Clique un mot puis sa traduction');
+  sT('mcl-l', LANGS[S.nL].native);
+  sT('mcl-r', LANGS[S.tL].native);
+  sT('match-prog-txt','0/'+S.mTotal);
+  $('g-progress').style.width='0%';
+  sT('g-score',0);
+  hideFB(); hideAllBtns(); showBtn('btn-skip');
+  renderMatchCols(S.mPairs);
+  startTimer(90);
+}
+
+function renderMatchCols(wids){
+  var left=shuf(wids.map(function(id){return {id:id,text:wt(id,S.nL)};}));
+  var right=shuf(wids.map(function(id){return {id:id,text:wt(id,S.tL)};}));
+  var lc=$('match-left'), rc=$('match-right');
+  lc.innerHTML=''; rc.innerHTML='';
+  left.forEach(function(it){ lc.appendChild(mkMI(it,'left')); });
+  right.forEach(function(it){ rc.appendChild(mkMI(it,'right')); });
+}
+
+function mkMI(item, side){
+  var d=document.createElement('div'); d.className='match-item';
+  d.textContent=item.text; d.dataset.id=item.id; d.dataset.side=side;
+  d.onclick=function(){ clickMatch(d); };
+  return d;
+}
+
+function clickMatch(el){
+  if(el.classList.contains('matched')) return;
+  var side=el.dataset.side, id=el.dataset.id;
+  if(!S.mSel){
+    S.mSel={el:el,id:id,side:side};
+    el.classList.add('selected');
+    return;
+  }
+  if(S.mSel.side===side){ S.mSel.el.classList.remove('selected'); S.mSel={el:el,id:id,side:side}; el.classList.add('selected'); return; }
+  if(S.mSel.id===id){
+    // Correct match
+    [S.mSel.el,el].forEach(function(e){ e.classList.remove('selected'); e.classList.add('matched'); });
+    S.mDone++; S.cor++; S.score+=10;
+    sT('g-score',S.score);
+    sT('match-prog-txt',S.mDone+'/'+S.mTotal);
+    $('g-progress').style.width=(S.mDone/S.mTotal*100)+'%';
+    floatCoin('+10');
+    S.mSel=null;
+    if(S.mDone>=S.mTotal){ clearInterval(S.timerInt); setTimeout(showResults,800); }
+  } else {
+    // Wrong
+    S.wr++;
+    [S.mSel.el,el].forEach(function(e){ e.classList.add('wrong-flash'); setTimeout(function(){e.classList.remove('wrong-flash','selected');},600); });
+    S.mSel=null;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// GAME — render
+// ══════════════════════════════════════════════════════════
+function renderQ(){
+  if(S.qi>=S.qs.length){ showResults(); return; }
+  var q=S.qs[S.qi]; S.curQ=q; S.curType=q.type;
+  var tot=S.qs.length;
+  $('g-progress').style.width=(S.qi/tot*100)+'%';
+  sT('g-dir', LANGS[S.nL].flag+' → '+LANGS[S.tL].flag);
+  sT('g-num', (S.qi+1)+' / '+tot);
+  sT('g-hint','');
+  hideFB(); hideAllBtns();
+  setTypePill(q.type==='quiz'?t('quiz'):q.type==='fill'?t('fill'):t('sort'));
+  showZone(q.type);
+  if(q.type==='quiz')  renderQuiz(q);
+  else if(q.type==='fill') renderFill(q);
+  else                 renderSort(q);
+}
+
+function renderQuiz(q){
+  sT('g-text',q.q);
+  var grid=$('answers-grid'); grid.innerHTML='';
+  ['A','B','C','D'].forEach(function(l,i){
+    if(!q.choices[i]) return;
+    var btn=document.createElement('button'); btn.className='answer-btn';
+    btn.innerHTML='<span class="al">'+l+'</span><span>'+q.choices[i]+'</span>';
+    btn.onclick=function(){ pickQ(q.choices[i],btn,q); };
+    grid.appendChild(btn);
+  });
+  startTimer(15);
+}
+
+function renderFill(q){
+  sT('g-text',q.q);
+  var inp=$('fill-input'); inp.value=''; inp.className='fill-input'; inp.disabled=false;
+  $('fuzzy-note').style.display='none';
+  showBtn('btn-check'); showBtn('btn-skip');
+  setTimeout(function(){ inp.focus(); },80);
+  startTimer(20);
+}
+
+function renderSort(q){
+  sT('g-text',q.q);
+  S.sortArr=[];
+  var bank=$('word-bank'); bank.innerHTML='';
+  shuf([].concat(q.words)).forEach(function(w){
+    var tok=document.createElement('div'); tok.className='word-token'; tok.textContent=w;
+    tok.onclick=function(){ addSort(w,tok); };
+    bank.appendChild(tok);
+  });
+  $('sentence-slots').innerHTML='<span class="slot-placeholder">'+('Clique sur les mots...')+'</span>';
+  showBtn('btn-check'); showBtn('btn-reset'); showBtn('btn-skip');
+  startTimer(30);
+}
+
+function addSort(w,tok){
+  S.sortArr.push(w); tok.classList.add('in-sentence'); tok.onclick=null;
+  renderSlots();
+}
+
+function renderSlots(){
+  var slots=$('sentence-slots');
+  if(!S.sortArr.length){ slots.innerHTML='<span class="slot-placeholder">Clique sur les mots...</span>'; return; }
+  slots.innerHTML='';
+  S.sortArr.forEach(function(w,i){
+    var tok=document.createElement('div'); tok.className='word-token in-sentence'; tok.textContent=w;
+    tok.onclick=function(){ S.sortArr.splice(i,1); reEnable(w); renderSlots(); };
+    slots.appendChild(tok);
+  });
+}
+
+function reEnable(w){
+  var bank=$('word-bank');
+  var toks=bank.querySelectorAll('.word-token');
+  for(var i=0;i<toks.length;i++){
+    var tok=toks[i];
+    if(tok.textContent===w&&tok.classList.contains('in-sentence')){
+      tok.classList.remove('in-sentence');
+      (function(t){ tok.onclick=function(){ addSort(w,tok); }; })(tok);
+      break;
+    }
+  }
+}
+
+function resetSort(){
+  S.sortArr=[];
+  var bank=$('word-bank');
+  bank.querySelectorAll('.word-token').forEach(function(tok){
+    tok.classList.remove('in-sentence');
+    var w=tok.textContent;
+    tok.onclick=function(){ addSort(w,tok); };
+  });
+  renderSlots();
+}
+
+// ══════════════════════════════════════════════════════════
+// GAME — checking answers
+// ══════════════════════════════════════════════════════════
+function deacc(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+function lev(a,b){
+  var m=a.length,n=b.length,d=[];
+  for(var i=0;i<=m;i++){d[i]=[i];}
+  for(var j=0;j<=n;j++){d[0][j]=j;}
+  for(var i=1;i<=m;i++) for(var j=1;j<=n;j++)
+    d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);
+  return d[m][n];
+}
+function fuzzy(inp,cor){
+  var clean=function(s){return deacc(s.replace(/[^\w\s]/gi,''));};
+  var a=clean(inp),b=clean(cor);
+  if(a===b||deacc(inp)===deacc(cor)) return 'exact';
+  var dist=lev(a,b); return dist<=(b.length<=3?1:b.length<=7?2:3)?'close':'wrong';
+}
+
+function pickQ(choice, btn, q){
+  clearInterval(S.timerInt);
+  document.querySelectorAll('.answer-btn').forEach(function(b){b.disabled=true;});
+  if(choice===q.answer){
+    btn.classList.add('correct'); S.cor++; S.score+=10; floatCoin('+10');
+    showFB(true, t('correct'),'');
+  } else {
+    btn.classList.add('wrong'); S.wr++;
+    // Highlight correct
+    document.querySelectorAll('.answer-btn').forEach(function(b){
+      if(b.querySelector('span:last-child')&&b.querySelector('span:last-child').textContent===q.answer)
+        b.classList.add('correct');
+    });
+    showFB(false, t('wrong'), q.answer);
+  }
+  sT('g-score',S.score);
+  showBtn('btn-next');
+}
+
+function checkCurrentQ(){
+  var q=S.curQ;
+  if(!q) return;
+  if(q.type==='fill') doFill(q);
+  else if(q.type==='sort') doSort(q);
+}
+
+function doFill(q){
+  if(!q) q=S.curQ; if(!q) return;
+  clearInterval(S.timerInt);
+  var inp=$('fill-input'); inp.disabled=true;
+  var val=inp.value.trim();
+  var res=fuzzy(val,q.answer);
+  if(res==='exact'||res==='close'){
+    inp.className='fill-input correct'; S.cor++; S.score+=res==='exact'?10:7;
+    floatCoin('+'+( res==='exact'?10:7));
+    if(res==='close'){ $('fuzzy-note').textContent='Accepté ! Réponse exacte : '+q.answer; $('fuzzy-note').style.display='block'; }
+    showFB(true, t(res==='exact'?'correct':'almost'), '');
+  } else {
+    inp.className='fill-input wrong'; S.wr++;
+    showFB(false, t('wrong'), q.answer);
+  }
+  sT('g-score',S.score);
+  hideBtn('btn-check'); hideBtn('btn-skip'); showBtn('btn-next');
+}
+
+function doSort(q){
+  if(!q) q=S.curQ; if(!q) return;
+  clearInterval(S.timerInt);
+  var ans=S.sortArr.join(' ');
+  var res=fuzzy(ans,q.answer);
+  if(res!=='wrong'){
+    S.cor++; S.score+=10; floatCoin('+10');
+    showFB(true, t('correct'), '');
+  } else {
+    S.wr++;
+    showFB(false, t('wrong'), q.answer);
+  }
+  sT('g-score',S.score);
+  hideBtn('btn-check'); hideBtn('btn-reset'); hideBtn('btn-skip'); showBtn('btn-next');
+}
+
+// ══════════════════════════════════════════════════════════
+// GAME — timer & flow
+// ══════════════════════════════════════════════════════════
+function startTimer(sec){
+  clearInterval(S.timerInt);
+  S.timerLeft=sec;
+  var el=$('g-timer'); if(el){el.textContent='⏱ '+sec; el.className='timer-badge';}
+  S.timerInt=setInterval(function(){
+    S.timerLeft--;
+    if(el){el.textContent='⏱ '+S.timerLeft; el.className='timer-badge'+(S.timerLeft<=5?' urgent':'');}
+    if(S.timerLeft<=0){ clearInterval(S.timerInt); onTimeout(); }
+  },1000);
+}
+
+function onTimeout(){
+  clearInterval(S.timerInt);
+  var q=S.curQ; if(!q) return;
+  if(q.type==='quiz'){
+    S.wr++; showFB(false,'⏱ Temps écoulé !',q.answer);
+    document.querySelectorAll('.answer-btn').forEach(function(b){b.disabled=true;});
+    showBtn('btn-next');
+  } else if(q.type==='fill') doFill(q);
+  else if(q.type==='sort') doSort(q);
+}
+
+function nextQ(){
+  S.qi++; hideFB(); renderQ();
+}
+
+function setTypePill(label){ sT('g-type-pill',label); }
+function showZone(z){
+  ['quiz','fill','sort','match'].forEach(function(n){ var e=$('zone-'+n); if(e) e.style.display=n===z?'block':'none'; });
+}
+function showFB(ok, msg, ans){
+  var fb=$('g-feedback'); if(!fb) return;
+  fb.className='feedback-banner show '+(ok?'correct':'wrong');
+  sT('g-feedback-icon', ok?'✓':'✗');
+  sT('g-feedback-msg', msg);
+  sT('g-feedback-ans', ans?'→ '+ans:'');
+}
+function hideFB(){ var fb=$('g-feedback'); if(fb){fb.className='feedback-banner';fb.style.display='';} }
+function showBtn(id){ var e=$(id); if(e) e.style.display='inline-flex'; }
+function hideBtn(id){ var e=$(id); if(e) e.style.display='none'; }
+function hideAllBtns(){ ['btn-skip','btn-check','btn-next','btn-reset'].forEach(hideBtn); }
+
+function goToSel(){ goTo('game-select'); }
+
+function playAgain(){
+  if(S.chap) startGame('mixed');
+  else goTo('game-select');
+}
+
+// ══════════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════════
+function showResults(){
+  clearInterval(S.timerInt);
+  var tot=S.qs.length||S.mTotal||1;
+  var pct=S.cor/tot;
+  var stars=pct>=0.9?3:pct>=0.6?2:pct>=0.3?1:0;
+  var xp=Math.round(S.cor*10*(S.xpBoost?2:1));
+  var coins=Math.round(S.cor*5);
+
+  sT('r-stars','⭐'.repeat(stars)+('☆'.repeat(3-stars)));
+  sT('r-score',S.cor+'/'+tot);
+  sT('r-sub', pct>=0.9?'Excellent !':pct>=0.6?'Bien joué !':pct>=0.3?'Continue !':'Réessaie !');
+  sT('r-xp', xp); sT('r-coins', coins);
+
+  if(U){
+    U.xp=(U.xp||0)+xp; U.coins=(U.coins||0)+coins;
+    if(S.chap){ U.progress=U.progress||{}; U.progress[S.chap]=Math.max(stars,U.progress[S.chap]||0); U.chaptersCompleted=Object.keys(U.progress).length; }
+    var today=new Date().toDateString();
+    if(U.lastSession!==today){ U.streak=(U.streak||0)+1; U.lastSession=today; }
+    saveU(); updateTopBar();
+    floatCoin('+'+coins);
+  }
+  goTo('results');
+}
+
+// ══════════════════════════════════════════════════════════
+// PORTFOLIO
+// ══════════════════════════════════════════════════════════
+function calcDividends(){
+  if(!U) return;
+  var now=Date.now(), elapsed=(now-(U.lastDivTime||now))/1000;
+  if(elapsed<1) return;
+  U.lastDivTime=now;
+  var total=0;
+  ASSET_DEFS.forEach(function(a){
+    var owned=U.assets[a.id]||0;
+    if(owned>0) total+=a.cost*owned*(1+(owned-1)*0.1)*a.divRate*elapsed/86400;
+  });
+  U.pendingDiv=(U.pendingDiv||0)+total;
+}
+
+function collectDiv(){
+  if(!U||U.pendingDiv<1) return;
+  var amt=Math.floor(U.pendingDiv);
+  U.coins+=amt; U.pendingDiv-=amt;
+  saveU(); updateTopBar(); renderPortfolio();
+  toast('💰 +'+amt+' pièces collectées !');
+  floatCoin('+'+amt);
+}
+
+function getTotalWealth(){
+  if(!U) return 0;
+  return Math.round(ASSET_DEFS.reduce(function(s,a){
+    var owned=U.assets[a.id]||0;
+    return s+a.cost*owned*(1+(owned-1)*0.1);
+  },0));
+}
+
+function buyAsset(id){
+  if(!U) return;
+  var a=ASSET_DEFS.find(function(x){return x.id===id;});
+  if(!a) return;
+  var owned=U.assets[id]||0;
+  var cost=Math.round(a.cost*Math.pow(1.1,owned));
+  if(U.coins<cost){toast('Pas assez de pièces !');return;}
+  U.coins-=cost; U.assets[id]=owned+1;
+  saveU(); updateTopBar(); renderPortfolio();
+  toast(a.icon+' '+a.name+' acheté !');
+  floatCoin('-'+cost);
+}
+
+function sellAsset(id){
+  if(!U) return;
+  var a=ASSET_DEFS.find(function(x){return x.id===id;});
+  if(!a) return;
+  var owned=U.assets[id]||0; if(owned<=0) return;
+  var price=Math.round(a.cost*Math.pow(1.1,owned-1)*0.8);
+  U.coins+=price; U.assets[id]=owned-1;
+  saveU(); updateTopBar(); renderPortfolio();
+  toast('Vendu pour '+price+' pièces'); floatCoin('+'+price);
+  closeAssetModal();
+}
+
+function renderPortfolio(){
+  if(!U) return;
+  calcDividends();
+  sT('wealth-total', getTotalWealth());
+  sT('portfolio-coins', Math.floor(U.coins));
+  sT('port-title', t('portfolio'));
+  var pending=Math.floor(U.pendingDiv||0);
+  var db=$('div-banner');
+  if(db) db.className='div-banner'+(pending>=1?' show':'');
+  sT('div-amount', pending);
+  var grid=$('assets-grid'); if(!grid) return; grid.innerHTML='';
+  ASSET_DEFS.forEach(function(a){
+    var owned=U.assets[a.id]||0;
+    var cost=Math.round(a.cost*Math.pow(1.1,owned));
+    var daily=owned>0?(a.cost*owned*(1+(owned-1)*0.1)*a.divRate).toFixed(2):'0';
+    var card=document.createElement('div'); card.className='asset-card '+a.cls;
+    card.innerHTML=
+      '<div class="asset-icon">'+a.icon+'</div>'+
+      '<div class="asset-name">'+a.name+'</div>'+
+      '<div class="asset-type">'+a.type+'</div>'+
+      '<div class="asset-owned">×'+owned+'</div>'+
+      '<div class="asset-div">+'+daily+'/j</div>'+
+      '<div class="asset-btns">'+
+        '<button class="asset-buy" '+(U.coins<cost?'disabled':'')+'>Acheter ('+cost+')</button>'+
+        '<button class="asset-info">ℹ</button>'+
+      '</div>';
+    card.querySelector('.asset-buy').onclick=function(){ buyAsset(a.id); };
+    card.querySelector('.asset-info').onclick=function(){ openAssetModal(a.id); };
+    grid.appendChild(card);
+  });
+}
+
+function openAssetModal(id){
+  var a=ASSET_DEFS.find(function(x){return x.id===id;}); if(!a||!U) return;
+  var owned=U.assets[id]||0;
+  var cost=Math.round(a.cost*Math.pow(1.1,owned));
+  var daily=owned>0?(a.cost*owned*(1+(owned-1)*0.1)*a.divRate).toFixed(2):'0';
+  sT('amod-icon',a.icon); sT('amod-name',a.name); sT('amod-type',a.type+' — '+a.desc);
+  sT('amod-owned',owned); sT('amod-daily',daily+'/j');
+  sT('amod-explain',a.explain);
+  var buy=$('amod-buy-btn'); buy.textContent='Acheter ('+cost+')'; buy.disabled=U.coins<cost;
+  buy.onclick=function(){ buyAsset(id); closeAssetModal(); };
+  var sell=$('amod-sell-btn'); sell.textContent=owned>0?'Vendre ('+Math.round(cost*.8)+')':'Vendre'; sell.disabled=owned<=0;
+  sell.onclick=function(){ sellAsset(id); };
+  $('asset-modal').classList.add('show');
+}
+
+function closeAssetModal(){ $('asset-modal').classList.remove('show'); }
+
+// ══════════════════════════════════════════════════════════
+// SHOP
+// ══════════════════════════════════════════════════════════
+function renderShop(){
+  if(!U) return;
+  sT('shop-coins', Math.floor(U.coins));
+  var grid=$('shop-grid'); if(!grid) return; grid.innerHTML='';
+  SHOP_ITEMS.forEach(function(item){
+    var owned=U.owned&&U.owned.includes(item.id);
+    var canBuy=U.coins>=item.price;
+    var card=document.createElement('div'); card.className='shop-item'+(owned?' owned':'');
+    card.innerHTML=
+      (owned?'<div class="owned-badge">✓ Possédé</div>':'')+
+      '<div class="shop-item-icon">'+item.icon+'</div>'+
+      '<div class="shop-item-name">'+item.name+'</div>'+
+      '<div class="shop-item-desc">'+item.desc+'</div>';
+    if(!owned){
+      var btn=document.createElement('button');
+      btn.className='btn btn-sm '+(canBuy?'btn-primary':'btn-secondary');
+      btn.textContent='🪙 '+item.price;
+      btn.disabled=!canBuy;
+      btn.onclick=function(){ buyShop(item.id); };
+      card.appendChild(btn);
+    }
+    grid.appendChild(card);
+  });
+}
+
+function buyShop(id){
+  var item=SHOP_ITEMS.find(function(x){return x.id===id;}); if(!item||!U) return;
+  if(U.coins<item.price){toast('Pas assez de pièces !');return;}
+  U.coins-=item.price;
+  if(!U.owned) U.owned=[];
+  if(item.type==='cosmetic') U.owned.push(id);
+  saveU(); updateTopBar(); renderShop();
+  toast(item.icon+' '+item.name+' acheté !');
+  floatCoin('-'+item.price);
+  if(item.id==='avatar_gold'||item.id==='avatar_diamond') updateTopBar();
+}
+
+// ══════════════════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════════════════
+function renderProfile(){
+  if(!U) return;
+  calcDividends();
+  // Hero
+  var av=$('prof-avatar');
+  if(av){
+    av.textContent=U.name.charAt(0).toUpperCase();
+    if(U.owned&&U.owned.includes('avatar_diamond')) av.style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
+    else if(U.owned&&U.owned.includes('avatar_gold')) av.style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+    else av.style.background='linear-gradient(135deg,var(--accent),var(--accent2))';
+  }
+  sT('prof-name', U.name);
+  sT('prof-email', U.email==='guest@local'?'Mode invité':U.email);
+  sT('prof-joined', U.joined?'Membre depuis '+new Date(U.joined).toLocaleDateString('fr'):'');
+  // Stats
+  sT('stat-xp',    U.xp||0);
+  sT('stat-coins', Math.floor(U.coins)||0);
+  sT('stat-sessions', U.sessions||0);
+  sT('stat-streak', (U.streak||0)+' 🔥');
+  sT('stat-chaps',  U.chaptersCompleted||0);
+  sT('stat-wealth', getTotalWealth());
+  // Theme buttons
+  var saved=localStorage.getItem('lq_theme')||'dark';
+  ['light','dark','claude','auto'].forEach(function(m){
+    var b=$('theme-btn-'+m); if(b) b.classList.toggle('active',m===saved);
+  });
+  // Lang grid
+  renderUILangGrid();
+}
+
+// ══════════════════════════════════════════════════════════
+// QR CODE
+// ══════════════════════════════════════════════════════════
+function openQR(cid){
+  var chaps=CHAPTERS[S.level]||[];
+  var ch=chaps.find(function(c){return c.id===cid;})||{};
+  var title=(ch.title&&ch.title[S.nL])||cid;
+  var base=location.origin+location.pathname;
+  var url=base+'?n='+S.nL+'&t='+S.tL+'&l='+S.level+'&c='+cid;
+  var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=f59e0b&bgcolor=0a0a14&margin=10&data='+encodeURIComponent(url);
+  sT('qr-title', title);
+  sT('qr-sub', LANGS[S.nL].flag+' '+LANGS[S.nL].native+' → '+LANGS[S.tL].flag+' '+LANGS[S.tL].native);
+  $('qr-img').innerHTML='<img src="'+qrUrl+'" width="200" height="200" style="border-radius:10px;">';
+  var ut=$('qr-url-text'); if(ut){ut.textContent=url; ut.dataset.url=url;}
+  $('qr-modal').classList.add('show');
+}
+
+function closeQR(){ $('qr-modal').classList.remove('show'); }
+
+function copyUrl(){
+  var ut=$('qr-url-text');
+  var url=ut?ut.dataset.url||ut.textContent:'';
+  if(navigator.clipboard){ navigator.clipboard.writeText(url).then(function(){ toast('🔗 Lien copié !'); }); }
+  else { toast(url); }
+}
+
+// ══════════════════════════════════════════════════════════
+// URL PARAMS — shared quiz
+// ══════════════════════════════════════════════════════════
+function readParams(){
+  var p=new URLSearchParams(location.search);
+  if(p.get('n')) S.nL=p.get('n');
+  if(p.get('t')) S.tL=p.get('t');
+  if(p.get('l')) S.level=p.get('l');
+  if(p.get('c')){
+    S.chap=p.get('c');
+    if(U) setTimeout(function(){ goToSel(S.chap); },300);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════
+mkStars();
+initTheme();
+
+// Init UI language
+(function(){
+  var saved=localStorage.getItem('lq_ui_lang');
+  if(saved&&LANGS[saved]) _uiLang=saved;
+  else {
+    var nav=(navigator.language||'fr').split('-')[0].toLowerCase();
+    var map={fr:'fr',en:'en',es:'es',de:'de',cs:'cs',sk:'cs',cz:'cs'};
+    _uiLang=map[nav]||'fr';
+  }
+})();
+
+// Auto-login then decide entry screen
+(async function(){
+  var hasTheme=!!localStorage.getItem('lq_theme');
+  var saved=loadCurrent();
+
+  if(saved){
+    try{
+      var loaded=await loadUserFromDB(saved);
+      if(loaded){U=loaded;afterLogin();return;}
+    }catch(e){}
+    var users=loadUsers();
+    if(users[saved]){U=users[saved];afterLogin();return;}
+  }
+
+  // No session — show theme picker or auth
+  if(!hasTheme) goTo('theme-picker');
+  else goTo('auth');
+})();
+
+// Dividend tick every 5s
+setInterval(function(){
+  if(!U) return;
+  calcDividends();
+  var db=$('div-banner'), da=$('div-amount');
+  if(db) db.className='div-banner'+(U.pendingDiv>=1?' show':'');
+  if(da) da.textContent=Math.floor(U.pendingDiv||0);
+  updateTopBar();
+},5000);
+</script>
+</body>
+</html>
+
         :root {<!DOCTYPE html>
 <html lang="fr"><!DOCTYPE html>
 <html lang="fr">
