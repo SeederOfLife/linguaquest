@@ -7,7 +7,60 @@
 // BOOT
 // ══════════════════════════════════════════════
 mkStars();buildGrids();readParams();
-// Auto-login if session exists
+// Auto-login if session exists// Safety: $ helper (also defined in ui.js)
+if(typeof $ === 'undefined'){ var $ = function(id){ return document.getElementById(id); }; }
+
+// ═══════════════════════════════════════════
+// BOOT.JS — Initialisation de l'app
+// Ce fichier ne contient QUE le code de démarrage.
+// Toutes les fonctions sont dans leurs modules respectifs.
+// ═══════════════════════════════════════════
+
+// Étoiles de fond
+mkStars();
+
+// Construit les grilles de sélection de langue
+buildGrids();
+
+// Lit les paramètres URL (quiz partagé)
+readParams();
+
+// Applique le thème sauvegardé (ou affiche le picker au 1er lancement)
+initTheme();
+maybeShowThemePicker();
+
+// Initialise la langue UI
+(function(){
+  var savedLang = localStorage.getItem('lq_ui_lang');
+  setUILang(savedLang || detectBrowserLang());
+})();
+
+// btn-guest est câblé via onclick dans le HTML
+
+// Auto-login : essaie Supabase d'abord, puis localStorage
+(async function(){
+  var saved = loadCurrent();
+  if(!saved) return; // pas de session → reste sur auth
+  try {
+    var loaded = await loadUserFromDB(saved);
+    if(loaded){ U = loaded; afterLogin(); return; }
+  } catch(e){}
+  // Fallback localStorage
+  var users = loadUsers();
+  if(users[saved]){ U = users[saved]; afterLogin(); }
+})();
+
+// Tick dividendes toutes les 5 secondes
+setInterval(function(){
+  if(!U) return;
+  calcDividends();
+  var db  = document.getElementById('div-banner');
+  var da  = document.getElementById('div-amount');
+  if(U.pendingDiv >= 1 && db) db.style.display = 'flex';
+  if(da) da.textContent = Math.floor(U.pendingDiv || 0);
+  updateTopBar();
+}, 5000);
+
 // Auto-login: Supabase first, localStorage fallback
 maybeShowThemePicker();
 (async function(){// Safety: $ helper (also defined in ui.js)
