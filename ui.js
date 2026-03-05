@@ -7,7 +7,7 @@ function goTo(sc){
   window.scrollTo(0,0);clearInterval(S.timer);
 }
 function navTo(tab){
-  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker'};
+  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker',lesson:'lesson'};
   ['learn','portfolio','shop','profile'].forEach(t=>{
     const n=$('nav-'+t); if(n) n.classList.toggle('active',t===tab);
   });
