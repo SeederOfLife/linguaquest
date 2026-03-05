@@ -22,10 +22,10 @@
   --border-col:rgba(109,40,217,.15);
 }
 [data-theme="claude"]{
-  --bg:#1a1108;--card:#221a0e;--card2:#2a2010;--card3:#332615;
-  --accent:#c8621a;--accent2:#d4845a;--accent3:#e8a87c;--accent4:#f0b429;
-  --gold:#f0b429;--green:#5a9a6e;--red:#c0392b;--text:#f5e6d0;--muted:#9a8060;--r:16px;
-  --nav-bg:rgba(26,17,8,.97);--top-bg:rgba(26,17,8,.94);
+  --bg:#1c1c1f;--card:#26262b;--card2:#2e2e35;--card3:#38383f;
+  --accent:#e07b39;--accent2:#d4652a;--accent3:#f5a46a;--accent4:#f5a623;
+  --gold:#f5a623;--green:#3d9970;--red:#e05252;--text:#ffffff;--muted:#8c8c99;--r:16px;
+  --nav-bg:rgba(28,28,31,.97);--top-bg:rgba(28,28,31,.94);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
@@ -430,7 +430,28 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 [data-theme="light"] .step-line{background:#e5e7eb;}
 
 /* ── CLAUDE THEME LOGO ── */
-[data-theme="claude"] .lq-logo-svg{filter:drop-shadow(0 0 18px rgba(212,132,90,.65));}
+[data-theme="claude"] .lq-logo-svg{filter:drop-shadow(0 0 18px rgba(224,123,57,.7));}
+
+/* ── CLAUDE THEME OVERRIDES ── */
+[data-theme="claude"] .star{background:rgba(255,255,255,.55);}
+[data-theme="claude"] .auth-input{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:#fff;}
+[data-theme="claude"] .auth-tab.active{background:linear-gradient(135deg,#e07b39,#d4652a);}
+[data-theme="claude"] .btn-primary{background:linear-gradient(135deg,#e07b39,#d4652a);}
+[data-theme="claude"] .coin-display{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.25);}
+[data-theme="claude"] .asset-card.gold .asset-progress-fill,
+[data-theme="claude"] .asset-card.gold .asset-buy-btn{background:linear-gradient(135deg,#e07b39,#f5a623);}
+[data-theme="claude"] .theme-btn.active{background:linear-gradient(135deg,#e07b39,#d4652a);color:#fff;border-color:#e07b39;}
+[data-theme="claude"] .nav-item.active{color:#e07b39;}
+[data-theme="claude"] .game-type-card.featured{border-color:rgba(224,123,57,.4);background:rgba(224,123,57,.07);}
+[data-theme="claude"] .mix-badge{background:rgba(224,123,57,.12);border-color:rgba(224,123,57,.3);color:#f5a46a;}
+[data-theme="claude"] .answer-btn.correct{background:rgba(61,153,112,.15);border-color:#3d9970;}
+[data-theme="claude"] .answer-btn.wrong{background:rgba(224,82,82,.12);border-color:#e05252;}
+[data-theme="claude"] .section-title{color:#ffffff;}
+[data-theme="claude"] .wealth-total{color:#e07b39;}
+[data-theme="claude"] .profile-hero{background:linear-gradient(135deg,rgba(224,123,57,.18),rgba(212,101,42,.08));}
+[data-theme="claude"] .inv-xp-bar{background:linear-gradient(90deg,#e07b39,#f5a46a);}
+[data-theme="claude"] .lesson-card:not(.lesson-done):not(.lesson-locked)::before{background:linear-gradient(90deg,#e07b39,#f5a46a);}
+[data-theme="claude"] .auth-tab{color:rgba(255,255,255,.5);}
 
 /* ── INVESTOR LEVEL SYSTEM ── */
 .inv-level-bar{width:100%;max-width:700px;background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:12px;}
@@ -828,7 +849,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div style="font-size:1.2rem;font-weight:900;margin-bottom:6px;" id="lesson-done-title">Leçon terminée !</div>
     <div style="color:var(--muted);font-size:.84rem;margin-bottom:16px;" id="lesson-done-sub"></div>
     <div style="font-size:1.4rem;font-weight:900;color:var(--gold);margin-bottom:16px;" id="lesson-done-reward"></div>
-    <button class="btn btn-primary" onclick="navTo('portfolio')">← Retour au Portfolio</button>
+    <button class="btn btn-primary" id="lesson-done-back" onclick="navTo('portfolio')">← Retour au Portfolio</button>
   </div>
   <div style="display:flex;gap:8px;margin-top:8px;" id="lesson-btn-row">
     <button class="btn btn-primary" id="lesson-btn-next" onclick="lessonNext()" style="display:none;">Suivant →</button>
