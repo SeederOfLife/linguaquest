@@ -1,3 +1,14 @@
+// ── Lesson i18n helpers ──────────────────────────────────────────────────────
+function getLessonT(lesson){
+  return lesson.t[_uiLang] || lesson.t['fr'] || Object.values(lesson.t)[0];
+}
+function s_(key, vars){
+  const s = UI_STRINGS[_uiLang] || UI_STRINGS['fr'];
+  let str = (s&&s[key]) ? s[key] : key;
+  if(vars) Object.entries(vars).forEach(([k,v])=>{ str=str.split('{'+k+'}').join(v); });
+  return str;
+}
+
 // ══════════════════════════════════════════════
 // DIVIDEND ENGINE
 // ══════════════════════════════════════════════
@@ -71,9 +82,9 @@ function renderInvestorLevel(){
   // Build level chips for all 8 levels
   const chips=INVESTOR_LEVELS.map(lv=>{
     const unlocked=invested>=lv.min;
-    const assetName=lv.unlocksAsset ? (ASSET_DEFS.find(a=>a.id===lv.unlocksAsset)||{name:lv.unlocksAsset}).name : null;
-    return `<div class="inv-unlock-chip ${unlocked?'done':'locked'}" title="Niv. ${lv.level}: ${lv.title}">
-      ${lv.icon} ${lv.title}${assetName&&!unlocked?' 🔒':''}
+    const lvTitle=(_uiLang==='en'?lv.titleEn:lv.title)||lv.title;
+    return `<div class="inv-unlock-chip ${unlocked?'done':'locked'}" title="Lv.${lv.level}: ${lvTitle}">
+      ${lv.icon} ${lvTitle}${lv.unlocksAsset&&!unlocked?' 🔒':''}
     </div>`;
   }).join('');
 
@@ -81,8 +92,8 @@ function renderInvestorLevel(){
     <div class="inv-level-header">
       <div class="inv-level-badge">${cur.icon}</div>
       <div class="inv-level-info">
-        <div class="inv-level-title">${cur.icon} Investisseur ${cur.title}</div>
-        <div class="inv-level-sub">${invested.toLocaleString()} pièces investies${next?' · Prochain : '+next.min.toLocaleString()+' pièces':' · Niveau MAX !'}</div>
+        <div class="inv-level-title">${cur.icon} ${s_('inv_level_label',{title:(_uiLang==='en'?cur.titleEn:cur.title)||cur.title})}</div>
+        <div class="inv-level-sub">${invested.toLocaleString()} · ${next?s_('inv_next_unlock',{n:next.min.toLocaleString()}):s_('inv_max')}</div>
       </div>
       <div class="inv-level-num">Niv. ${cur.level}/8</div>
     </div>
@@ -90,7 +101,7 @@ function renderInvestorLevel(){
       <div class="inv-xp-bar-wrap"><div class="inv-xp-bar" style="width:${pct}%;background:${cur.color}"></div></div>
       <div class="inv-xp-pct">${pct}%</div>
     </div>
-    ${next?`<div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">🔓 Débloquer <strong>${(ASSET_DEFS.find(a=>a.id===next.unlocksAsset)||{name:'bonus'}).name}</strong> à ${next.min.toLocaleString()} pièces investies${next.reward>0?' · Récompense : +'+next.reward+' 🪙':''}</div>`:''}
+    ${next&&next.unlocksAsset?`<div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">${s_('inv_next_asset',{asset:(ASSET_DEFS.find(a=>a.id===next.unlocksAsset)||{name:'?'}).name,n:next.min.toLocaleString()})}${next.reward>0?' · '+s_('inv_reward',{n:next.reward}):''}</div>`:''}
     <div class="inv-unlock-row">${chips}</div>
   `;
 }
@@ -117,11 +128,11 @@ function renderAcademy(){
     card.className=`lesson-card${done?' lesson-done':''}${locked?' lesson-locked':''}`;
     card.innerHTML=`
       <div class="lesson-icon">${lesson.icon}</div>
-      <div class="lesson-title">${lesson.title}</div>
-      <div class="lesson-diff ${lesson.difficulty}">${lesson.difficulty}</div>
-      <div class="lesson-reward">🪙 +${lesson.reward} pièces</div>
+      <div class="lesson-title">${lt.title}</div>
+      <div class="lesson-diff ${lt.difficulty}">${lt.difficulty}</div>
+      <div class="lesson-reward">🪙 +${lesson.reward}</div>
       ${done?'<div class="lesson-done-badge">✅</div>':''}
-      ${locked?`<div class="lesson-lock-info">🔒 Niveau investisseur ${lesson.unlockLevel} requis</div>`:''}
+      ${locked?`<div class="lesson-lock-info">${s_('lesson_locked',{n:lesson.unlockLevel})}</div>`:''}
     `;
     if(!locked) card.onclick=()=>openLesson(lesson.id);
     grid.appendChild(card);
@@ -132,13 +143,14 @@ function openLesson(id){
   const lesson=FINANCE_LESSONS.find(l=>l.id===id);
   if(!lesson) return;
   _lessonState={lessonId:id,qi:-1,score:0,answered:false};
-  $('lesson-bc').textContent=lesson.title;
-  $('lesson-intro-zone').textContent=lesson.intro;
+  const lt=getLessonT(lesson);
+  $('lesson-bc').textContent=lt.title;
+  $('lesson-intro-zone').textContent=lt.intro;
   $('lesson-intro-zone').style.display='block';
   $('lesson-q-card').style.display='none';
   $('lesson-complete').style.display='none';
   $('lesson-btn-start').style.display='inline-flex';
-  $('lesson-btn-start').textContent=`${lesson.icon} Commencer → (${lesson.questions.length} questions)`;
+  $('lesson-btn-start').textContent=`${lesson.icon} ${s_('lesson_start')} (${lt.questions.length})`;
   $('lesson-btn-next').style.display='none';
   $('lesson-prog-fill').style.width='0%';
   goTo('lesson');
@@ -155,11 +167,12 @@ function renderLessonQuestion(){
   const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
   if(!lesson) return;
   const qi=_lessonState.qi;
-  if(qi>=lesson.questions.length){ lessonComplete(); return; }
-  const q=lesson.questions[qi];
-  const total=lesson.questions.length;
+  const lt2=getLessonT(lesson);
+  if(qi>=lt2.questions.length){ lessonComplete(); return; }
+  const q=lt2.questions[qi];
+  const total=lt2.questions.length;
   $('lesson-prog-fill').style.width=`${(qi/total)*100}%`;
-  $('lesson-q-num').textContent=`Question ${qi+1} / ${total}`;
+  $('lesson-q-num').textContent=s_('lesson_q_label',{i:qi+1,n:total});
   $('lesson-q-text').textContent=q.q;
   $('lesson-explain').textContent='';
   $('lesson-explain').className='lesson-explain-bar';
@@ -195,7 +208,9 @@ function pickLessonChoice(idx,btn,q){
   exp.textContent=(correct?'✅ ':'❌ ')+q.explain;
   exp.className='lesson-explain-bar show';
   $('lesson-btn-next').style.display='inline-flex';
-  $('lesson-btn-next').textContent=_lessonState.qi+1>=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId).questions.length?'Terminer 🏆':'Suivant →';
+  const _l2=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
+  const _lt2=getLessonT(_l2);
+  $('lesson-btn-next').textContent=_lessonState.qi+1>=_lt2.questions.length?s_('lesson_finish'):s_('lesson_next');
 }
 
 function lessonNext(){
@@ -207,7 +222,8 @@ function lessonComplete(){
   const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
   if(!lesson) return;
   const score=_lessonState.score;
-  const total=lesson.questions.length;
+  const lt3=getLessonT(lesson);
+  const total=lt3.questions.length;
   const pct=Math.round(score/total*100);
   const alreadyDone=(U.lessonsCompleted||{})[lesson.id];
 
@@ -225,9 +241,9 @@ function lessonComplete(){
   $('lesson-btn-next').style.display='none';
   $('lesson-btn-start').style.display='none';
   $('lesson-prog-fill').style.width='100%';
-  $('lesson-done-title').textContent=pct>=80?'Excellent ! 🌟':pct>=50?'Bien joué !':'Continue à apprendre !';
-  $('lesson-done-sub').textContent=`${score}/${total} bonnes réponses · ${pct}%${alreadyDone?' (déjà complétée)':''}`;
-  $('lesson-done-reward').innerHTML=earned>0?`+${earned} <span class="coin"></span> gagnés !`:`🏆 ${pct}% de réussite`;
+  $('lesson-done-title').textContent=pct>=80?s_('lesson_done_great'):pct>=50?s_('lesson_done_good'):s_('lesson_done_keep');
+  $('lesson-done-sub').textContent=s_('lesson_done_score',{s:score,t:total,p:pct})+(alreadyDone?' '+s_('lesson_done_already'):'');
+  $('lesson-done-reward').innerHTML=earned>0?`+${earned} <span class="coin"></span>`:`🏆 ${pct}%`;
   $('lesson-complete').style.display='block';
   if(earned>0) confetti();
 }
