@@ -24,3 +24,39 @@ const SHOP_ITEMS=[
   {id:'bonus_coins',name:'Bonus Pièces',icon:'<span class="coin"></span>',price:0,desc:'Reçois 50 pièces bonus chaque semaine',type:'premium'},
 ];
 
+
+// ══════════════════════════════════════════════
+// UI STRINGS (interface translations)
+// ══════════════════════════════════════════════
+const UI_STRINGS = {
+  fr:{ learn:'Apprendre', portfolio:'Portfolio', shop:'Boutique', profile:'Profil',
+       appearance:'🎨 Apparence', langUI:'🌐 Langue de l\'interface',
+       logout:'Se déconnecter', changeLang:'Changer de langue',
+       wealth:'Patrimoine total', dividends:'Dividendes', collect:'Collecter',
+       levels:'Niveaux', chapters:'Chapitres', start:'Commencer →',
+       correct:'Correct !', wrong:'Pas tout à fait', almost:'Presque !' },
+  en:{ learn:'Learn', portfolio:'Portfolio', shop:'Shop', profile:'Profile',
+       appearance:'🎨 Appearance', langUI:'🌐 Interface language',
+       logout:'Log out', changeLang:'Change language',
+       wealth:'Total wealth', dividends:'Dividends', collect:'Collect',
+       levels:'Levels', chapters:'Chapters', start:'Start →',
+       correct:'Correct!', wrong:'Not quite', almost:'Almost!' },
+  es:{ learn:'Aprender', portfolio:'Portafolio', shop:'Tienda', profile:'Perfil',
+       appearance:'🎨 Apariencia', langUI:'🌐 Idioma de la interfaz',
+       logout:'Cerrar sesión', changeLang:'Cambiar idioma',
+       wealth:'Patrimonio total', dividends:'Dividendos', collect:'Cobrar',
+       levels:'Niveles', chapters:'Capítulos', start:'Empezar →',
+       correct:'¡Correcto!', wrong:'No exactamente', almost:'¡Casi!' },
+  de:{ learn:'Lernen', portfolio:'Portfolio', shop:'Shop', profile:'Profil',
+       appearance:'🎨 Erscheinungsbild', langUI:'🌐 Oberflächensprache',
+       logout:'Abmelden', changeLang:'Sprache ändern',
+       wealth:'Gesamtvermögen', dividends:'Dividenden', collect:'Einsammeln',
+       levels:'Niveaus', chapters:'Kapitel', start:'Starten →',
+       correct:'Richtig!', wrong:'Nicht ganz', almost:'Fast!' },
+  cs:{ learn:'Učit se', portfolio:'Portfolio', shop:'Obchod', profile:'Profil',
+       appearance:'🎨 Vzhled', langUI:'🌐 Jazyk rozhraní',
+       logout:'Odhlásit se', changeLang:'Změnit jazyk',
+       wealth:'Celkové jmění', dividends:'Dividendy', collect:'Vybrat',
+       levels:'Úrovně', chapters:'Kapitoly', start:'Začít →',
+       correct:'Správně!', wrong:'Není přesné', almost:'Skoro!' },
+};
