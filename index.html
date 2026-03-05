@@ -15,10 +15,8 @@
   --nav-bg:rgba(10,10,20,.96);--top-bg:rgba(10,10,20,.92);
 }
 [data-theme="light"]{
-  --bg:#f8f7ff;--card:#ffffff;--card2:#f0effe;--card3:#e4e0fd;
-  --accent:#6d28d9;--accent2:#db2777;--accent3:#0891b2;--accent4:#d97706;
-  --gold:#d97706;--green:#059669;--red:#dc2626;--text:#1e1b4b;--muted:#6b7280;--r:16px;
-  --nav-bg:rgba(248,247,255,.97);--top-bg:rgba(248,247,255,.95);
+  --bg:#ffffff;
+  --nav-bg:rgba(255,255,255,.97);--top-bg:rgba(255,255,255,.95);
 }
 [data-theme="claude"]{
   --bg:#1a1108;--card:#221a0e;--card2:#2a2010;--card3:#332615;
@@ -393,15 +391,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .lang-ui-btn:hover{border-color:var(--accent);}
 .lang-ui-btn.active{border-color:var(--accent);background:rgba(124,58,237,.12);color:var(--accent);}
 
-/* ── LIGHT THEME FIXES ── */
-[data-theme="light"] .stars .star{background:#6d28d9;}
-[data-theme="light"] .auth-card{border-color:rgba(109,40,217,.15);}
-[data-theme="light"] .auth-input{background:rgba(109,40,217,.05);border-color:rgba(109,40,217,.15);color:var(--text);}
-[data-theme="light"] .auth-input::placeholder{color:var(--muted);}
-[data-theme="light"] .card,.card2{border-color:rgba(109,40,217,.12);}
-[data-theme="light"] .theme-btn{border-color:rgba(109,40,217,.15);}
-[data-theme="light"] .lang-ui-btn{border-color:rgba(109,40,217,.15);}
-[data-theme="light"] .theme-pick-btn{border-color:rgba(109,40,217,.15);}
 
 /* ── CLAUDE THEME LOGO ── */
 [data-theme="claude"] .lq-logo-svg{filter:drop-shadow(0 0 18px rgba(212,132,90,.65));}
