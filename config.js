@@ -39,10 +39,148 @@ function pickTheme(mode) {
 function applyUILang() {
   const s = UI_STRINGS[_uiLang] || UI_STRINGS.fr;
   const set = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
-  set('lbl-nav-learn',     s.learn);
-  set('lbl-nav-portfolio', s.portfolio);
-  set('lbl-nav-shop',      s.shop);
-  set('lbl-nav-profile',   s.profile);
+  const html = (id, val) => { const e = document.getElementById(id); if(e) e.innerHTML = val; };
+  const ph = (id, val) => { const e = document.getElementById(id); if(e) e.placeholder = val; };
+
+  // NAV
+  set('lbl-nav-learn', s.nav_learn);
+  set('lbl-nav-portfolio', s.nav_portfolio);
+  set('lbl-nav-shop', s.nav_shop);
+  set('lbl-nav-profile', s.nav_profile);
+
+  // THEME PICKER
+  set('lbl-tagline', s.tagline);
+  set('lbl-pick-theme', s.pick_theme);
+  set('lbl-theme-dark', s.theme_dark);
+  set('lbl-theme-light', s.theme_light);
+  set('lbl-theme-claude', s.theme_claude);
+  set('lbl-theme-random', s.theme_random);
+
+  // AUTH
+  set('lbl-tagline-auth', s.tagline);
+  set('tab-login', s.tab_login);
+  set('tab-register', s.tab_register);
+  set('lbl-login-pass', s.lbl_pass);
+  set('btn-do-login', s.btn_login);
+  set('btn-demo', s.demo_link);
+  set('lbl-reg-name', s.lbl_reg_name);
+  set('lbl-reg-email', s.lbl_reg_email);
+  set('lbl-reg-pass', s.lbl_reg_pass);
+  set('btn-do-register', s.btn_register);
+  set('lbl-or-guest', s.or_guest);
+  set('lbl-guest-btn', s.guest_btn);
+  set('lbl-guest-warn', s.guest_warn);
+  ph('login-email', s.ph_login_email);
+  ph('login-pass', s.ph_login_pass);
+  ph('reg-name', s.ph_reg_name);
+  ph('reg-email', s.ph_reg_email);
+  ph('reg-pass', s.ph_reg_pass);
+
+  // LEARN
+  set('lbl-learn-tagline', s.learn_tagline);
+  set('lbl-i-speak', s.i_speak);
+  set('lbl-i-learn', s.i_learn);
+  set('btn-start', s.btn_start);
+
+  // LEVELS
+  set('lbl-levels-sub', s.levels_sub);
+
+  // GAME SELECT
+  set('lbl-mix-badge', s.mix_badge);
+  set('lbl-gtype-mixed', s.gtype_mixed);
+  set('lbl-gdesc-mixed', s.gdesc_mixed);
+  set('lbl-gtype-quiz', s.gtype_quiz);
+  set('lbl-gdesc-quiz', s.gdesc_quiz);
+  set('lbl-gtype-fill', s.gtype_fill);
+  set('lbl-gdesc-fill', s.gdesc_fill);
+  set('lbl-gtype-match', s.gtype_match);
+  set('lbl-gdesc-match', s.gdesc_match);
+  set('lbl-reward-mixed', s.reward_mixed);
+  set('lbl-reward-quiz', s.reward_quiz);
+  set('lbl-reward-fill', s.reward_fill);
+  set('lbl-reward-match', s.reward_match);
+
+  // GAME
+  ph('fill-input', s.ph_fill);
+  set('lbl-your-sent', s.your_sent);
+  set('lbl-words-avail', s.words_avail);
+  set('lbl-pairs', s.pairs);
+  set('btn-check', s.btn_check);
+  set('btn-next', s.btn_next);
+  set('btn-skip', s.btn_continue);
+
+  // RESULTS
+  set('lbl-coins-won', s.coins_won);
+  set('lbl-coins-hint', s.coins_hint);
+  set('lbl-r-correct', s.r_correct);
+  set('lbl-r-wrong', s.r_wrong);
+  set('btn-replay', s.btn_replay);
+  set('btn-r-chapters', s.btn_r_chapters);
+  set('btn-r-invest', s.btn_r_invest);
+
+  // PORTFOLIO
+  set('lbl-wealth-hero', s.wealth_hero);
+  set('lbl-liquid-coins', s.liquid_coins);
+  set('lbl-div-day', s.div_day);
+  set('lbl-invested', s.invested);
+  set('lbl-div-avail', s.div_avail);
+  set('collect-btn', s.btn_collect);
+  set('lbl-div-explain-title', s.div_explain_title);
+  html('lbl-div-explain-body', s.div_explain_body);
+  set('lbl-target-title', s.target_title);
+  set('lbl-target-sub', s.target_sub);
+  set('lbl-target-obj', s.target_obj);
+  set('lbl-tr-missing', s.tr_missing);
+  set('lbl-tr-daily', s.tr_daily);
+  set('lbl-tr-time', s.tr_time);
+  set('lbl-tr-progress', s.tr_progress);
+  set('lbl-tl-target', s.tl_target);
+  set('tl-now', s.tl_now);
+  set('lbl-assets-title', s.assets_title);
+
+  // SHOP
+  set('lbl-shop-title', s.shop_title);
+  set('lbl-shop-sub', s.shop_sub);
+  set('lbl-shop-coins-lbl', s.shop_coins_lbl);
+
+  // PROFILE
+  set('lbl-ps-xp', s.ps_xp);
+  set('lbl-ps-coins', s.ps_coins);
+  set('lbl-ps-sessions', s.ps_sessions);
+  set('lbl-ps-streak', s.ps_streak);
+  set('lbl-ps-chapters', s.ps_chapters);
+  set('lbl-ps-wealth', s.ps_wealth);
+  set('lbl-appearance', s.appearance);
+  set('lbl-lang-ui', s.lang_ui);
+  set('theme-btn-dark', s.theme_dark);
+  set('theme-btn-light', s.theme_light);
+  set('theme-btn-claude', s.theme_claude);
+  set('theme-btn-random', s.theme_random);
+  set('btn-change-lang', s.btn_change_lang);
+  set('btn-logout', s.btn_logout);
+
+  // QR MODAL
+  set('lbl-qr-title', s.qr_title);
+  set('btn-qr-copy', s.btn_qr_copy);
+  set('btn-qr-close', s.btn_close);
+
+  // LANG CHANGE MODAL
+  set('lbl-langmodal-title', s.langmodal_title);
+  set('lbl-lm-speak', s.lm_speak);
+  set('lbl-lm-learn', s.lm_learn);
+  set('btn-lm-apply', s.btn_apply);
+  set('btn-lm-cancel', s.btn_cancel);
+
+  // ASSET INFO MODAL
+  set('lbl-amod-market', s.amod_market);
+  set('lbl-amod-position', s.amod_position);
+  set('lbl-amod-units', s.amod_units);
+  set('lbl-amod-value', s.amod_value);
+  set('lbl-amod-daily', s.amod_daily);
+  set('lbl-amod-pv', s.amod_pv);
+  set('amod-buy-btn', s.btn_buy);
+  set('amod-sell-btn', s.btn_sell);
+  set('btn-amod-close', s.btn_close);
 }
 
 function renderUILangGrid() {
