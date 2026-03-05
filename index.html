@@ -15,8 +15,11 @@
   --nav-bg:rgba(10,10,20,.96);--top-bg:rgba(10,10,20,.92);
 }
 [data-theme="light"]{
-  --bg:#ffffff;
-  --nav-bg:rgba(255,255,255,.97);--top-bg:rgba(255,255,255,.95);
+  --bg:#f0f0ff;--card:#ffffff;--card2:#f0effe;--card3:#e4e0fd;
+  --accent:#7c3aed;--accent2:#ec4899;--accent3:#06b6d4;--accent4:#f59e0b;
+  --gold:#d97706;--green:#059669;--red:#dc2626;--text:#1e1b4b;--muted:#6b7280;--r:16px;
+  --nav-bg:rgba(240,240,255,.97);--top-bg:rgba(240,240,255,.95);
+  --border-col:rgba(109,40,217,.15);
 }
 [data-theme="claude"]{
   --bg:#1a1108;--card:#221a0e;--card2:#2a2010;--card3:#332615;
@@ -392,6 +395,40 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .lang-ui-btn.active{border-color:var(--accent);background:rgba(124,58,237,.12);color:var(--accent);}
 
 
+/* ── LIGHT THEME OVERRIDES ── */
+[data-theme="light"] .star{background:#7c3aed;opacity:.25;}
+[data-theme="light"] body{color:var(--text);}
+[data-theme="light"] .auth-card{border-color:rgba(109,40,217,.15);}
+[data-theme="light"] .auth-card::before{opacity:.6;}
+[data-theme="light"] .auth-input{background:#f8f6ff;border-color:rgba(109,40,217,.2);color:var(--text);}
+[data-theme="light"] .auth-input::placeholder{color:var(--muted);}
+[data-theme="light"] .top-bar{border-bottom-color:rgba(109,40,217,.12);}
+[data-theme="light"] .nav-bar{border-top-color:rgba(109,40,217,.12);}
+[data-theme="light"] .nav-item{color:#9ca3af;}
+[data-theme="light"] .nav-item.active{color:var(--accent);}
+[data-theme="light"] .card-accent,.level-card,.chapter-item,.shop-card,.stat-card,
+[data-theme="light"] .asset-card,.modal-box,.feedback-banner{border-color:rgba(109,40,217,.12)!important;}
+[data-theme="light"] .auth-tab{background:transparent;color:var(--muted);}
+[data-theme="light"] .btn-secondary{background:#ede9fe;color:var(--text);border-color:rgba(109,40,217,.2);}
+[data-theme="light"] .answer-btn{background:#fff;border-color:rgba(109,40,217,.15);color:var(--text);}
+[data-theme="light"] .answer-btn:hover:not(:disabled){border-color:var(--accent);background:#f5f3ff;}
+[data-theme="light"] .word-token{background:#ede9fe;border-color:rgba(109,40,217,.2);color:var(--text);}
+[data-theme="light"] .sentence-slots{background:rgba(109,40,217,.04);border-color:rgba(109,40,217,.2);}
+[data-theme="light"] .match-item{background:#fff;border-color:rgba(109,40,217,.15);color:var(--text);}
+[data-theme="light"] .theme-btn{background:#fff;border-color:rgba(109,40,217,.15);color:var(--text);}
+[data-theme="light"] .theme-btn.active{border-color:var(--accent);background:#ede9fe;color:var(--accent);}
+[data-theme="light"] .lang-ui-btn{background:#fff;border-color:rgba(109,40,217,.15);color:var(--text);}
+[data-theme="light"] .lang-ui-btn.active{border-color:var(--accent);background:#ede9fe;color:var(--accent);}
+[data-theme="light"] .lang-card{background:#fff;border-color:rgba(109,40,217,.12);color:var(--text);}
+[data-theme="light"] .lang-card.selected{border-color:var(--accent);background:#ede9fe;}
+[data-theme="light"] .game-header-bar{background:var(--top-bg);}
+[data-theme="light"] .fill-input{background:#f8f6ff;border-color:rgba(109,40,217,.2);color:var(--text);}
+[data-theme="light"] .fill-input:focus{border-color:var(--accent);}
+[data-theme="light"] .timer-badge{background:#ede9fe;color:var(--text);}
+[data-theme="light"] .section-title{color:var(--text);}
+[data-theme="light"] .step-dot.pending{background:#e5e7eb;color:var(--muted);}
+[data-theme="light"] .step-line{background:#e5e7eb;}
+
 /* ── CLAUDE THEME LOGO ── */
 [data-theme="claude"] .lq-logo-svg{filter:drop-shadow(0 0 18px rgba(212,132,90,.65));}
 
@@ -437,8 +474,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <button class="theme-pick-btn" onclick="pickTheme('claude')">
         <div class="theme-pick-icon">🤖</div><div class="theme-pick-name">Claude</div>
       </button>
-      <button class="theme-pick-btn" onclick="pickTheme('auto')">
-        <div class="theme-pick-icon">⚙️</div><div class="theme-pick-name">Auto</div>
+      <button class="theme-pick-btn" onclick="pickTheme('random')">
+        <div class="theme-pick-icon">🎲</div><div class="theme-pick-name">Aléatoire</div>
       </button>
     </div>
   </div>
@@ -824,7 +861,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         <button class="theme-btn" id="theme-btn-dark"    onclick="setTheme('dark')">🌙 Sombre</button>
         <button class="theme-btn" id="theme-btn-light"   onclick="setTheme('light')">☀️ Clair</button>
         <button class="theme-btn" id="theme-btn-claude"  onclick="setTheme('claude')">🤖 Claude</button>
-        <button class="theme-btn" id="theme-btn-auto"    onclick="setTheme('auto')">⚙️ Auto</button>
+        <button class="theme-btn" id="theme-btn-random" onclick="setTheme('random')">🎲 Aléatoire</button>
       </div>
       <!-- UI Language -->
       <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;margin-top:12px;">🌐 Langue de l'interface</div>
