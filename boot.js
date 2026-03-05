@@ -26,6 +26,7 @@ function readParams(){const p=new URLSearchParams(location.search);const n=p.get
 // ══════════════════════════════════════════════
 mkStars();buildGrids();readParams();
 initTheme();
+applyUILang();
 // Auto-login if session exists
 // Auto-login: Supabase first, localStorage fallback
 (async function(){
