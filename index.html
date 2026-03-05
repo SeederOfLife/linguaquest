@@ -432,6 +432,77 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* ── CLAUDE THEME LOGO ── */
 [data-theme="claude"] .lq-logo-svg{filter:drop-shadow(0 0 18px rgba(212,132,90,.65));}
 
+/* ── INVESTOR LEVEL SYSTEM ── */
+.inv-level-bar{width:100%;max-width:700px;background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:12px;}
+.inv-level-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.inv-level-badge{font-size:1.6rem;line-height:1;}
+.inv-level-info{flex:1;}
+.inv-level-title{font-size:1rem;font-weight:900;color:var(--text);}
+.inv-level-sub{font-size:.73rem;color:var(--muted);margin-top:1px;}
+.inv-level-num{font-size:.8rem;font-weight:800;color:var(--accent3);background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);border-radius:20px;padding:4px 10px;white-space:nowrap;}
+.inv-xp-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.inv-xp-bar-wrap{flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;}
+.inv-xp-bar{height:100%;border-radius:4px;transition:width .6s ease;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.inv-xp-pct{font-size:.7rem;font-weight:800;color:var(--muted);min-width:32px;text-align:right;}
+.inv-unlock-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.inv-unlock-chip{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:20px;border:1px solid;display:flex;align-items:center;gap:3px;}
+.inv-unlock-chip.done{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:var(--green);}
+.inv-unlock-chip.locked{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:var(--muted);}
+
+/* ── FINANCE ACADEMY ── */
+.academy-section{width:100%;max-width:700px;margin-bottom:14px;}
+.academy-title{font-size:1rem;font-weight:900;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.lesson-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+@media(max-width:480px){.lesson-grid{grid-template-columns:1fr;}}
+.lesson-card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.lesson-card:hover:not(.lesson-locked){border-color:var(--accent);transform:translateY(-2px);}
+.lesson-card.lesson-done{border-color:rgba(16,185,129,.3);}
+.lesson-card.lesson-locked{opacity:.5;cursor:not-allowed;}
+.lesson-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;}
+.lesson-card.lesson-done::before{background:linear-gradient(90deg,var(--green),#34d399);}
+.lesson-card:not(.lesson-done):not(.lesson-locked)::before{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.lesson-icon{font-size:1.6rem;margin-bottom:6px;}
+.lesson-title{font-size:.88rem;font-weight:800;margin-bottom:3px;}
+.lesson-diff{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;margin-bottom:5px;}
+.lesson-diff.Débutant,.lesson-diff.Beginner,.lesson-diff.Principiante,.lesson-diff.Anfänger,.lesson-diff.Začátečník{background:rgba(16,185,129,.1);color:var(--green);}
+.lesson-diff.Intermédiaire,.lesson-diff.Intermediate,.lesson-diff.Intermedio,.lesson-diff.Mittel,.lesson-diff.Středně{background:rgba(6,182,212,.1);color:var(--accent3);}
+.lesson-diff.Avancé,.lesson-diff.Advanced,.lesson-diff.Avanzado,.lesson-diff.Fortgeschritten,.lesson-diff.Pokročilý{background:rgba(124,58,237,.1);color:var(--accent);}
+.lesson-diff.Expert{background:rgba(236,72,153,.1);color:var(--accent2);}
+.lesson-reward{font-size:.71rem;color:var(--gold);font-weight:700;}
+.lesson-done-badge{position:absolute;top:10px;right:10px;font-size:1rem;}
+.lesson-lock-info{font-size:.68rem;color:var(--muted);margin-top:4px;}
+
+/* ── LESSON SCREEN ── */
+#screen-lesson{padding-top:64px;}
+.lesson-progress-bar{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;width:100%;max-width:700px;margin-bottom:16px;}
+.lesson-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s;}
+.lesson-question-card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:20px;width:100%;max-width:700px;margin-bottom:14px;}
+.lesson-intro-card{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(6,182,212,.08));border:1px solid rgba(124,58,237,.2);border-radius:18px;padding:20px;width:100%;max-width:700px;margin-bottom:14px;line-height:1.7;font-size:.88rem;color:var(--text);}
+.lesson-explain-bar{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:12px 14px;font-size:.82rem;color:var(--green);line-height:1.6;margin-top:8px;display:none;}
+.lesson-explain-bar.show{display:block;}
+.lesson-choice{width:100%;text-align:left;background:var(--card2);border:1.5px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;cursor:pointer;font-family:Nunito;font-weight:700;font-size:.88rem;color:var(--text);margin-bottom:7px;transition:all .2s;}
+.lesson-choice:hover:not(:disabled){border-color:var(--accent);background:rgba(124,58,237,.1);}
+.lesson-choice.choice-correct{border-color:var(--green);background:rgba(16,185,129,.12);color:var(--green);}
+.lesson-choice.choice-wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red);}
+.lesson-complete-card{text-align:center;padding:30px 20px;background:var(--card);border-radius:20px;width:100%;max-width:500px;}
+.lesson-complete-stars{font-size:2.5rem;margin-bottom:10px;}
+
+/* ── LOCKED ASSET OVERLAY ── */
+.asset-card.asset-locked{opacity:.6;position:relative;}
+.asset-locked-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;backdrop-filter:blur(2px);z-index:2;}
+.asset-locked-icon{font-size:2rem;}
+.asset-locked-msg{font-size:.78rem;font-weight:800;color:#fff;text-align:center;padding:0 12px;}
+
+/* ── NEW ASSET CLASSES ── */
+.asset-card.etf   .asset-progress-fill{background:linear-gradient(90deg,#0891b2,#22d3ee) !important;}
+.asset-card.bonds .asset-progress-fill{background:linear-gradient(90deg,#059669,#6ee7b7) !important;}
+.asset-card.oil   .asset-progress-fill{background:linear-gradient(90deg,#92400e,#d97706) !important;}
+.asset-card.nasdaq .asset-progress-fill{background:linear-gradient(90deg,#6d28d9,#a78bfa) !important;}
+
+/* ── MARKET MINI CHART ── */
+.asset-sparkline{height:36px;width:100%;margin:6px 0;}
+
+
 </style>
 </head>
 <body>
@@ -738,6 +809,33 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   </div>
 </div>
 
+<!-- ══════════════════ FINANCE LESSON SCREEN ══════════════════ -->
+<div class="screen screen-padded" id="screen-lesson">
+  <div class="breadcrumb">
+    <span class="crumb" onclick="navTo('portfolio')">Portfolio</span><span class="sep">›</span>
+    <span id="lesson-bc">Finance Academy</span>
+  </div>
+  <div class="lesson-progress-bar"><div class="lesson-progress-fill" id="lesson-prog-fill" style="width:0%"></div></div>
+  <div id="lesson-intro-zone" class="lesson-intro-card" style="display:none;"></div>
+  <div class="lesson-question-card" id="lesson-q-card" style="display:none;">
+    <div style="font-size:.7rem;color:var(--muted);font-weight:800;margin-bottom:10px;" id="lesson-q-num"></div>
+    <div style="font-size:1rem;font-weight:800;margin-bottom:14px;line-height:1.5;" id="lesson-q-text"></div>
+    <div id="lesson-choices"></div>
+    <div class="lesson-explain-bar" id="lesson-explain"></div>
+  </div>
+  <div class="lesson-complete-card" id="lesson-complete" style="display:none;">
+    <div class="lesson-complete-stars">🏆</div>
+    <div style="font-size:1.2rem;font-weight:900;margin-bottom:6px;" id="lesson-done-title">Leçon terminée !</div>
+    <div style="color:var(--muted);font-size:.84rem;margin-bottom:16px;" id="lesson-done-sub"></div>
+    <div style="font-size:1.4rem;font-weight:900;color:var(--gold);margin-bottom:16px;" id="lesson-done-reward"></div>
+    <button class="btn btn-primary" onclick="navTo('portfolio')">← Retour au Portfolio</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px;" id="lesson-btn-row">
+    <button class="btn btn-primary" id="lesson-btn-next" onclick="lessonNext()" style="display:none;">Suivant →</button>
+    <button class="btn btn-secondary" id="lesson-btn-start" onclick="lessonStartQuestions()">Commencer →</button>
+  </div>
+</div>
+
 <!-- ══════════════════ PORTFOLIO SCREEN ══════════════════ -->
 <div class="screen screen-padded" id="screen-portfolio">
   <div class="wealth-hero">
@@ -819,6 +917,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
   <!-- Assets -->
   <div class="section-title" style="text-align:left;margin-bottom:8px;" id="lbl-assets-title">🏠 Actifs disponibles</div>
+  <!-- INVESTOR LEVEL -->
+  <div class="inv-level-bar" id="inv-level-bar"></div>
+  <!-- FINANCE ACADEMY -->
+  <div class="academy-section" id="academy-section">
+    <div class="academy-title">🎓 <span id="lbl-academy-title">Finance Academy</span></div>
+    <div class="lesson-grid" id="lesson-grid"></div>
+  </div>
   <div class="assets-grid" id="assets-grid"></div>
 </div>
 
