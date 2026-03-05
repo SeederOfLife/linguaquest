@@ -181,6 +181,18 @@ function applyUILang() {
   set('amod-buy-btn', s.btn_buy);
   set('amod-sell-btn', s.btn_sell);
   set('btn-amod-close', s.btn_close);
+
+  // Finance Academy — static lesson screen labels
+  set('lbl-academy-title', s.academy_title);
+  // back button in lesson screen uses lesson_back from current lang
+  const _lessonBack = document.getElementById('lesson-done-back');
+  if(_lessonBack) _lessonBack.textContent = s.lesson_back;
+  // Re-render academy grid if portfolio screen is active
+  const pfScreen = document.getElementById('screen-portfolio');
+  if(pfScreen && pfScreen.classList.contains('active')){
+    if(typeof renderAcademy === 'function') renderAcademy();
+    if(typeof renderInvestorLevel === 'function') renderInvestorLevel();
+  }
 }
 
 function renderUILangGrid() {
