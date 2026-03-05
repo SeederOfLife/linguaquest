@@ -1,10 +1,14 @@
 // ── Lesson i18n helpers ──────────────────────────────────────────────────────
 function getLessonT(lesson){
-  return lesson.t[_uiLang] || lesson.t['fr'] || Object.values(lesson.t)[0];
+  if(!lesson) return {};
+  const lang = (typeof _uiLang !== 'undefined' && _uiLang) || 'fr';
+  return (lesson.t && (lesson.t[lang] || lesson.t['fr'])) || lesson.t && Object.values(lesson.t)[0] || {};
 }
 function s_(key, vars){
-  const s = UI_STRINGS[_uiLang] || UI_STRINGS['fr'];
-  let str = (s&&s[key]) ? s[key] : key;
+  const lang = (typeof _uiLang !== 'undefined' && _uiLang) || 'fr';
+  const strings = (typeof UI_STRINGS !== 'undefined' && UI_STRINGS) || {};
+  const s = strings[lang] || strings['fr'] || {};
+  let str = s[key] || key;
   if(vars) Object.entries(vars).forEach(([k,v])=>{ str=str.split('{'+k+'}').join(v); });
   return str;
 }
@@ -253,6 +257,12 @@ function lessonComplete(){
 // ══════════════════════════════════════════════
 function renderPortfolio(){
   if(!U) return;
+  // Safety: ensure all required fields exist (in case of old saved data)
+  if(!U.assets)      U.assets = {};
+  if(!U.assetValues) U.assetValues = {};
+  if(!U.lessonsCompleted) U.lessonsCompleted = {};
+  if(U.investorLevel === undefined) U.investorLevel = 1;
+  if(!U.totalInvested) U.totalInvested = 0;
   calcDividends();
   const wealth=getTotalWealth();
   const daily=getDailyDividend();
