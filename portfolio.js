@@ -126,14 +126,15 @@ function renderAcademy(){
   const completed=U.lessonsCompleted||{};
   grid.innerHTML='';
   FINANCE_LESSONS.forEach(lesson=>{
+    const lt=getLessonT(lesson);
     const done=!!completed[lesson.id];
     const locked=lesson.unlockLevel>investorLv;
     const card=document.createElement('div');
     card.className=`lesson-card${done?' lesson-done':''}${locked?' lesson-locked':''}`;
     card.innerHTML=`
       <div class="lesson-icon">${lesson.icon}</div>
-      <div class="lesson-title">${lt.title}</div>
-      <div class="lesson-diff ${lt.difficulty}">${lt.difficulty}</div>
+      <div class="lesson-title">${lt.title||''}</div>
+      <div class="lesson-diff">${lt.difficulty||''}</div>
       <div class="lesson-reward">🪙 +${lesson.reward}</div>
       ${done?'<div class="lesson-done-badge">✅</div>':''}
       ${locked?`<div class="lesson-lock-info">${s_('lesson_locked',{n:lesson.unlockLevel})}</div>`:''}
