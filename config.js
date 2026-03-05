@@ -214,7 +214,7 @@ function defaultUser(name, email){
     assetValues: {gold:0,house:0,stock:0,crypto:0},
     lastDivTime: Date.now(),
     pendingDiv: 0, totalInvested: 0,
-    owned: [], avatar: '',
+    owned: [], avatar: '', lessonsCompleted: {}, investorLevel: 1,
   };
 }
 
