@@ -462,20 +462,20 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       </svg>
     </div>
     <div class="logo">LinguaQuest</div>
-    <div class="tagline">Apprends. Investis. Maîtrise.</div>
-    <p style="font-weight:800;font-size:1rem;margin-top:8px;">Choisis ton thème</p>
+    <div class="tagline" id="lbl-tagline">Apprends. Investis. Maîtrise.</div>
+    <p style="font-weight:800;font-size:1rem;margin-top:8px;" id="lbl-pick-theme">Choisis ton thème</p>
     <div class="theme-pick-grid">
       <button class="theme-pick-btn" onclick="pickTheme('dark')">
-        <div class="theme-pick-icon">🌙</div><div class="theme-pick-name">Sombre</div>
+        <div class="theme-pick-icon">🌙</div><div class="theme-pick-name" id="lbl-theme-dark">Sombre</div>
       </button>
       <button class="theme-pick-btn" onclick="pickTheme('light')">
-        <div class="theme-pick-icon">☀️</div><div class="theme-pick-name">Clair</div>
+        <div class="theme-pick-icon">☀️</div><div class="theme-pick-name" id="lbl-theme-light">Clair</div>
       </button>
       <button class="theme-pick-btn" onclick="pickTheme('claude')">
-        <div class="theme-pick-icon">🤖</div><div class="theme-pick-name">Claude</div>
+        <div class="theme-pick-icon">🤖</div><div class="theme-pick-name" id="lbl-theme-claude">Claude</div>
       </button>
       <button class="theme-pick-btn" onclick="pickTheme('random')">
-        <div class="theme-pick-icon">🎲</div><div class="theme-pick-name">Aléatoire</div>
+        <div class="theme-pick-icon">🎲</div><div class="theme-pick-name" id="lbl-theme-random">Aléatoire</div>
       </button>
     </div>
   </div>
@@ -493,41 +493,41 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       </svg>
     </div>
     <div class="logo">LinguaQuest</div>
-    <div class="tagline">Apprends. Investis. Maîtrise.</div>
+    <div class="tagline" id="lbl-tagline-auth">Apprends. Investis. Maîtrise.</div>
   </div>
   <div class="auth-card card-accent">
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Se connecter</button>
-      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">S'inscrire</button>
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')" data-i18n="tab_login">Se connecter</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')" data-i18n="tab_register">S'inscrire</button>
     </div>
     <!-- LOGIN -->
     <div id="form-login">
       <label class="auth-label">Email</label>
       <input class="auth-input" type="email" id="login-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-      <label class="auth-label">Mot de passe</label>
+      <label class="auth-label" id="lbl-login-pass">Mot de passe</label>
       <input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
       <div class="auth-error" id="login-err"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">Se connecter →</button>
-      <div style="text-align:center;margin-top:12px;font-size:.76rem;color:var(--muted);">Compte de démo : <span style="color:var(--accent3);cursor:pointer;font-weight:700;" id="btn-demo" onclick="demoLogin()">Connexion démo →</span></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()" id="btn-do-login">Se connecter →</button>
+      <div style="text-align:center;margin-top:12px;font-size:.76rem;color:var(--muted);">Compte de démo : <span style="color:var(--accent3);cursor:pointer;font-weight:700;" id="btn-demo" onclick="demoLogin()" data-i18n="demo_link">Connexion démo →</span></div>
     </div>
     <!-- REGISTER -->
     <div id="form-register" style="display:none;">
-      <label class="auth-label">Prénom / Pseudo</label>
+      <label class="auth-label" id="lbl-reg-name">Prénom / Pseudo</label>
       <input class="auth-input" type="text" id="reg-name" placeholder="Marie" onkeydown="if(event.key==='Enter')doRegister()">
-      <label class="auth-label">Email</label>
+      <label class="auth-label" id="lbl-reg-email">Email</label>
       <input class="auth-input" type="email" id="reg-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doRegister()">
-      <label class="auth-label">Mot de passe</label>
+      <label class="auth-label" id="lbl-reg-pass">Mot de passe</label>
       <input class="auth-input" type="password" id="reg-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')doRegister()">
       <div class="auth-error" id="reg-err"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()">Créer mon compte 🚀</button>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()" id="btn-do-register">Créer mon compte 🚀</button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;">
       <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
-      <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;">ou continuer sans compte</span>
+      <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;" id="lbl-or-guest">ou continuer sans compte</span>
       <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
     </div>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;gap:8px;" id="btn-guest" onclick="guestLogin()">👤 Continuer en invité</button>
-    <div style="text-align:center;margin-top:8px;font-size:.7rem;color:var(--muted);">La progression ne sera pas sauvegardée</div>
+    <button class="btn btn-secondary" style="width:100%;justify-content:center;gap:8px;" id="btn-guest" onclick="guestLogin()"><span id="lbl-guest-btn">👤 Continuer en invité</span></button>
+    <div style="text-align:center;margin-top:8px;font-size:.7rem;color:var(--muted);" id="lbl-guest-warn">La progression ne sera pas sauvegardée</div>
   </div>
 </div>
 
@@ -567,7 +567,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       </svg>
       <div class="logo" style="font-size:1.9rem;">LinguaQuest</div>
     </div>
-    <div class="tagline" style="margin-bottom:0;">Choisis ta langue</div>
+    <div class="tagline" style="margin-bottom:0;" id="lbl-learn-tagline">Choisis ta langue</div>
   </div>
   <div class="steps-row">
     <div class="step-dot active" id="dot1">1</div>
@@ -577,13 +577,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="step-dot pending" id="dot3">→</div>
   </div>
   <div class="lang-section">
-    <div class="lang-section-title">🧑 Je parle</div>
+    <div class="lang-section-title" id="lbl-i-speak">🧑 Je parle</div>
     <div class="lang-grid" id="native-grid"></div>
   </div>
   <div style="text-align:center;font-size:1.4rem;color:var(--accent);margin:4px 0;animation:arrowPulse 1.5s ease infinite alternate;" id="lang-arrow" style="opacity:.28">↓</div>
   <style>@keyframes arrowPulse{from{opacity:.3;transform:scale(1);}to{opacity:1;transform:scale(1.1);}}</style>
   <div class="lang-section" id="target-section" style="opacity:.38;transition:opacity .3s;">
-    <div class="lang-section-title">🎯 Je veux apprendre</div>
+    <div class="lang-section-title" id="lbl-i-learn">🎯 Je veux apprendre</div>
     <div class="lang-grid" id="target-grid"></div>
   </div>
   <div class="selected-pair" id="pair-summary" style="display:none;">
@@ -593,7 +593,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div style="flex:1"></div>
     <button class="pair-swap" onclick="swapLangs()">⇄</button>
   </div>
-  <button class="btn btn-primary btn-lg" onclick="goToLevels()" id="btn-start" disabled style="margin-top:12px;justify-content:center;">Commencer →</button>
+  <button class="btn btn-primary btn-lg" onclick="goToLevels()" id="btn-start" disabled style="margin-top:12px;justify-content:center;" id="btn-start">Commencer →</button>
 </div>
 
 <!-- ══════════════════ LEVELS ══════════════════ -->
@@ -607,7 +607,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <span id="xp-count" style="font-size:.76rem;color:var(--accent4);font-weight:800;"></span>
   </div>
   <div class="section-title" id="levels-title">Niveaux</div>
-  <div class="section-sub">Chaque niveau réutilise le vocabulaire précédent</div>
+  <div class="section-sub" id="lbl-levels-sub">Chaque niveau réutilise le vocabulaire précédent</div>
   <div class="levels-grid" id="levels-grid"></div>
 </div>
 
@@ -634,28 +634,28 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="section-title" id="gsel-title">Mode de jeu</div>
   <div class="section-sub" id="gsel-sub"></div>
   <div style="display:flex;justify-content:flex-end;width:100%;max-width:700px;margin-bottom:7px;">
-    <span class="mix-badge">🎲 Mode Mixte recommandé</span>
+    <span class="mix-badge" id="lbl-mix-badge">🎲 Mode Mixte recommandé</span>
   </div>
   <div class="game-types">
     <div class="game-type-card featured" onclick="startGame('mixed')">
-      <div class="game-icon">🎲</div><div class="game-type-name">Mode Mixte</div>
-      <div class="game-type-desc">Tout mélangé — la meilleure façon d'apprendre</div>
-      <div class="reward-tag"><span class="coin"></span> +30 pièces max</div>
+      <div class="game-icon">🎲</div><div class="game-type-name" id="lbl-gtype-mixed">Mode Mixte</div>
+      <div class="game-type-desc" id="lbl-gdesc-mixed">Tout mélangé — la meilleure façon d'apprendre</div>
+      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-mixed">+30 pièces max</span></div>
     </div>
     <div class="game-type-card" onclick="startGame('quiz')">
-      <div class="game-icon">⚡</div><div class="game-type-name">Quiz Rapide</div>
-      <div class="game-type-desc">4 choix · Chrono · Style Kahoot</div>
-      <div class="reward-tag"><span class="coin"></span> +15 pièces max</div>
+      <div class="game-icon">⚡</div><div class="game-type-name" id="lbl-gtype-quiz">Quiz Rapide</div>
+      <div class="game-type-desc" id="lbl-gdesc-quiz">4 choix · Chrono · Style Kahoot</div>
+      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-quiz">+15 pièces max</span></div>
     </div>
     <div class="game-type-card" onclick="startGame('fill')">
-      <div class="game-icon">✏️</div><div class="game-type-name">Compléter</div>
-      <div class="game-type-desc">Tape le mot · Accents tolérés ✨</div>
-      <div class="reward-tag"><span class="coin"></span> +20 pièces max</div>
+      <div class="game-icon">✏️</div><div class="game-type-name" id="lbl-gtype-fill">Compléter</div>
+      <div class="game-type-desc" id="lbl-gdesc-fill">Tape le mot · Accents tolérés ✨</div>
+      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-fill">+20 pièces max</span></div>
     </div>
     <div class="game-type-card" onclick="startGame('match')">
-      <div class="game-icon">🔗</div><div class="game-type-name">Associer</div>
-      <div class="game-type-desc">Relie les mots et traductions</div>
-      <div class="reward-tag"><span class="coin"></span> +10 pièces max</div>
+      <div class="game-icon">🔗</div><div class="game-type-name" id="lbl-gtype-match">Associer</div>
+      <div class="game-type-desc" id="lbl-gdesc-match">Relie les mots et traductions</div>
+      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-match">+10 pièces max</span></div>
     </div>
   </div>
 </div>
@@ -676,7 +676,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   </div>
   <div id="zone-quiz" style="width:100%;max-width:700px;"><div class="answers-grid" id="answers-grid"></div></div>
   <div id="zone-fill" style="display:none;width:100%;max-width:700px;">
-    <input class="fill-input" type="text" id="fill-input" placeholder="Écris ta réponse…" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkCurrentQ()">
+    <input class="fill-input" type="text" id="fill-input" placeholder="Écris ta réponse…" id="fill-input" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkCurrentQ()">
     <div class="fuzzy-note" id="fuzzy-note" style="display:none;"></div>
   </div>
   <div id="zone-match" style="display:none;width:100%;max-width:700px;">
@@ -688,12 +688,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="match-col" id="match-left"></div>
       <div class="match-col" id="match-right"></div>
     </div>
-    <div style="color:var(--muted);font-size:.74rem;text-align:center;margin-top:3px;">✅ <span id="match-prog-txt">0/0</span> paires</div>
+    <div style="color:var(--muted);font-size:.74rem;text-align:center;margin-top:3px;"><span id="lbl-pairs-check">✅</span> <span id="match-prog-txt">0/0</span> <span id="lbl-pairs">paires</span></div>
   </div>
   <div id="zone-sort" style="display:none;width:100%;max-width:700px;">
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;">Ta phrase :</div>
-    <div class="sentence-slots" id="sentence-slots"><span class="slot-placeholder">Clique sur les mots…</span></div>
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;">Mots disponibles :</div>
+    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;" id="lbl-your-sent">Ta phrase :</div>
+    <div class="sentence-slots" id="sentence-slots"><span class="slot-placeholder" id="lbl-slot-placeholder">Clique sur les mots…</span></div>
+    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;" id="lbl-words-avail">Mots disponibles :</div>
     <div class="word-bank" id="word-bank"></div>
   </div>
   <div class="feedback-banner" id="g-fb">
@@ -701,10 +701,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div><div id="g-fb-title"></div><div id="g-fb-detail" style="font-weight:600;font-size:.76rem;opacity:.8;margin-top:1px;"></div></div>
   </div>
   <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-    <button class="btn btn-primary" onclick="checkCurrentQ()" id="btn-check" style="display:none;">Vérifier ✓</button>
+    <button class="btn btn-primary" onclick="checkCurrentQ()" id="btn-check" style="display:none;" data-i18n="btn_check">Vérifier ✓</button>
     <button class="btn btn-secondary" onclick="resetSort()" id="btn-reset" style="display:none;">⟳</button>
-    <button class="btn btn-primary" onclick="nextQ()" id="btn-next" style="display:none;">Suivant →</button>
-    <button class="btn btn-secondary" onclick="skipMatch()" id="btn-skip" style="display:none;">Continuer →</button>
+    <button class="btn btn-primary" onclick="nextQ()" id="btn-next" style="display:none;" data-i18n="btn_next">Suivant →</button>
+    <button class="btn btn-secondary" onclick="skipMatch()" id="btn-skip" style="display:none;" data-i18n="btn_continue">Continuer →</button>
   </div>
 </div>
 
@@ -719,21 +719,21 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="coin-reward-banner" id="coin-reward-banner">
       <div style="font-size:1.8rem;"><span class="coin"></span></div>
       <div style="flex:1;text-align:left;">
-        <div style="font-weight:800;color:var(--gold);">Pièces gagnées !</div>
-        <div style="font-size:.78rem;color:var(--muted);">Utilise-les pour investir dans le Portfolio</div>
+        <div style="font-weight:800;color:var(--gold);" id="lbl-coins-won">Pièces gagnées !</div>
+        <div style="font-size:.78rem;color:var(--muted);" id="lbl-coins-hint">Utilise-les pour investir dans le Portfolio</div>
       </div>
       <div class="coin-reward-amount" id="coin-reward-amount">+0</div>
     </div>
     <div class="results-stats">
-      <div class="stat-box"><div class="stat-val" id="r-correct" style="color:var(--green)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">Correct</div></div>
-      <div class="stat-box"><div class="stat-val" id="r-wrong" style="color:var(--red)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">Erreurs</div></div>
+      <div class="stat-box"><div class="stat-val" id="r-correct" style="color:var(--green)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);" id="lbl-r-correct">Correct</div></div>
+      <div class="stat-box"><div class="stat-val" id="r-wrong" style="color:var(--red)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);" id="lbl-r-wrong">Erreurs</div></div>
       <div class="stat-box"><div class="stat-val" id="r-xp" style="color:var(--accent4)">+0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">XP</div></div>
     </div>
     <div id="r-breakdown" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;"></div>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="playAgain()">Rejouer 🔄</button>
-      <button class="btn btn-secondary" onclick="goTo('chapters')">Chapitres</button>
-      <button class="btn btn-gold" onclick="navTo('portfolio')">$ Investir</button>
+      <button class="btn btn-primary" onclick="playAgain()" id="btn-replay">Rejouer 🔄</button>
+      <button class="btn btn-secondary" onclick="goTo('chapters')" id="btn-r-chapters">Chapitres</button>
+      <button class="btn btn-gold" onclick="navTo('portfolio')" id="btn-r-invest">$ Investir</button>
     </div>
   </div>
 </div>
@@ -741,23 +741,23 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <!-- ══════════════════ PORTFOLIO SCREEN ══════════════════ -->
 <div class="screen screen-padded" id="screen-portfolio">
   <div class="wealth-hero">
-    <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;">◈ Patrimoine total</div>
+    <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;" id="lbl-wealth-hero">◈ Patrimoine total</div>
     <div class="wealth-total" id="wealth-total">0 <span class="coin"></span></div>
     <div class="wealth-sub" id="wealth-sub"></div>
     <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
       <div style="text-align:center;">
         <div style="font-weight:900;font-size:1.1rem;color:var(--gold)" id="pf-coins">0</div>
-        <div style="font-size:.68rem;color:var(--muted);">Pièces liquides</div>
+        <div style="font-size:.68rem;color:var(--muted);" id="lbl-liquid-coins">Pièces liquides</div>
       </div>
       <div style="width:1px;background:rgba(255,255,255,.1);"></div>
       <div style="text-align:center;">
         <div style="font-weight:900;font-size:1.1rem;color:var(--green)" id="pf-div-total">0 <span class="coin"></span>/j</div>
-        <div style="font-size:.68rem;color:var(--muted);">Dividendes / jour</div>
+        <div style="font-size:.68rem;color:var(--muted);" id="lbl-div-day">Dividendes / jour</div>
       </div>
       <div style="width:1px;background:rgba(255,255,255,.1);"></div>
       <div style="text-align:center;">
         <div style="font-weight:900;font-size:1.1rem;color:var(--accent3)" id="pf-invested">0</div>
-        <div style="font-size:.68rem;color:var(--muted);">Investi</div>
+        <div style="font-size:.68rem;color:var(--muted);" id="lbl-invested">Investi</div>
       </div>
     </div>
   </div>
@@ -766,17 +766,17 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="dividend-banner" id="div-banner" style="display:none;">
     <div class="div-icon" style="font-size:1.6rem;color:#10b981;font-weight:900;">↑</div>
     <div class="div-info">
-      <div class="div-title">Dividendes disponibles !</div>
+      <div class="div-title" id="lbl-div-avail">Dividendes disponibles !</div>
       <div class="div-sub" id="div-banner-sub">Tes actifs ont généré des revenus</div>
     </div>
     <div class="div-amount" id="div-amount">+0 <span class="coin"></span></div>
-    <button class="collect-btn" id="collect-btn" onclick="collectDividends()">Collecter</button>
+    <button class="collect-btn" id="collect-btn" onclick="collectDividends()" data-i18n="btn_collect">Collecter</button>
   </div>
 
   <!-- Explanation -->
   <div class="explain-card">
-    <div class="explain-title">📖 Comment fonctionnent les dividendes ?</div>
-    <div class="explain-body">
+    <div class="explain-title" id="lbl-div-explain-title">📖 Comment fonctionnent les dividendes ?</div>
+    <div class="explain-body" id="lbl-div-explain-body">
       Dans la vraie vie, certains <strong>actifs</strong> (or, immobilier, actions) génèrent des revenus <strong>réguliers</strong> sans que tu doives les vendre. C'est ça un <span class="highlight">dividende</span>.<br><br>
       Ici, chaque actif que tu achètes avec tes <span class="coin"></span> pièces te rapporte automatiquement un pourcentage chaque jour. Comme dans la réalité, <strong>plus tu investis tôt, plus tu reçois</strong>. Les actifs <strong>n'ont pas de valeur négative</strong> — ils peuvent stagner ou croître, jamais disparaître.
     </div>
@@ -784,28 +784,28 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
   <!-- Target Widget -->
   <div class="target-widget" id="target-widget">
-    <div class="target-title">&#127919; Simulateur d'objectif</div>
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">Fixe un objectif en pièces et vois combien de temps il faudra pour l'atteindre avec tes dividendes actuels.</div>
+    <div class="target-title" id="lbl-target-title">🎯 Simulateur d'objectif</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;" id="lbl-target-sub">Fixe un objectif en pièces et vois combien de temps il faudra pour l'atteindre avec tes dividendes actuels.</div>
     <div class="target-slider-row">
-      <span style="font-size:.76rem;color:var(--muted);">Objectif :</span>
+      <span style="font-size:.76rem;color:var(--muted);" id="lbl-target-obj">Objectif :</span>
       <input type="range" class="target-slider" id="target-slider" min="100" max="10000" step="50" value="1000" oninput="updateTarget()">
       <span class="target-val" id="target-val">1 000 <span class="coin"></span></span>
     </div>
     <div class="target-results">
       <div class="target-result-card">
-        <div class="target-result-label">Il manque</div>
+        <div class="target-result-label" id="lbl-tr-missing">Il manque</div>
         <div class="target-result-val" id="tr-missing" style="color:var(--accent2);">-</div>
       </div>
       <div class="target-result-card">
-        <div class="target-result-label">Dividendes / jour</div>
+        <div class="target-result-label" id="lbl-tr-daily">Dividendes / jour</div>
         <div class="target-result-val" id="tr-daily" style="color:var(--green);">-</div>
       </div>
       <div class="target-result-card">
-        <div class="target-result-label">Temps estimé</div>
+        <div class="target-result-label" id="lbl-tr-time">Temps estimé</div>
         <div class="target-result-val" id="tr-time" style="color:var(--accent3);">-</div>
       </div>
       <div class="target-result-card">
-        <div class="target-result-label">Progression actuelle</div>
+        <div class="target-result-label" id="lbl-tr-progress">Progression actuelle</div>
         <div class="target-result-val" id="tr-pct" style="color:var(--gold);">-</div>
       </div>
     </div>
@@ -813,22 +813,22 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="tl-bar"><div class="tl-fill" id="tl-fill" style="width:0%"></div></div>
       <div class="tl-cursor" id="tl-cursor" style="left:0%"></div>
       <div class="tl-now" id="tl-now" style="left:0%">Maintenant</div>
-      <div class="tl-target">Objectif</div>
+      <div class="tl-target" id="lbl-tl-target">Objectif</div>
     </div>
   </div>
 
   <!-- Assets -->
-  <div class="section-title" style="text-align:left;margin-bottom:8px;">&#127970; Actifs disponibles</div>
+  <div class="section-title" style="text-align:left;margin-bottom:8px;" id="lbl-assets-title">🏠 Actifs disponibles</div>
   <div class="assets-grid" id="assets-grid"></div>
 </div>
 
 <!-- ══════════════════ SHOP SCREEN ══════════════════ -->
 <div class="screen screen-padded" id="screen-shop">
-  <div class="section-title">🛍 Boutique</div>
-  <div class="section-sub">Dépense tes pièces pour des bonus et cosmétiques</div>
+  <div class="section-title" id="lbl-shop-title">🛍 Boutique</div>
+  <div class="section-sub" id="lbl-shop-sub">Dépense tes pièces pour des bonus et cosmétiques</div>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
     <div class="coin-display"><span><span class="coin"></span></span><span id="shop-coins">0</span></div>
-    <span style="font-size:.8rem;color:var(--muted);">pièces disponibles</span>
+    <span style="font-size:.8rem;color:var(--muted);" id="lbl-shop-coins-lbl">pièces disponibles</span>
   </div>
   <div class="shop-grid" id="shop-grid"></div>
 </div>
@@ -844,31 +844,31 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
   </div>
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val" id="ps-xp" style="color:var(--accent4)">0</div><div class="stat-lbl">XP Total</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-coins" style="color:var(--gold)">0</div><div class="stat-lbl">Pièces</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-sessions" style="color:var(--accent3)">0</div><div class="stat-lbl">Sessions</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-xp" style="color:var(--accent4)">0</div><div class="stat-lbl" id="lbl-ps-xp">XP Total</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-coins" style="color:var(--gold)">0</div><div class="stat-lbl" id="lbl-ps-coins">Pièces</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-sessions" style="color:var(--accent3)">0</div><div class="stat-lbl" id="lbl-ps-sessions">Sessions</div></div>
   </div>
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val" id="ps-streak" style="color:var(--accent2)">0</div><div class="stat-lbl">🔥 Jours</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-chapters" style="color:var(--green)">0</div><div class="stat-lbl">Chapitres</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-wealth" style="color:var(--gold)">0</div><div class="stat-lbl">💎 Patrimoine</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-streak" style="color:var(--accent2)">0</div><div class="stat-lbl" id="lbl-ps-streak">🔥 Jours</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-chapters" style="color:var(--green)">0</div><div class="stat-lbl" id="lbl-ps-chapters">Chapitres</div></div>
+    <div class="stat-card"><div class="stat-val" id="ps-wealth" style="color:var(--gold)">0</div><div class="stat-lbl" id="lbl-ps-wealth">💎 Patrimoine</div></div>
   </div>
   <div style="width:100%;max-width:700px;margin-top:14px;">
     <!-- Apparence / Thèmes -->
     <div style="background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:10px;">
-      <div style="font-weight:800;font-size:.88rem;margin-bottom:10px;">🎨 Apparence</div>
+      <div style="font-weight:800;font-size:.88rem;margin-bottom:10px;" id="lbl-appearance">🎨 Apparence</div>
       <div class="theme-btns">
-        <button class="theme-btn" id="theme-btn-dark"    onclick="setTheme('dark')">🌙 Sombre</button>
-        <button class="theme-btn" id="theme-btn-light"   onclick="setTheme('light')">☀️ Clair</button>
-        <button class="theme-btn" id="theme-btn-claude"  onclick="setTheme('claude')">🤖 Claude</button>
-        <button class="theme-btn" id="theme-btn-random" onclick="setTheme('random')">🎲 Aléatoire</button>
+        <button class="theme-btn" id="theme-btn-dark"    onclick="setTheme('dark')" data-i18n="theme_dark">🌙 Sombre</button>
+        <button class="theme-btn" id="theme-btn-light"   onclick="setTheme('light')" data-i18n="theme_light">☀️ Clair</button>
+        <button class="theme-btn" id="theme-btn-claude"  onclick="setTheme('claude')" data-i18n="theme_claude">🤖 Claude</button>
+        <button class="theme-btn" id="theme-btn-random" onclick="setTheme('random')" data-i18n="theme_random">🎲 Aléatoire</button>
       </div>
       <!-- UI Language -->
-      <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;margin-top:12px;">🌐 Langue de l'interface</div>
+      <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;margin-top:12px;" id="lbl-lang-ui">🌐 Langue de l'interface</div>
       <div class="lang-ui-btns" id="ui-lang-btns"></div>
     </div>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="openLangModal()">&#127760; Changer de langue</button>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;" onclick="doLogout()">&#128682; Se déconnecter</button>
+    <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="openLangModal()" id="btn-change-lang">🌍 Changer de langue</button>
+    <button class="btn btn-secondary" style="width:100%;justify-content:center;" onclick="doLogout()" id="btn-logout">🚪 Se déconnecter</button>
   </div>
 </div>
 
@@ -876,13 +876,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="modal-overlay" id="qr-modal" style="display:none;" onclick="closeQR(event)">
   <div class="modal-box" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeQR()">✕</button>
-    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;">📱 Partager ce chapitre</div>
+    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-qr-title">📱 Partager ce chapitre</div>
     <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px;" id="qr-sub"></div>
     <div id="qr-container"></div>
     <div style="font-size:.66rem;color:var(--muted);word-break:break-all;margin:12px 0;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:7px;" id="qr-url"></div>
     <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-primary btn-sm" onclick="copyUrl()">📋 Copier</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeQR()">Fermer</button>
+      <button class="btn btn-primary btn-sm" onclick="copyUrl()" id="btn-qr-copy">📋 Copier</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeQR()" id="btn-qr-close">Fermer</button>
     </div>
   </div>
 </div>
@@ -892,15 +892,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="modal-overlay" id="lang-modal" style="display:none;" onclick="closeLangModal(event)">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px;">
     <button class="modal-close" onclick="closeLangModal()">&#x2715;</button>
-    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;">Changer de langue</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;">Je parle :</div>
+    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-langmodal-title">Changer de langue</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;" id="lbl-lm-speak">Je parle :</div>
     <div class="lang-picker-grid" id="lp-native"></div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;margin-top:8px;">J'apprends :</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;margin-top:8px;" id="lbl-lm-learn">J'apprends :</div>
     <div class="lang-picker-grid" id="lp-target"></div>
     <div id="lp-pair" style="text-align:center;font-size:.85rem;font-weight:800;color:var(--accent3);margin:10px 0;min-height:22px;"></div>
     <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-primary btn-sm" onclick="applyLangChange()">Appliquer</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeLangModal()">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="applyLangChange()" id="btn-lm-apply">Appliquer</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeLangModal()" id="btn-lm-cancel">Annuler</button>
     </div>
   </div>
 </div>
@@ -914,27 +914,27 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div id="amod-type" style="font-size:.76rem;color:var(--muted);margin-bottom:14px;"></div>
     <!-- Live price -->
     <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Prix marché réel</div>
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;" id="lbl-amod-market">Prix marché réel</div>
       <div id="amod-price" style="font-size:1.4rem;font-weight:900;color:var(--accent3);">Chargement…</div>
       <div id="amod-change" style="font-size:.8rem;margin-top:2px;"></div>
       <div id="amod-ticker" style="font-size:.68rem;color:var(--muted);margin-top:4px;"></div>
     </div>
     <!-- Your position -->
     <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Ta position</div>
+      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;" id="lbl-amod-position">Ta position</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div><div style="font-size:.68rem;color:var(--muted);">Unités possédées</div><div id="amod-owned" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);">Valeur actuelle</div><div id="amod-val" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);">Dividendes / jour</div><div id="amod-daily" style="font-weight:900;font-size:1.1rem;color:var(--green);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);">Plus-value</div><div id="amod-pv" style="font-weight:900;font-size:1.1rem;"></div></div>
+        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-units">Unités possédées</div><div id="amod-owned" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
+        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-value">Valeur actuelle</div><div id="amod-val" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
+        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-daily">Dividendes / jour</div><div id="amod-daily" style="font-weight:900;font-size:1.1rem;color:var(--green);"></div></div>
+        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-pv">Plus-value</div><div id="amod-pv" style="font-weight:900;font-size:1.1rem;"></div></div>
       </div>
     </div>
     <!-- Explanation -->
     <div style="font-size:.8rem;color:var(--muted);line-height:1.6;" id="amod-explain"></div>
     <div style="display:flex;gap:8px;margin-top:14px;">
-      <button class="btn btn-primary btn-sm" id="amod-buy-btn" onclick="">Acheter</button>
-      <button class="btn btn-secondary btn-sm" id="amod-sell-btn" onclick="">Vendre</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeAssetModal()">Fermer</button>
+      <button class="btn btn-primary btn-sm" id="amod-buy-btn" onclick="" data-i18n="btn_buy">Acheter</button>
+      <button class="btn btn-secondary btn-sm" id="amod-sell-btn" onclick="" data-i18n="btn_sell">Vendre</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeAssetModal()" id="btn-amod-close">Fermer</button>
     </div>
   </div>
 </div>
