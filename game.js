@@ -1,12 +1,3 @@
-
-// ── Speech helpers ───────────────────────────────────────────────
-// Reverse-lookup a word ID from its translated text + language
-function _findWid(text,lang){
-  if(!text||!lang) return null;
-  const lower=text.toLowerCase();
-  return Object.keys(WD).find(id=>WD[id][lang]&&WD[id][lang].toLowerCase()===lower)||null;
-}
-
 // ══════════════════════════════════════════════
 // GAME ENGINE
 // ══════════════════════════════════════════════
@@ -25,76 +16,25 @@ function startGame(type){
 function buildMixed(ch){const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','fill','sort','quiz','fill','match4','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
 function buildQuizOnly(ch){return shuf([...ch.wids]).slice(0,8).map(id=>mkQQ(id,ch.wids));}
 function buildFillOnly(ch){return shuf([...ch.wids]).slice(0,6).map(id=>mkFQ(id));}
-function mkQQ(id,all){
-  const q=wt(id,S.nL),cor=wt(id,S.tL);
-  const wrongIds=shuf(all.filter(x=>x!==id)).slice(0,3);
-  const wr=wrongIds.map(x=>wt(x,S.tL));
-  const allChoices=shuf([{wid:id,text:cor},...wrongIds.map((wid,i)=>({wid,text:wr[i]}))]);
-  return{type:'quiz',wid:id,q,correct:cor,choices:allChoices.map(c=>c.text),choiceWids:allChoices.map(c=>c.wid)};
-}
-function mkFQ(id){return{type:'fill',wid:id,q:wt(id,S.nL),correct:wt(id,S.tL)};}
+function mkQQ(id,all){const q=wt(id,S.nL),cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));return{type:'quiz',q,correct:cor,choices:shuf([cor,...wr])};}
+function mkFQ(id){return{type:'fill',q:wt(id,S.nL),correct:wt(id,S.tL)};}
 function mkSQ(sent,nSent){return{type:'sort',q:nSent,correct:sent,words:sent.split(' ')};}
 function mkMQ(ids){return{type:'match',ids};}
 
 function startMatchSA(ch){S.mPairs=shuf([...ch.wids]).slice(0,6);S.mSel=null;S.mDone=0;S.mTotal=S.mPairs.length;S.mEmbed=false;goTo('game');setTypePill('match');showZone('match');sT('g-text','Associe les traductions');sT('g-dir',dirLbl());sT('g-num','');sT('g-hint','Clique un mot puis sa traduction');sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(S.mPairs);sT('match-prog-txt',`0/${S.mTotal}`);$('g-progress').style.width='0%';sT('g-score',0);hideFB();hideAllBtns();showBtn('btn-skip');startTimer(60);}
 
 function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi];S.curQ=q;S.curType=q.type;const tot=S.qs.length;$('g-progress').style.width=`${(S.qi/tot)*100}%`;sT('g-dir',dirLbl());sT('g-num',`${S.qi+1} / ${tot}`);sT('g-hint','');hideFB();hideAllBtns();setTypePill(q.type);showZone(q.type);$('fuzzy-note').style.display='none';if(q.type==='quiz')renderQuiz(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
-function renderQuiz(q){
-  sT('g-text',q.q);
-  // Add speaker icon next to question text
-  renderSpeakIcon('g-text', q.q, S.nL);
-  const grid=$('answers-grid');grid.innerHTML='';
-  ['A','B','C','D'].forEach((l,i)=>{
-    if(!q.choices[i])return;
-    const btn=document.createElement('button');
-    btn.className='answer-btn';
-    btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;
-    // Attach word ID and language for tooltip+TTS
-    if(q.choiceWids&&q.choiceWids[i]){btn.dataset.wid=q.choiceWids[i];btn.dataset.lang=S.tL;}
-    btn.onclick=(e)=>{
-      onWordClick(btn,e);
-      pickQ(q.choices[i],btn,q);
-    };
-    grid.appendChild(btn);
-  });
-  startTimer(15);
-}
-function renderFill(q){
-  sT('g-text',q.q);
-  renderSpeakIcon('g-text', q.q, S.nL);
-  const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;
-  setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);
-}
+function renderQuiz(q){sT('g-text',q.q);if(typeof speakWord!=='undefined')setTimeout(()=>speakWord(q.q,S.nL,{rate:.85}),100);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{if(typeof speakWord!=='undefined')speakWord(q.choices[i],S.tL,{rate:.82});pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
+function renderFill(q){sT('g-text',q.q);if(typeof speakWord!=='undefined')setTimeout(()=>speakWord(q.q,S.nL,{rate:.85}),100);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
 function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text','Associe les traductions !');sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
-function renderSort(q){sT('g-text',q.q);S.sortArr=[];const bank=$('word-bank');bank.innerHTML='';shuf([...q.words]).forEach(w=>{
-    const t=document.createElement('div');t.className='word-token';t.textContent=w;
-    // Try reverse-lookup word ID in WD
-    const wid=_findWid(w,S.tL);if(wid){t.dataset.wid=wid;t.dataset.lang=S.tL;}
-    t.onclick=(e)=>{
-      if(typeof onWordClick!=='undefined') onWordClick(t,e);
-      else if(typeof speakWord!=='undefined') speakWord(w,S.tL);
-      addSort(w,t);
-    };
-    bank.appendChild(t);
-  });$('sentence-slots').innerHTML='<span class="slot-placeholder">Clique sur les mots…</span>';showBtn('btn-check');showBtn('btn-reset');startTimer(30);}
+function renderSort(q){sT('g-text',q.q);S.sortArr=[];const bank=$('word-bank');bank.innerHTML='';shuf([...q.words]).forEach(w=>{const t=document.createElement('div');t.className='word-token';t.textContent=w;t.onclick=()=>{if(typeof speakWord!=='undefined')speakWord(w,S.tL,{rate:.82});addSort(w,t);};bank.appendChild(t);});$('sentence-slots').innerHTML='<span class="slot-placeholder">Clique sur les mots…</span>';showBtn('btn-check');showBtn('btn-reset');startTimer(30);}
 
 function renderMatchCols(ids){const ls=shuf(ids.map(id=>({id,text:wt(id,S.nL)}))),rs=shuf(ids.map(id=>({id,text:wt(id,S.tL)})));const lc=$('match-left'),rc=$('match-right');lc.innerHTML='';rc.innerHTML='';ls.forEach(it=>{lc.appendChild(mkMI(it,'left'));});rs.forEach(it=>{rc.appendChild(mkMI(it,'right'));});}
-function mkMI(it,side){
-  const d=document.createElement('div');d.className='match-item';d.textContent=it.text;
-  d.dataset.id=it.id;d.dataset.side=side;
-  d.dataset.wid=it.id;d.dataset.lang=side==='left'?S.nL:S.tL;
-  d.onclick=(e)=>{
-    if(typeof onWordClick!=='undefined') onWordClick(d,e);
-    clickMatch(d);
-  };
-  return d;
-}
+function mkMI(it,side){const d=document.createElement('div');d.className='match-item';d.textContent=it.text;d.dataset.id=it.id;d.dataset.side=side;d.onclick=()=>{if(typeof speakWord!=='undefined')speakWord(it.text,side==='left'?S.nL:S.tL,{rate:.82});clickMatch(d);};return d;}
 function clickMatch(el){if(el.classList.contains('matched'))return;const sel=S.mSel;if(!sel){S.mSel=el;el.classList.add('selected');return;}if(sel===el){el.classList.remove('selected');S.mSel=null;return;}if(sel.dataset.side===el.dataset.side){sel.classList.remove('selected');S.mSel=el;el.classList.add('selected');return;}if(sel.dataset.id===el.dataset.id){sel.classList.remove('selected');sel.classList.add('matched');el.classList.add('matched');S.mDone++;S.cor++;S.ts.match.c++;S.score+=10;sT('g-score',S.score);sT('match-prog-txt',`${S.mDone}/${S.mTotal}`);$('g-progress').style.width=`${(S.mDone/S.mTotal)*100}%`;if(S.mDone>=S.mTotal){clearInterval(S.timer);setTimeout(()=>S.mEmbed?nextQ():showResults(),600);}}else{sel.classList.remove('selected');el.classList.add('wrong-match');setTimeout(()=>el.classList.remove('wrong-match'),360);S.wr++;S.ts.match.w++;}S.mSel=null;}
 function skipMatch(){S.mEmbed?nextQ():showResults();}
 
-function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>{b.disabled=true;if(b.querySelector('span:last-child').textContent===q.correct)b.classList.add('correct');});if(!ok)btn.classList.add('wrong');ok?(S.score+=10,S.cor++,S.ts.quiz.c++,showFB(true,'🎉 Correct !',q.correct)):(S.wr++,S.ts.quiz.w++,showFB(false,'❌ Raté !','Réponse : '+q.correct));
-  // Always speak the correct answer
-  if(typeof speakAnswer!=='undefined') speakAnswer(q.correct,S.tL);sT('g-score',S.score);showBtn('btn-next');}
+function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>{b.disabled=true;if(b.querySelector('span:last-child').textContent===q.correct)b.classList.add('correct');});if(!ok)btn.classList.add('wrong');ok?(S.score+=10,S.cor++,S.ts.quiz.c++,showFB(true,'🎉 Correct !',q.correct)):(S.wr++,S.ts.quiz.w++,showFB(false,'❌ Raté !','Réponse : '+q.correct));sT('g-score',S.score);showBtn('btn-next');if(typeof speakWord!=='undefined')setTimeout(()=>speakWord(q.correct,S.tL,{rate:.82}),250);}
 function checkCurrentQ(){const q=S.curQ;if(q.type==='fill')doFill(q);else if(q.type==='sort')doSort(q);}
 
 // Fuzzy
@@ -102,13 +42,7 @@ function deacc(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLow
 function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j;}for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);return d[m][n];}
 function fuzzy(inp,cor){const clean=s=>deacc(s.replace(/[^\w\s]/gi,''));const a=clean(inp),b=clean(cor);if(a===b||deacc(inp)===deacc(cor))return'exact';const dist=lev(a,b);return dist<=(b.length<=3?1:b.length<=7?2:3)?'close':'wrong';}
 
-function doFill(q){clearInterval(S.timer);const inp=$('fill-input'),res=fuzzy(inp.value,q.correct);inp.disabled=true;if(res==='exact'){inp.className='fill-input correct';S.score+=10;S.cor++;S.ts.fill.c++;showFB(true,'🎉 Parfait !',q.correct);}
-  else if(res==='close'){inp.className='fill-input close';S.score+=5;S.cor++;S.ts.fill.c++;const fn=$('fuzzy-note');fn.textContent=`✨ Presque ! Réponse exacte : ${q.correct}`;fn.style.display='block';showFB('close','✨ Presque !',`Réponse exacte : ${q.correct}`);}
-  else{inp.className='fill-input wrong';S.wr++;S.ts.fill.w++;showFB(false,'❌ Pas tout à fait !','Réponse : '+q.correct);}
-  // Speak correct answer in target language
-  if(typeof speakAnswer!=='undefined') speakAnswer(q.correct,S.tL);
-  // Show tooltip for this word near input
-  if(q.wid&&typeof showWordTooltip!=='undefined') setTimeout(()=>showWordTooltip(inp,q.wid,S.tL,S.nL),300);sT('g-score',S.score);hideBtn('btn-check');showBtn('btn-next');}
+function doFill(q){clearInterval(S.timer);const inp=$('fill-input'),res=fuzzy(inp.value,q.correct);inp.disabled=true;if(res==='exact'){inp.className='fill-input correct';S.score+=10;S.cor++;S.ts.fill.c++;showFB(true,'🎉 Parfait !',q.correct);}else if(res==='close'){inp.className='fill-input close';S.score+=5;S.cor++;S.ts.fill.c++;const fn=$('fuzzy-note');fn.textContent=`✨ Presque ! Réponse exacte : ${q.correct}`;fn.style.display='block';showFB('close','✨ Presque !',`Réponse exacte : ${q.correct}`);}else{inp.className='fill-input wrong';S.wr++;S.ts.fill.w++;showFB(false,'❌ Pas tout à fait !','Réponse : '+q.correct);}sT('g-score',S.score);hideBtn('btn-check');showBtn('btn-next');if(typeof speakWord!=='undefined')setTimeout(()=>speakWord(q.correct,S.tL,{rate:.82}),250);}
 function doSort(q){clearInterval(S.timer);const built=S.sortArr.join(' '),res=fuzzy(built,q.correct);if(res==='exact'){S.score+=10;S.cor++;S.ts.sort.c++;showFB(true,'🎉 Parfait !',q.correct);}else if(res==='close'){S.score+=5;S.cor++;S.ts.sort.c++;showFB('close','✨ Presque !',q.correct);}else{S.wr++;S.ts.sort.w++;showFB(false,'❌ Pas tout à fait !','Réponse : '+q.correct);}sT('g-score',S.score);hideBtn('btn-check');hideBtn('btn-reset');showBtn('btn-next');}
 
 function addSort(word,el){if(el.style.opacity==='0.3')return;S.sortArr.push(word);el.style.opacity='0.3';el.style.pointerEvents='none';renderSlots();}
@@ -169,8 +103,7 @@ function showResults(){
   goTo('results');
   if(stars>=2)confetti();
   if(coinsEarned>0) floatCoin($('coin-reward-amount'),`+${coinsEarned} <span class="coin"></span>`);
-  // Speak result message
-  if(typeof speakResult!=='undefined') speakResult(stars>=2, S.nL);
+  if(typeof speakWord!=='undefined'){const _rm={fr:{y:'Excellent ! Bravo !',n:'Continue comme ça !'},en:{y:'Well done! Excellent!',n:'Keep it up!'},es:{y:'¡Excelente trabajo!',n:'¡Sigue así!'},de:{y:'Ausgezeichnet!',n:'Weiter so!'},cs:{y:'Výborně!',n:'Pokračuj!'}};const _rl=S.nL||'fr';const _r=(_rm[_rl]||_rm.fr)[stars>=2?'y':'n'];setTimeout(()=>speakWord(_r,_rl,{rate:.9}),500);}
 }
 function playAgain(){startGame(S.gType);}
 
