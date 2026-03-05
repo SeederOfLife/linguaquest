@@ -182,6 +182,16 @@ function applyUILang() {
   set('amod-sell-btn', s.btn_sell);
   set('btn-amod-close', s.btn_close);
 
+  // Portfolio mode toggle buttons (translated labels)
+  const _btnP = document.getElementById('pf-mode-practice');
+  const _btnR = document.getElementById('pf-mode-real');
+  if(_btnP) _btnP.textContent = s.pf_mode_practice;
+  if(_btnR) _btnR.textContent = s.pf_mode_real;
+  // Re-render real portfolio if currently visible
+  if(typeof _portfolioMode !== 'undefined' && _portfolioMode === 'real'){
+    if(typeof renderRealPortfolio === 'function') renderRealPortfolio();
+  }
+
   // Finance Academy — static lesson screen labels
   set('lbl-academy-title', s.academy_title);
   // back button in lesson screen uses lesson_back from current lang
