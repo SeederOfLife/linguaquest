@@ -96,7 +96,38 @@ function showAuthErr(prefix,msg){
   setTimeout(()=>el.classList.remove('show'),4000);
 }
 
+function migrateUser(){
+  if(!U) return;
+  // Ensure all new fields exist (added across updates)
+  if(!U.assets)         U.assets = {};
+  if(!U.assetValues)    U.assetValues = {};
+  if(!U.lessonsCompleted) U.lessonsCompleted = {};
+  if(U.investorLevel === undefined) U.investorLevel = 1;
+  if(U.totalInvested === undefined){
+    // Recalculate from existing assets
+    U.totalInvested = typeof ASSET_DEFS !== 'undefined'
+      ? ASSET_DEFS.reduce((s,a) => s + a.cost*(U.assets[a.id]||0), 0)
+      : 0;
+  }
+  if(!U.pendingDiv)   U.pendingDiv = 0;
+  if(!U.lastDivTime)  U.lastDivTime = Date.now();
+  if(!U.progress)     U.progress = {};
+  if(!U.xp)           U.xp = 0;
+  if(!U.coins)        U.coins = 0;
+  if(!U.sessions)     U.sessions = 0;
+  if(!U.streak)       U.streak = 0;
+  if(!U.chaptersCompleted) U.chaptersCompleted = 0;
+  // Ensure assetValues exists for all known assets
+  if(typeof ASSET_DEFS !== 'undefined'){
+    ASSET_DEFS.forEach(a => {
+      if(U.assetValues[a.id] === undefined) U.assetValues[a.id] = 0;
+    });
+  }
+  saveU();
+}
+
 function afterLogin(){
+  migrateUser();
   showChrome();
   calcDividends();
   updateTopBar();
