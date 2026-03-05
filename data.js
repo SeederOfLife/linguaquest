@@ -7,12 +7,127 @@ const WD={hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},goodbye
 const CHAPTERS={A1:[{id:'A1-1',title:{fr:'Salutations',en:'Greetings',es:'Saludos',de:'Begrüßung',cs:'Pozdravy'},subtitle:{fr:'Se présenter',en:'Meet people',es:'Presentarse',de:'Vorstellen',cs:'Predstavit se'},wids:['hello','goodbye','thanks','please','yes','no','sorry','excuse'],sents:{fr:['Je m appelle Marie','Comment tu t appelles','Enchante de te connaitre'],en:['My name is Tom','What is your name','Nice to meet you'],es:['Me llamo Carlos','Como te llamas','Encantado de conocerte'],de:['Ich heisse Klaus','Wie heisst du','Schon dich kennenzulernen'],cs:['Jmenuji se Marie','Jak se jmenujes','Rad te poznavam']}},{id:'A1-2',title:{fr:'Les Chiffres',en:'Numbers',es:'Números',de:'Zahlen',cs:'Čísla'},subtitle:{fr:'Compter de 1 à 100',en:'Count 1–100',es:'Contar 1–100',de:'Zählen 1–100',cs:'Počítat 1–100'},wids:['one','two','three','four','five','ten','twenty','hundred'],sents:{fr:['J ai vingt ans','Combien coute ce livre','Il est dix heures'],en:['I am twenty years old','How much is this book','It is ten o clock'],es:['Tengo veinte anos','Cuanto cuesta este libro','Son las diez'],de:['Ich bin zwanzig Jahre alt','Wie viel kostet dieses Buch','Es ist zehn Uhr'],cs:['Je mi dvacet let','Kolik stoji tato kniha','Je deset hodin']}},{id:'A1-3',title:{fr:'Les Couleurs',en:'Colours',es:'Colores',de:'Farben',cs:'Barvy'},subtitle:{fr:'Décrire avec les couleurs',en:'Describe with colours',es:'Describir con colores',de:'Mit Farben beschreiben',cs:'Popisovat barvami'},wids:['red','blue','green','yellow','black','white','orange','pink'],sents:{fr:['Le ciel est bleu','Ma voiture est rouge','J aime la couleur verte'],en:['The sky is blue','My car is red','I like the colour green'],es:['El cielo es azul','Mi coche es rojo','Me gusta el color verde'],de:['Der Himmel ist blau','Mein Auto ist rot','Ich mag die Farbe Grun'],cs:['Nebe je modre','Moje auto je cervene','Mam rad zelenou barvu']}}],A2:[{id:'A2-1',title:{fr:'La Famille',en:'Family',es:'La Familia',de:'Familie',cs:'Rodina'},subtitle:{fr:'Parler de sa famille',en:'Talk about your family',es:'Hablar de la familia',de:'Über Familie sprechen',cs:'Mluvit o rodině'},wids:['father','mother','brother','sister','grandfather','grandmother','child','cousin'],sents:{fr:['J ai deux freres et une soeur','Mon pere est medecin','Ma famille est grande'],en:['I have two brothers and a sister','My father is a doctor','My family is big'],es:['Tengo dos hermanos y una hermana','Mi padre es medico','Mi familia es grande'],de:['Ich habe zwei Bruder und eine Schwester','Mein Vater ist Arzt','Meine Familie ist gross'],cs:['Mam dva bratry a sestru','Muj otec je lekar','Moje rodina je velka']}},{id:'A2-2',title:{fr:'La Nourriture',en:'Food & Drink',es:'Comida',de:'Essen',cs:'Jídlo'},subtitle:{fr:'Commander de la nourriture',en:'Order food',es:'Pedir comida',de:'Essen bestellen',cs:'Objednat jídlo'},wids:['bread','water','coffee','wine','meat','fish','fruit','cheese'],sents:{fr:['Je voudrais un cafe','L addition s il vous plait','Le poisson est tres bon'],en:['I would like a coffee please','The bill please','The fish is very good'],es:['Quisiera un cafe por favor','La cuenta por favor','El pescado esta muy bueno'],de:['Ich hatte gerne einen Kaffee','Die Rechnung bitte','Der Fisch ist sehr gut'],cs:['Chtel bych kavu prosim','Ucet prosim','Ryba je velmi dobra']}}],B1:[{id:'B1-1',title:{fr:'Les Voyages',en:'Travel',es:'Viajes',de:'Reisen',cs:'Cestování'},subtitle:{fr:'Voyager et se déplacer',en:'Getting around',es:'Viajar',de:'Reisen',cs:'Cestovat'},wids:['plane','train','hotel','passport','ticket','suitcase','airport','reservation'],sents:{fr:['Mon vol est retarde de deux heures','J ai reserve une chambre pour trois nuits','Ou est l aeroport'],en:['My flight is delayed by two hours','I have booked a room for three nights','Where is the airport'],es:['Mi vuelo lleva dos horas de retraso','He reservado una habitacion por tres noches','Donde esta el aeropuerto'],de:['Mein Flug hat zwei Stunden Verspatung','Ich habe ein Zimmer fur drei Nachte gebucht','Wo ist der Flughafen'],cs:['Muj let ma dvouhodinove zpozdeni','Rezervoval jsem pokoj na tri noci','Kde je letiste']}}]};
 
 // ASSETS (real-world inspired, always positive growth)
-const ASSET_DEFS=[
-  {id:'gold',name:'Or',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="url(#gi)" stroke="#b45309" stroke-width="1.5"/><text x="16" y="21" text-anchor="middle" font-size="14" font-weight="900" fill="#7c2d12">Au</text><defs><radialGradient id="gi" cx="35%" cy="35%"><stop offset="0%" stop-color="#ffe066"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs></svg>',type:'Métal précieux',class:'gold',cost:50,divRate:0.02,growthRate:0.001,desc:'L\'or conserve sa valeur depuis des millénaires. Jamais à zéro.',explain:'L\'or est un actif réel. Sa valeur augmente légèrement chaque jour. Il verse 2% de dividendes par investissement.'},
-  {id:'house',name:'Immeuble',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="16,4 28,16 24,16 24,28 8,28 8,16 4,16" fill="#0ea5e9" stroke="#0369a1" stroke-width="1.5" stroke-linejoin="round"/><rect x="13" y="20" width="6" height="8" fill="#7dd3fc"/></svg>',type:'Immobilier',class:'house',cost:150,divRate:0.04,growthRate:0.0008,desc:'L\'immobilier génère des loyers réguliers. Prix jamais négatif.',explain:'Les loyers = dividendes. La valeur des biens immobiliers croît historiquement. Taux : 4%/j par niveau.'},
-  {id:'stock',name:'Actions',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="4" fill="#064e3b"/><polyline points="5,24 11,16 17,20 27,8" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="27" cy="8" r="2.5" fill="#34d399"/></svg>',type:'Marché actions',class:'stock',cost:80,divRate:0.03,growthRate:0.0012,desc:'Les grandes entreprises partagent leurs bénéfices.',explain:'Les actions versent des dividendes trimestriels. Ici, tu reçois 3% de ta mise par jour.'},
-  {id:'crypto',name:'Crypto Index',icon:'<svg width="32" height="32" viewBox="0 0 32 32"><polygon points="16,2 30,10 30,22 16,30 2,22 2,10" fill="url(#ci)" stroke="#6d28d9" stroke-width="1.5"/><text x="16" y="21" text-anchor="middle" font-size="11" font-weight="900" fill="#ede9fe">IDX</text><defs><radialGradient id="ci" cx="35%" cy="35%"><stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#7c3aed"/></radialGradient></defs></svg>',type:'Actif digital',class:'crypto',cost:30,divRate:0.015,growthRate:0.002,desc:'Panier d\'actifs digitaux. Volatil mais toujours un plancher non nul.',explain:'Représente un indice crypto diversifié. Croissance rapide mais dividende plus faible (1.5%/j).'},
+// INVESTOR LEVELS — based on totalInvested
+const INVESTOR_LEVELS = [
+  {level:1, title:'Débutant',     titleEn:'Beginner',   icon:'🌱', min:0,     max:100,   reward:0,   color:'#6b7280', unlocksAsset:null},
+  {level:2, title:'Épargnant',    titleEn:'Saver',      icon:'💰', min:100,   max:400,   reward:25,  color:'#10b981', unlocksAsset:'house'},
+  {level:3, title:'Investisseur', titleEn:'Investor',   icon:'📊', min:400,   max:1000,  reward:50,  color:'#06b6d4', unlocksAsset:'stock'},
+  {level:4, title:'Trader',       titleEn:'Trader',     icon:'⚡', min:1000,  max:3000,  reward:100, color:'#7c3aed', unlocksAsset:'crypto'},
+  {level:5, title:'Diversifié',   titleEn:'Diversified',icon:'🌍', min:3000,  max:8000,  reward:200, color:'#f59e0b', unlocksAsset:'etf'},
+  {level:6, title:'Analyste',     titleEn:'Analyst',    icon:'🔬', min:8000,  max:20000, reward:400, color:'#ec4899', unlocksAsset:'bonds'},
+  {level:7, title:'Gestionnaire', titleEn:'Manager',    icon:'🏦', min:20000, max:50000, reward:800, color:'#e11d48', unlocksAsset:'oil'},
+  {level:8, title:'Tycoon',       titleEn:'Tycoon',     icon:'👑', min:50000, max:Infinity, reward:1500, color:'#d97706', unlocksAsset:'nasdaq'},
 ];
+
+// EXPANDED ASSET_DEFS — 8 assets unlocked by investor level
+const ASSET_DEFS=[
+  {id:'gold',   name:'Or',           ticker:'GC=F',   cgId:null,      icon:'🥇', type:'Métal précieux',  class:'gold',   cost:50,  divRate:0.020, growthRate:0.0010, unlockLevel:1,
+   desc:"L'or est l'actif refuge ultime. Depuis 5000 ans, il conserve sa valeur.",
+   explain:"L'or physique protège contre l'inflation. Les banques centrales en détiennent des milliers de tonnes. Dividende : 2%/j car il génère un rendement de stockage virtuel.",
+   realWhat:"Dans la réalité, l'or ne verse pas de dividende mais prend de la valeur en période de crise. GC=F est le contrat futures sur l'or du COMEX (Chicago)."},
+  {id:'house',  name:'Immeuble',     ticker:'VNQ',    cgId:null,      icon:'🏢', type:'Immobilier',       class:'house',  cost:150, divRate:0.040, growthRate:0.0008, unlockLevel:2,
+   desc:"L'immobilier génère des loyers réguliers. Actif physique, jamais à zéro.",
+   explain:"VNQ est un REIT (Real Estate Investment Trust) : un fonds qui possède des centaines d'immeubles. Tu touches ta part des loyers chaque jour. Rendement élevé : 4%/j.",
+   realWhat:"Les REITs sont obligés par loi de distribuer 90% de leurs bénéfices en dividendes. Le VNQ (Vanguard Real Estate ETF) inclut des centres commerciaux, bureaux, entrepôts."},
+  {id:'stock',  name:'S&P 500',      ticker:'SPY',    cgId:null,      icon:'📈', type:'Actions USA',      class:'stock',  cost:80,  divRate:0.030, growthRate:0.0012, unlockLevel:3,
+   desc:"Les 500 plus grandes entreprises américaines en un seul actif.",
+   explain:"Le SPY est l'ETF le plus tradé au monde. Acheter 1 part = posséder un morceau d'Apple, Microsoft, Amazon, Tesla... Dividende : 3%/j basé sur leur rendement historique.",
+   realWhat:"Historiquement, le S&P 500 rapporte ~10%/an. Il a survécu à toutes les crises. Warren Buffett recommande de l'acheter et de ne jamais le vendre."},
+  {id:'crypto', name:'Bitcoin',      ticker:null,     cgId:'bitcoin', icon:'₿',  type:'Crypto-actif',     class:'crypto', cost:30,  divRate:0.015, growthRate:0.0020, unlockLevel:4,
+   desc:"La première cryptomonnaie. Offre limitée à 21 millions de BTC.",
+   explain:"Bitcoin est l'actif le plus volatile mais aussi le plus performant de la dernière décennie. Dividende virtuel 1.5%/j — faible car le potentiel de hausse est énorme.",
+   realWhat:"BlackRock, Fidelity, et des dizaines de fonds gèrent maintenant des ETF Bitcoin. Son prix est corrélé au cycle de halvings (tous les ~4 ans)."},
+  {id:'etf',    name:'ETF Monde',    ticker:'VT',     cgId:null,      icon:'🌐', type:'Actions mondiales', class:'etf',    cost:200, divRate:0.025, growthRate:0.0015, unlockLevel:5,
+   desc:"3700 entreprises de 47 pays. La diversification ultime.",
+   explain:"Le VT (Vanguard Total World) couvre 98% de la capitalisation boursière mondiale. USA, Europe, Asie, marchés émergents. Dividende modéré 2.5%/j — mais risque très faible.",
+   realWhat:"Diversifier géographiquement réduit le risque spécifique à un pays. Si les USA chutent, l'Europe ou l'Asie peut compenser. Stratégie recommandée pour les investisseurs long terme."},
+  {id:'bonds',  name:'Obligations',  ticker:'TLT',    cgId:null,      icon:'📜', type:'Dette souveraine',  class:'bonds',  cost:120, divRate:0.035, growthRate:0.0005, unlockLevel:6,
+   desc:"Prêter de l'argent aux États-Unis en échange d'intérêts garantis.",
+   explain:"TLT est un ETF d'obligations du Trésor US à 20 ans. Quand les taux baissent, les obligations montent. Dividende élevé 3.5%/j — revenu prévisible et stable.",
+   realWhat:"Les obligations souveraines sont considérées comme 'sans risque' car un État ne fait jamais défaut (en théorie). Elles ont un rôle défensif dans un portefeuille."},
+  {id:'oil',    name:'Pétrole',      ticker:'CL=F',   cgId:null,      icon:'🛢️', type:'Matière première',  class:'oil',    cost:90,  divRate:0.028, growthRate:0.0018, unlockLevel:7,
+   desc:"L'or noir — moteur de l'économie mondiale.",
+   explain:"CL=F est le crude oil WTI (West Texas Intermediate). Très volatile, mais les crises géopolitiques le font monter en flèche. Dividende 2.8%/j — bonne rentabilité cyclique.",
+   realWhat:"L'OPEP+ contrôle la production mondiale. Quand ils réduisent les quotas, les prix explosent. Les énergies renouvelables créent une pression baissière à long terme."},
+  {id:'nasdaq', name:'Nasdaq 100',   ticker:'QQQ',    cgId:null,      icon:'🚀', type:'Tech & Innovation',  class:'nasdaq', cost:250, divRate:0.022, growthRate:0.0025, unlockLevel:8,
+   desc:"Les 100 plus grandes entreprises tech du monde. Le futur en action.",
+   explain:"QQQ = Apple, Microsoft, Nvidia, Meta, Amazon, Google... Les géants de la tech. Croissance la plus rapide (+0.25%/j) mais dividende plus faible (2.2%/j).",
+   realWhat:"Le Nasdaq 100 a multiplié par 7 en 10 ans. Très sensible aux taux d'intérêt et aux résultats trimestriels. Actif à fort potentiel mais volatil."},
+];
+
+// FINANCE ACADEMY — tutorial lessons
+const FINANCE_LESSONS = [
+  {id:'div101', title:'Les Dividendes', icon:'🌱', unlockLevel:1, reward:30, difficulty:'Débutant',
+   intro:"Un dividende, c'est la part des bénéfices qu'une entreprise te reverse parce que tu possèdes une partie d'elle. Comme un loyer que tu touches sur ton investissement.",
+   questions:[
+     {q:"Qu'est-ce qu'un dividende ?", choices:["Une taxe sur les investissements","Un revenu versé par un actif à son propriétaire","Le prix d'achat d'une action","Un emprunt bancaire"], correct:1,
+      explain:"Un dividende est un revenu passif — tu le reçois sans rien faire, juste parce que tu possèdes l'actif."},
+     {q:"Si tu possèdes 100 pièces d'or avec un taux de dividende de 2%/jour, combien gagnes-tu par jour ?", choices:["0.2 pièce","2 pièces","20 pièces","200 pièces"], correct:1,
+      explain:"100 × 2% = 2 pièces par jour. C'est l'intérêt simple sur ton investissement."},
+     {q:"Pourquoi vaut-il mieux réinvestir ses dividendes ?", choices:["Ça fait baisser les impôts","Chaque dividende reinvesti génère lui-même des dividendes (intérêts composés)","C'est obligatoire par la loi","Pour éviter la volatilité"], correct:1,
+      explain:"C'est l'intérêt composé : tes gains génèrent eux-mêmes des gains. Einstein l'appelait 'la 8e merveille du monde'."},
+   ]},
+  {id:'compound', title:"L'Intérêt Composé", icon:'📈', unlockLevel:1, reward:40, difficulty:'Débutant',
+   intro:"L'intérêt composé, c'est quand tes gains génèrent eux-mêmes des gains. 100€ à 10%/an → 110€ la 1ère année, mais 121€ la 2ème (pas 120) car 10 génèrent aussi 10%.",
+   questions:[
+     {q:"Tu investis 100 pièces à 10%/an. Après 2 ans sans réinvestissement, tu as :", choices:["110 pièces","120 pièces","121 pièces","100 pièces"], correct:1,
+      explain:"Sans réinvestissement = intérêt simple : 100 + 10 + 10 = 120. Avec composé ce serait 121."},
+     {q:"Tu investis 100 pièces à 10%/an avec réinvestissement. Après 2 ans, tu as :", choices:["110 pièces","120 pièces","121 pièces","115 pièces"], correct:2,
+      explain:"Année 1 : 100 × 1.10 = 110. Année 2 : 110 × 1.10 = 121. Les 10 gagnés en année 1 rapportent aussi 10%."},
+     {q:"La règle des '72' permet de calculer :", choices:["Le montant des impôts","En combien d'années ton argent double","La meilleure heure pour trader","Le rendement d'un ETF"], correct:1,
+      explain:"Règle des 72 : divise 72 par ton taux annuel. À 8%/an, ton argent double en 72/8 = 9 ans."},
+     {q:"Pourquoi commencer à investir jeune est-il crucial ?", choices:["Les jeunes paient moins de frais","Plus d'années = plus d'intérêts composés = différence énorme","Les marchés montent toujours jeune","Ce n'est pas important"], correct:1,
+      explain:"Investir 1000€ à 20 ans vs 40 ans à 7%/an : à 60 ans tu as 14 974€ vs 3 870€. Soit 4× plus juste en commençant 20 ans plus tôt."},
+   ]},
+  {id:'diversif', title:'La Diversification', icon:'🎯', unlockLevel:2, reward:60, difficulty:'Intermédiaire',
+   intro:"'Ne mets pas tous tes œufs dans le même panier.' La diversification consiste à répartir ses investissements pour que la chute d'un actif ne ruine pas tout le portefeuille.",
+   questions:[
+     {q:"Tu as 1000 pièces. Laquelle de ces stratégies est la plus sûre ?", choices:["Tout dans Bitcoin","500 Bitcoin + 500 Or","250 Or + 250 Immo + 250 Actions + 250 Crypto","Tout dans l'Or"], correct:2,
+      explain:"Répartir sur 4 actifs non-corrélés réduit le risque. Si le crypto chute de 50%, tu ne perds que 12.5% du total."},
+     {q:"Qu'est-ce que la 'corrélation' entre actifs ?", choices:["Leur rendement annuel","À quel point ils montent/descendent ensemble","Leur prix actuel","Leur dividende"], correct:1,
+      explain:"Des actifs corrélés montent et baissent ensemble. L'or et les actions sont souvent inversement corrélés — quand l'un baisse, l'autre monte. Parfait pour diversifier."},
+     {q:"Le VT (ETF Monde) inclut des entreprises de combien de pays ?", choices:["5 pays","12 pays","47 pays","150 pays"], correct:2,
+      explain:"Le VT couvre 47 pays et ~3700 entreprises. C'est la diversification maximale en un seul achat."},
+   ]},
+  {id:'riskreturn', title:'Risque & Rendement', icon:'⚖️', unlockLevel:3, reward:80, difficulty:'Intermédiaire',
+   intro:"En finance, il n'y a pas de rendement élevé sans risque élevé. Le Bitcoin peut doubler en 1 an — mais aussi perdre 70%. Les obligations d'État sont moins rentables mais quasi-garanties.",
+   questions:[
+     {q:"Classe ces actifs du moins risqué au plus risqué :", choices:["Or → S&P500 → Obligations → Bitcoin","Obligations → Or → S&P500 → Bitcoin","Bitcoin → S&P500 → Or → Obligations","Tous ont le même risque"], correct:1,
+      explain:"Les obligations souveraines sont quasi sans risque. L'or est stable. Le S&P500 est volatil mais diversifié. Bitcoin est le plus volatile de tous."},
+     {q:"Tu veux un revenu stable et prévisible. Quel actif choisir ?", choices:["Bitcoin","Pétrole","Obligations d'État","Actions technologiques"], correct:2,
+      explain:"Les obligations versent un coupon fixe garanti par l'État. Parfait pour un revenu sûr. Les autres actifs sont trop volatils pour cet objectif."},
+     {q:"Qu'est-ce que la 'volatilité' ?", choices:["La vitesse à laquelle on peut vendre un actif","L'amplitude des variations de prix","Le rendement annualisé","Les frais de transaction"], correct:1,
+      explain:"Un actif très volatile peut perdre ou gagner 20% en un jour. Haute volatilité = risque élevé ET potentiel de gain élevé. C'est le compromis fondamental en finance."},
+     {q:"Qu'est-ce qu'un 'drawdown' ?", choices:["Une hausse soudaine","Un profit exceptionnel","La chute maximale depuis un sommet","Un type d'obligation"], correct:2,
+      explain:"Le drawdown mesure la perte maximale depuis un pic. Le Bitcoin a eu des drawdowns de -80%. Le S&P 500 rarement plus de -50%."},
+   ]},
+  {id:'etfvsstocks', title:'ETF vs Actions', icon:'🔬', unlockLevel:4, reward:100, difficulty:'Avancé',
+   intro:"Une action = un morceau d'une entreprise. Un ETF (Exchange Traded Fund) = un panier de centaines d'actions. L'ETF te donne la diversification en un seul achat.",
+   questions:[
+     {q:"Tu achètes une action Apple. Que se passe-t-il si Apple fait faillite ?", choices:["Tu perds 10%","Tu perds tout","L'État te rembourse","Tu reçois des obligations à la place"], correct:1,
+      explain:"Une action peut valoir 0. Apple a peu de chances de faire faillite, mais Nokia, Kodak, Lehman Brothers l'ont fait. Concentration = risque maximal."},
+     {q:"Quel est l'avantage principal d'un ETF sur une action individuelle ?", choices:["Il coûte moins cher","Il est garanti par l'État","Il diversifie automatiquement sur des centaines de valeurs","Il verse plus de dividendes"], correct:2,
+      explain:"Acheter le SPY (S&P500 ETF), c'est posséder 500 entreprises en même temps. Si l'une coule, les 499 autres compensent."},
+     {q:"Qu'est-ce que le ratio P/E (Price/Earnings) ?", choices:["Le prix divisé par les dividendes","Le prix de l'action divisé par le bénéfice annuel par action","La performance sur 5 ans","Les frais de gestion annuels"], correct:1,
+      explain:"P/E = combien tu paies pour 1€ de bénéfice. P/E de 20 = tu paies 20€ pour 1€/an de bénéfice. Plus le P/E est bas, plus l'action est 'bon marché'."},
+     {q:"Qu'est-ce qu'un 'expense ratio' (frais de gestion) d'un ETF ?", choices:["Le prix d'achat","Les frais annuels prélevés automatiquement sur la performance","La taxe de bourse","Les dividendes versés"], correct:1,
+      explain:"Un ETF comme VT prend 0.07%/an. Un fonds actif peut prendre 1-2%/an. Sur 30 ans, la différence est massive à cause des intérêts composés."},
+   ]},
+  {id:'macro', title:'Macro-économie', icon:'🌍', unlockLevel:5, reward:150, difficulty:'Expert',
+   intro:"Les marchés ne bougent pas au hasard. Les décisions des banques centrales, l'inflation, les taux d'intérêt, les cycles économiques — tout influence tes investissements.",
+   questions:[
+     {q:"Quand la Réserve Fédérale (Fed) hausse les taux d'intérêt, que se passe-t-il généralement ?", choices:["Les actions montent fortement","Les obligations montent, les actions baissent","Les actions et obligations montent ensemble","Rien ne change"], correct:1,
+      explain:"Des taux élevés = l'argent coûte plus cher = les entreprises empruntent moins et investissent moins. Les obligations existantes (à taux fixe) perdent de la valeur en comparaison."},
+     {q:"Qu'est-ce que l'inflation fait à ton argent en banque ?", choices:["Il gagne de la valeur","Il garde exactement la même valeur","Il perd de la valeur réelle si le rendement est inférieur à l'inflation","Il est garanti par l'État"], correct:2,
+      explain:"Avec 3% d'inflation et 0.5% sur ton compte bancaire, tu perds -2.5% de pouvoir d'achat par an. C'est pourquoi investir est essentiel pour ne pas s'appauvrir."},
+     {q:"Qu'est-ce qu'un 'marché haussier' (bull market) ?", choices:["Un marché qui monte d'au moins 20% depuis un creux","Un marché très volatil","Un marché où on achète des matières premières","Un marché fermé le lundi"], correct:0,
+      explain:"Bull market = hausse soutenue de 20%+. Bear market = baisse de 20%+. Historiquement, les bull markets durent plus longtemps que les bear markets."},
+     {q:"Le 'quantitative easing' (QE) consiste à :", choices:["Augmenter les impôts","La banque centrale crée de la monnaie pour acheter des actifs et stimuler l'économie","Vendre les réserves d'or d'un pays","Réduire les salaires"], correct:1,
+      explain:"Le QE injecte de l'argent dans l'économie. Il a tendance à faire monter les marchés d'actions (mais peut créer de l'inflation). La Fed en a fait massivement en 2008 et 2020."},
+   ]},
+];
+
+
 
 // SHOP ITEMS
 const SHOP_ITEMS=[
