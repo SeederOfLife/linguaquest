@@ -4,18 +4,14 @@
 function calcDividends(){
   if(!U) return;
   const now=Date.now();
-  const elapsedMs=now-U.lastDivTime;
-  const elapsedDays=elapsedMs/(1000*60*60*24);
+  const elapsedDays=(now-U.lastDivTime)/(1000*60*60*24);
   let total=0;
   ASSET_DEFS.forEach(a=>{
     const owned=U.assets[a.id]||0;
     if(owned>0){
       const invested=a.cost*owned;
-      // Daily dividend rate * owned levels * elapsed days
-      const div=invested*a.divRate*elapsedDays;
-      // Also grow asset value slightly (simulates price appreciation)
+      total+=invested*a.divRate*elapsedDays;
       U.assetValues[a.id]=(U.assetValues[a.id]||0)+invested*a.growthRate*elapsedDays;
-      total+=div;
     }
   });
   U.pendingDiv=(U.pendingDiv||0)+total;
@@ -26,11 +22,11 @@ function calcDividends(){
 function collectDividends(){
   if(!U||U.pendingDiv<0.5) return;
   const amount=Math.floor(U.pendingDiv);
-  U.coins+=amount;U.pendingDiv-=amount;
-  saveU();updateTopBar();
+  U.coins+=amount; U.pendingDiv-=amount;
+  saveU(); updateTopBar();
   floatCoin($('collect-btn'),`+${amount} <span class="coin"></span>`);
   renderPortfolio();
-  toast(`🌱 +${amount} <span class="coin"></span> dividendes collectés !`);
+  toast(`🌱 +${amount} dividendes collectés !`);
 }
 
 function getAssetWealth(){
@@ -38,20 +34,202 @@ function getAssetWealth(){
   return ASSET_DEFS.reduce((s,a)=>{
     const owned=U.assets[a.id]||0;
     if(!owned) return s;
-    const base=a.cost*owned;
-    const appreciated=base+(U.assetValues[a.id]||0);
-    return s+appreciated;
+    return s+a.cost*owned+(U.assetValues[a.id]||0);
   },0);
 }
-
 function getTotalWealth(){return Math.floor(U.coins+getAssetWealth());}
-
 function getDailyDividend(){
   if(!U) return 0;
-  return ASSET_DEFS.reduce((s,a)=>{
-    const owned=U.assets[a.id]||0;
-    return s+a.cost*owned*a.divRate;
-  },0);
+  return ASSET_DEFS.reduce((s,a)=>s+(a.cost*(U.assets[a.id]||0)*a.divRate),0);
+}
+
+// ══════════════════════════════════════════════
+// INVESTOR LEVEL SYSTEM
+// ══════════════════════════════════════════════
+function getInvestorLevel(){
+  const invested=U.totalInvested||0;
+  let cur=INVESTOR_LEVELS[0];
+  for(const lv of INVESTOR_LEVELS){ if(invested>=lv.min) cur=lv; }
+  return cur;
+}
+
+function renderInvestorLevel(){
+  const bar=$('inv-level-bar'); if(!bar) return;
+  const invested=U.totalInvested||0;
+  const cur=getInvestorLevel();
+  const next=INVESTOR_LEVELS.find(l=>l.level===cur.level+1);
+  const pct=next ? Math.min(100,Math.round((invested-cur.min)/(next.min-cur.min)*100)) : 100;
+
+  // Check if we just levelled up
+  const prevLevel=U.investorLevel||1;
+  if(cur.level>prevLevel){
+    U.investorLevel=cur.level;
+    if(cur.reward>0){ U.coins+=cur.reward; saveU(); updateTopBar(); }
+    setTimeout(()=>showLevelUpModal(cur),400);
+  } else { U.investorLevel=cur.level; }
+
+  // Build level chips for all 8 levels
+  const chips=INVESTOR_LEVELS.map(lv=>{
+    const unlocked=invested>=lv.min;
+    const assetName=lv.unlocksAsset ? (ASSET_DEFS.find(a=>a.id===lv.unlocksAsset)||{name:lv.unlocksAsset}).name : null;
+    return `<div class="inv-unlock-chip ${unlocked?'done':'locked'}" title="Niv. ${lv.level}: ${lv.title}">
+      ${lv.icon} ${lv.title}${assetName&&!unlocked?' 🔒':''}
+    </div>`;
+  }).join('');
+
+  bar.innerHTML=`
+    <div class="inv-level-header">
+      <div class="inv-level-badge">${cur.icon}</div>
+      <div class="inv-level-info">
+        <div class="inv-level-title">${cur.icon} Investisseur ${cur.title}</div>
+        <div class="inv-level-sub">${invested.toLocaleString()} pièces investies${next?' · Prochain : '+next.min.toLocaleString()+' pièces':' · Niveau MAX !'}</div>
+      </div>
+      <div class="inv-level-num">Niv. ${cur.level}/8</div>
+    </div>
+    <div class="inv-xp-row">
+      <div class="inv-xp-bar-wrap"><div class="inv-xp-bar" style="width:${pct}%;background:${cur.color}"></div></div>
+      <div class="inv-xp-pct">${pct}%</div>
+    </div>
+    ${next?`<div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">🔓 Débloquer <strong>${(ASSET_DEFS.find(a=>a.id===next.unlocksAsset)||{name:'bonus'}).name}</strong> à ${next.min.toLocaleString()} pièces investies${next.reward>0?' · Récompense : +'+next.reward+' 🪙':''}</div>`:''}
+    <div class="inv-unlock-row">${chips}</div>
+  `;
+}
+
+function showLevelUpModal(lv){
+  toast(`🎉 Niveau ${lv.level} débloqué ! ${lv.icon} ${lv.title} +${lv.reward} pièces !`);
+  confetti();
+}
+
+// ══════════════════════════════════════════════
+// FINANCE ACADEMY
+// ══════════════════════════════════════════════
+let _lessonState={lessonId:null,qi:-1,score:0,answered:false};
+
+function renderAcademy(){
+  const grid=$('lesson-grid'); if(!grid) return;
+  const investorLv=getInvestorLevel().level;
+  const completed=U.lessonsCompleted||{};
+  grid.innerHTML='';
+  FINANCE_LESSONS.forEach(lesson=>{
+    const done=!!completed[lesson.id];
+    const locked=lesson.unlockLevel>investorLv;
+    const card=document.createElement('div');
+    card.className=`lesson-card${done?' lesson-done':''}${locked?' lesson-locked':''}`;
+    card.innerHTML=`
+      <div class="lesson-icon">${lesson.icon}</div>
+      <div class="lesson-title">${lesson.title}</div>
+      <div class="lesson-diff ${lesson.difficulty}">${lesson.difficulty}</div>
+      <div class="lesson-reward">🪙 +${lesson.reward} pièces</div>
+      ${done?'<div class="lesson-done-badge">✅</div>':''}
+      ${locked?`<div class="lesson-lock-info">🔒 Niveau investisseur ${lesson.unlockLevel} requis</div>`:''}
+    `;
+    if(!locked) card.onclick=()=>openLesson(lesson.id);
+    grid.appendChild(card);
+  });
+}
+
+function openLesson(id){
+  const lesson=FINANCE_LESSONS.find(l=>l.id===id);
+  if(!lesson) return;
+  _lessonState={lessonId:id,qi:-1,score:0,answered:false};
+  $('lesson-bc').textContent=lesson.title;
+  $('lesson-intro-zone').textContent=lesson.intro;
+  $('lesson-intro-zone').style.display='block';
+  $('lesson-q-card').style.display='none';
+  $('lesson-complete').style.display='none';
+  $('lesson-btn-start').style.display='inline-flex';
+  $('lesson-btn-start').textContent=`${lesson.icon} Commencer → (${lesson.questions.length} questions)`;
+  $('lesson-btn-next').style.display='none';
+  $('lesson-prog-fill').style.width='0%';
+  goTo('lesson');
+}
+
+function lessonStartQuestions(){
+  $('lesson-intro-zone').style.display='none';
+  $('lesson-btn-start').style.display='none';
+  _lessonState.qi=0;
+  renderLessonQuestion();
+}
+
+function renderLessonQuestion(){
+  const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
+  if(!lesson) return;
+  const qi=_lessonState.qi;
+  if(qi>=lesson.questions.length){ lessonComplete(); return; }
+  const q=lesson.questions[qi];
+  const total=lesson.questions.length;
+  $('lesson-prog-fill').style.width=`${(qi/total)*100}%`;
+  $('lesson-q-num').textContent=`Question ${qi+1} / ${total}`;
+  $('lesson-q-text').textContent=q.q;
+  $('lesson-explain').textContent='';
+  $('lesson-explain').className='lesson-explain-bar';
+  _lessonState.answered=false;
+
+  const choicesDiv=$('lesson-choices');
+  choicesDiv.innerHTML='';
+  q.choices.forEach((choice,i)=>{
+    const btn=document.createElement('button');
+    btn.className='lesson-choice';
+    btn.textContent=choice;
+    btn.onclick=()=>pickLessonChoice(i,btn,q);
+    choicesDiv.appendChild(btn);
+  });
+
+  $('lesson-q-card').style.display='block';
+  $('lesson-btn-next').style.display='none';
+}
+
+function pickLessonChoice(idx,btn,q){
+  if(_lessonState.answered) return;
+  _lessonState.answered=true;
+  const correct=idx===q.correct;
+  if(correct) _lessonState.score++;
+  // Colour all choices
+  document.querySelectorAll('.lesson-choice').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.correct) b.classList.add('choice-correct');
+    else if(i===idx&&!correct) b.classList.add('choice-wrong');
+  });
+  // Show explanation
+  const exp=$('lesson-explain');
+  exp.textContent=(correct?'✅ ':'❌ ')+q.explain;
+  exp.className='lesson-explain-bar show';
+  $('lesson-btn-next').style.display='inline-flex';
+  $('lesson-btn-next').textContent=_lessonState.qi+1>=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId).questions.length?'Terminer 🏆':'Suivant →';
+}
+
+function lessonNext(){
+  _lessonState.qi++;
+  renderLessonQuestion();
+}
+
+function lessonComplete(){
+  const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
+  if(!lesson) return;
+  const score=_lessonState.score;
+  const total=lesson.questions.length;
+  const pct=Math.round(score/total*100);
+  const alreadyDone=(U.lessonsCompleted||{})[lesson.id];
+
+  // Award coins only first time
+  let earned=0;
+  if(!alreadyDone){
+    earned=Math.round(lesson.reward*(pct/100));
+    U.coins+=earned;
+    if(!U.lessonsCompleted) U.lessonsCompleted={};
+    U.lessonsCompleted[lesson.id]=true;
+    saveU(); updateTopBar();
+  }
+
+  $('lesson-q-card').style.display='none';
+  $('lesson-btn-next').style.display='none';
+  $('lesson-btn-start').style.display='none';
+  $('lesson-prog-fill').style.width='100%';
+  $('lesson-done-title').textContent=pct>=80?'Excellent ! 🌟':pct>=50?'Bien joué !':'Continue à apprendre !';
+  $('lesson-done-sub').textContent=`${score}/${total} bonnes réponses · ${pct}%${alreadyDone?' (déjà complétée)':''}`;
+  $('lesson-done-reward').innerHTML=earned>0?`+${earned} <span class="coin"></span> gagnés !`:`🏆 ${pct}% de réussite`;
+  $('lesson-complete').style.display='block';
+  if(earned>0) confetti();
 }
 
 // ══════════════════════════════════════════════
@@ -64,7 +242,7 @@ function renderPortfolio(){
   const daily=getDailyDividend();
   const invested=U.totalInvested||0;
   $('wealth-total').innerHTML=`${wealth.toLocaleString()} <span class="coin"></span>`;
-  $('wealth-sub').innerHTML=`+${daily.toFixed(1)} <span class="coin"></span> générés par jour · Patrimoine en croissance constante`;
+  $('wealth-sub').innerHTML=`+${daily.toFixed(1)} <span class="coin"></span>/j · Patrimoine en croissance constante`;
   $('pf-coins').innerHTML=Math.floor(U.coins).toLocaleString()+' <span class="coin"></span>';
   $('pf-div-total').innerHTML=daily.toFixed(1)+' <span class="coin"></span>/j';
   $('pf-invested').innerHTML=invested.toLocaleString()+' <span class="coin"></span>';
@@ -75,244 +253,275 @@ function renderPortfolio(){
   if(pending>=1){
     db.style.display='flex';
     $('div-amount').innerHTML=`+${Math.floor(pending)} <span class="coin"></span>`;
-    $('div-banner-sub').innerHTML=`Temps écoulé depuis la dernière collecte · Taux journalier : ${daily.toFixed(1)} <span class="coin"></span>`;
+    $('div-banner-sub').innerHTML=`Dividendes accumulés · Taux journalier : ${daily.toFixed(1)} <span class="coin"></span>`;
     $('collect-btn').disabled=false;
-  } else {db.style.display='none';}
+  } else { db.style.display='none'; }
 
-  // Render assets
-  const grid=$('assets-grid');grid.innerHTML='';
+  // Investor level bar
+  renderInvestorLevel();
+
+  // Finance Academy
+  renderAcademy();
+
+  // Assets grid
+  const investorLv=getInvestorLevel().level;
+  const grid=$('assets-grid'); grid.innerHTML='';
   ASSET_DEFS.forEach(a=>{
     const owned=U.assets[a.id]||0;
+    const unlocked=a.unlockLevel<=investorLv;
     const base=a.cost*owned;
     const appreciated=base+(U.assetValues[a.id]||0);
-    const scaledCost=Math.round(a.cost*(1+(owned)*0.1));const canBuy=U.coins>=scaledCost;
-    const pct=Math.min(100, owned*10);// visual fill: each unit = 10% up to 100%
+    const scaledCost=Math.round(a.cost*(1+owned*0.1));
+    const canBuy=U.coins>=scaledCost&&unlocked;
+    const pct=Math.min(100,owned*10);
     const dailyEarn=(a.cost*owned*a.divRate).toFixed(1);
     const growthPct=owned>0?((U.assetValues[a.id]||0)/Math.max(base,1)*100).toFixed(1):0;
+    const reqLv=INVESTOR_LEVELS.find(l=>l.level===a.unlockLevel);
+
     const div=document.createElement('div');
-    div.className=`asset-card ${a.class}`;
+    div.className=`asset-card ${a.class}${!unlocked?' asset-locked':''}`;
+    div.style='position:relative;';
     div.innerHTML=`
+      ${!unlocked?`<div class="asset-locked-overlay">
+        <div class="asset-locked-icon">🔒</div>
+        <div class="asset-locked-msg">Niveau Investisseur ${a.unlockLevel} requis<br><small>Investis ${(INVESTOR_LEVELS.find(l=>l.level===a.unlockLevel)||{min:0}).min.toLocaleString()} pièces au total</small></div>
+      </div>`:''}
       <div class="asset-header">
         <div class="asset-icon">${a.icon}</div>
-        <div><div class="asset-name">${a.name}</div><div class="asset-type">${a.type}</div><div class="asset-real-price" id="rp-${a.id}" style="font-size:.7rem;color:var(--accent3);margin-top:2px;">Chargement...</div></div>
+        <div style="flex:1">
+          <div class="asset-name">${a.name}</div>
+          <div class="asset-type">${a.type}</div>
+          <div class="asset-real-price" id="rp-${a.id}" style="font-size:.7rem;color:var(--accent3);margin-top:2px;">
+            ${unlocked?'Chargement…':'Prix masqué'}
+          </div>
+        </div>
         <div class="asset-value">
-          <div class="asset-price">${Math.floor(appreciated)} <span class="coin"></span></div>
-          <div class="asset-change">+${growthPct}% depuis achat</div>
+          <div class="asset-price">${Math.floor(appreciated).toLocaleString()} <span class="coin"></span></div>
+          <div class="asset-change">${owned>0?`+${growthPct}% depuis achat`:`Niv. ${a.unlockLevel}`}</div>
         </div>
       </div>
       <div class="asset-progress">
-        <div class="asset-progress-bar"><div class="asset-progress-fill" style="width:${pct}%;background:${a.class==='gold'?'linear-gradient(90deg,#d97706,#fbbf24)':a.class==='house'?'linear-gradient(90deg,#0891b2,#06b6d4)':a.class==='stock'?'linear-gradient(90deg,#059669,#10b981)':'linear-gradient(90deg,#6d28d9,#7c3aed)'};"></div></div>
-        <div class="asset-owned"><span>${owned} unit${owned>1?"s":""}</span><span>${a.cost} <span class="coin"></span> / niveau</span></div>
+        <div class="asset-progress-bar"><div class="asset-progress-fill" style="width:${pct}%"></div></div>
+        <div class="asset-owned"><span>${owned} unité${owned!==1?'s':''}</span><span>${a.cost} <span class="coin"></span>/unité</span></div>
       </div>
-      <div class="asset-div-info">🌱 Dividende : ${a.divRate*100}%/j · Soit <strong>${dailyEarn} <span class="coin"></span>/jour</strong> au niveau actuel · Croissance : +${(a.growthRate*100).toFixed(2)}%/j</div>
-      <div style="font-size:.74rem;color:var(--muted);margin:8px 0;">${a.explain}</div>
-      <button class="asset-info-btn" onclick="openAssetInfo('${a.id}')">&#128202; Voir les données du marché</button>
+      <div class="asset-div-info">🌱 ${a.divRate*100}%/j · <strong>${dailyEarn} <span class="coin"></span>/jour</strong> · Croissance +${(a.growthRate*100).toFixed(2)}%/j</div>
+      <div style="font-size:.74rem;color:var(--muted);margin:6px 0 10px;">${a.desc}</div>
+      <button class="asset-info-btn" onclick="openAssetInfo('${a.id}')">📊 Données marché réel</button>
       <div class="asset-actions">
         <button class="asset-buy-btn" onclick="buyAsset('${a.id}')" ${!canBuy?'disabled':''}>
-          ${owned===0?`Acheter (${a.cost} <span class="coin"></span>)`:`+1 unité (${Math.round(a.cost*(1+owned*0.1))} <span class="coin"></span>)`}
+          ${owned===0?`Acheter (${scaledCost} <span class="coin"></span>)`:`+1 unité (${scaledCost} <span class="coin"></span>)`}
         </button>
-        ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre 1 (${Math.round(a.cost*(1+(owned-1)*0.1)*0.8)} <span class="coin"></span>)</button>`:''}
-        ${owned>0?`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:8px 12px;font-size:.78rem;color:var(--green);font-weight:700;">+${dailyEarn} <span class="coin"></span>/j</div>`:''}
+        ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre (${Math.round(a.cost*(1+(owned-1)*0.1)*0.8)} <span class="coin"></span>)</button>`:''}
+        ${owned>0?`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:8px 12px;font-size:.78rem;color:var(--green);font-weight:700;">+${dailyEarn} <span class="coin"></span>/j</div>`:''} 
       </div>
     `;
     grid.appendChild(div);
   });
+
+  // Fetch live prices
+  setTimeout(()=>{ fetchMarketPrices(); updateTarget(); }, 0);
 }
 
 function buyAsset(id){
-  const a=ASSET_DEFS.find(x=>x.id===id);
-  if(!a) return;
+  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
+  const investorLv=getInvestorLevel().level;
+  if(a.unlockLevel>investorLv){ toast('🔒 Niveau investisseur insuffisant'); return; }
   const owned=U.assets[id]||0;
   const scaledCost=Math.round(a.cost*(1+owned*0.1));
-  if(U.coins<scaledCost) return;
+  if(U.coins<scaledCost){ toast('❌ Pas assez de pièces'); return; }
   U.coins-=scaledCost;
   U.assets[id]=owned+1;
   U.totalInvested=(U.totalInvested||0)+scaledCost;
-  saveU();updateTopBar();
-  floatCoin(document.getElementById('assets-grid'),`-${scaledCost} <span class="coin"></span>`);
+  saveU(); updateTopBar();
+  floatCoin($('assets-grid'),`-${scaledCost} <span class="coin"></span>`);
   renderPortfolio();
-  toast(`${a.name} x${U.assets[id]} — +${(a.divRate*100)}%/j · Prochaine unité : ${Math.round(a.cost*(1+(owned+1)*0.1))} coins`);
+  toast(`${a.icon} ${a.name} niv.${U.assets[id]} · +${(a.divRate*100).toFixed(1)}%/j`);
+}
+
+function sellAsset(id){
+  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
+  const owned=U.assets[id]||0; if(owned<=0) return;
+  const lastCost=Math.round(a.cost*(1+(owned-1)*0.1));
+  const sellPrice=Math.round(lastCost*0.8);
+  U.coins+=sellPrice;
+  U.assets[id]=owned-1;
+  U.totalInvested=Math.max(0,(U.totalInvested||0)-lastCost);
+  if(U.assetValues[id]) U.assetValues[id]=Math.max(0,U.assetValues[id]-lastCost*0.05);
+  saveU(); updateTopBar();
+  floatCoin($('assets-grid'),`+${sellPrice} <span class="coin"></span>`);
+  renderPortfolio();
+  toast(`Vendu 1× ${a.name} → +${sellPrice} pièces (80%)`);
 }
 
 // ══════════════════════════════════════════════
-// REAL MARKET DATA
+// REAL MARKET DATA — 8 assets
 // ══════════════════════════════════════════════
-// Maps asset id → real-world ticker/id for price display
 const MARKET_IDS = {
-  gold:   { source:'yahoo',  ticker:'GC=F',    label:'Or (XAU)',   unit:'USD/oz'  },
-  house:  { source:'yahoo',  ticker:'VNQ',     label:'REIT Index', unit:'USD'     },
-  stock:  { source:'yahoo',  ticker:'SPY',     label:'S&P 500 ETF',unit:'USD'     },
-  crypto: { source:'coingecko', id:'bitcoin',  label:'Bitcoin',    unit:'USD'     },
+  gold:   {source:'yahoo',    ticker:'GC%3DF',  label:'Or / XAU',         unit:'USD/oz'},
+  house:  {source:'yahoo',    ticker:'VNQ',     label:'REIT VNQ',          unit:'USD'},
+  stock:  {source:'yahoo',    ticker:'SPY',     label:'S&P 500 ETF',       unit:'USD'},
+  crypto: {source:'coingecko',cgId:'bitcoin',   label:'Bitcoin / USD',     unit:'USD'},
+  etf:    {source:'yahoo',    ticker:'VT',      label:'ETF Monde VT',      unit:'USD'},
+  bonds:  {source:'yahoo',    ticker:'TLT',     label:'Obligations TLT',   unit:'USD'},
+  oil:    {source:'yahoo',    ticker:'CL%3DF',  label:'Pétrole WTI',       unit:'USD/baril'},
+  nasdaq: {source:'yahoo',    ticker:'QQQ',     label:'Nasdaq 100 QQQ',    unit:'USD'},
 };
 
-// Cache prices to avoid hammering APIs
-const _priceCache = {};
-let _lastFetch = 0;
+const _priceCache={};
+let _lastFetch=0;
 
-async function fetchMarketPrices() {
-  const now = Date.now();
-  if (now - _lastFetch < 5 * 60 * 1000 && Object.keys(_priceCache).length > 0) {
-    updatePriceDisplay(); return;
-  }
-  _lastFetch = now;
+async function fetchMarketPrices(){
+  const now=Date.now();
+  if(now-_lastFetch<5*60*1000&&Object.keys(_priceCache).length>0){ updatePriceDisplay(); return; }
+  _lastFetch=now;
 
-  // ── CoinGecko via cors proxy (Bitcoin) ──
-  try {
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', {mode:'cors'});
-    if(r.ok){
-      const d = await r.json();
-      if(d.bitcoin) _priceCache.crypto = {price: d.bitcoin.usd, change: d.bitcoin.usd_24h_change};
-    }
-  } catch(e) {}
+  // Bitcoin via CoinGecko
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',{mode:'cors'});
+    if(r.ok){const d=await r.json(); if(d.bitcoin) _priceCache.crypto={price:d.bitcoin.usd,change:d.bitcoin.usd_24h_change};}
+  }catch(e){}
 
-  // ── Open Exchange / Metals API for Gold via corsproxy.io ──
-  // Use AllOrigins as CORS proxy for Yahoo Finance
-  const tickers = [{t:'GC%3DF',id:'gold'},{t:'SPY',id:'stock'},{t:'VNQ',id:'house'}];
-  for(const {t,id} of tickers){
-    try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${t}?interval=1d&range=2d`;
-      const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const r = await fetch(proxy);
+  // Yahoo Finance via allorigins proxy — all other tickers
+  const yahooIds=['gold','house','stock','etf','bonds','oil','nasdaq'];
+  for(const id of yahooIds){
+    const info=MARKET_IDS[id]; if(!info||info.source!=='yahoo') continue;
+    try{
+      const url=`https://query1.finance.yahoo.com/v8/finance/chart/${info.ticker}?interval=1d&range=5d`;
+      const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
       if(r.ok){
-        const wrapper = await r.json();
-        const d = JSON.parse(wrapper.contents);
-        const res = d?.chart?.result?.[0];
+        const wrapper=await r.json();
+        const d=JSON.parse(wrapper.contents);
+        const res=d?.chart?.result?.[0];
         if(res){
-          const meta = res.meta;
-          const price = meta.regularMarketPrice;
-          const prev = meta.chartPreviousClose || meta.previousClose;
-          const change = prev ? ((price-prev)/prev*100) : 0;
-          _priceCache[id] = {price, change};
+          const price=res.meta.regularMarketPrice;
+          const prev=res.meta.chartPreviousClose||res.meta.previousClose;
+          _priceCache[id]={price, change:prev?((price-prev)/prev*100):0, history:res.indicators?.quote?.[0]?.close||[]};
         }
       }
-    } catch(e) {}
+    }catch(e){}
   }
-
   updatePriceDisplay();
 }
 
-function updatePriceDisplay() {
-  Object.entries(MARKET_IDS).forEach(([id, info]) => {
-    const el = document.getElementById('rp-' + id);
-    if (!el) return;
-    const cached = _priceCache[id];
-    if (!cached) {
-      el.textContent = info.label + ' — données indisponibles';
-      el.style.color = 'var(--muted)';
-      return;
-    }
-    const changeStr = (cached.change >= 0 ? '+' : '') + cached.change.toFixed(2) + '%';
-    const changeColor = cached.change >= 0 ? 'var(--green)' : 'var(--red)';
-    el.innerHTML = `${info.label}: <strong>$${cached.price.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</strong> <span style="color:${changeColor}">${changeStr} 24h</span>`;
-    el.style.color = 'var(--accent3)';
+function updatePriceDisplay(){
+  Object.entries(MARKET_IDS).forEach(([id,info])=>{
+    const el=document.getElementById('rp-'+id); if(!el) return;
+    const c=_priceCache[id];
+    if(!c){el.innerHTML=`<span style="color:var(--muted)">${info.label} — indisponible</span>`; return;}
+    const chgColor=c.change>=0?'var(--green)':'var(--red)';
+    const chgStr=(c.change>=0?'+':'')+c.change.toFixed(2)+'%';
+    el.innerHTML=`${info.label}: <strong>$${c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong> <span style="color:${chgColor}">${chgStr}</span>`;
   });
-}
-
-// Wrap renderPortfolio to also fetch prices
-const __origRP = renderPortfolio;
-renderPortfolio = function() {
-  __origRP();
-  setTimeout(updateTarget, 0);
-  fetchMarketPrices();
-};
-
-// ── GLOBAL ENTER KEY: Suivant / Vérifier ──
-document.addEventListener('keydown', function(e){
-  if(e.key !== 'Enter') return;
-  const activeScreen = document.querySelector('.screen.active');
-  if(!activeScreen || activeScreen.id !== 'screen-game') return;
-  const btnNext = $('btn-next');
-  const btnCheck = $('btn-check');
-  // If "Suivant" is visible → go next
-  if(btnNext && btnNext.style.display !== 'none'){
-    e.preventDefault();
-    nextQ();
-    return;
-  }
-  // If "Vérifier" is visible and we're NOT in fill mode (fill handles its own Enter)
-  if(btnCheck && btnCheck.style.display !== 'none' && S.curType !== 'fill'){
-    e.preventDefault();
-    checkCurrentQ();
-  }
-});
-
-function sellAsset(id){
-  const a = ASSET_DEFS.find(x=>x.id===id);
-  if(!a) return;
-  const owned = U.assets[id]||0;
-  if(owned <= 0) return;
-  // Sell price = 80% of what the last unit cost (simulates market spread)
-  const lastCost = Math.round(a.cost*(1+(owned-1)*0.1));
-  const sellPrice = Math.round(lastCost * 0.8);
-  U.coins += sellPrice;
-  U.assets[id] = owned - 1;
-  // Reduce invested amount proportionally
-  U.totalInvested = Math.max(0, (U.totalInvested||0) - lastCost);
-  // Remove a bit of appreciation
-  if(U.assetValues[id]) U.assetValues[id] = Math.max(0, U.assetValues[id] - lastCost*0.05);
-  saveU(); updateTopBar();
-  floatCoin(document.getElementById('assets-grid'), `+${sellPrice} <span class="coin"></span>`);
-  renderPortfolio();
-  toast(`Vendu 1 unité de ${a.name} pour ${sellPrice} coins (80% du prix d'achat)`);
 }
 
 // ══════════════════════════════════════════════
 // ASSET INFO MODAL
 // ══════════════════════════════════════════════
-let _currentAssetId = null;
+let _currentAssetId=null;
 
 function openAssetInfo(id){
-  const a = ASSET_DEFS.find(x=>x.id===id);
-  if(!a) return;
-  _currentAssetId = id;
-  const owned = U.assets[id]||0;
-  const base = a.cost*owned;
-  const appreciated = base + (U.assetValues[id]||0);
-  const pv = appreciated - base;
-  const daily = (a.cost*owned*a.divRate).toFixed(1);
-  const mInfo = {
-    gold:   {ticker:'GC=F (Or/USD)',  what:"L'or physique est un actif refuge. Les banques centrales en détiennent des tonnes. Sa valeur monte en période d'incertitude économique."},
-    house:  {ticker:'VNQ (REIT ETF)', what:"L'immobilier génère des loyers. Le VNQ est un fonds qui possède des centaines d'immeubles. Tu touches ta part des loyers comme dividende."},
-    stock:  {ticker:'SPY (S&P 500)',  what:"Le S&P 500 regroupe les 500 plus grandes entreprises américaines. Apple, Microsoft, Amazon… Investir dedans = posséder un morceau de l'économie mondiale."},
-    crypto: {ticker:'BTC/USD',        what:"Bitcoin est la première cryptomonnaie. Sa quantité est limitée à 21 millions. De plus en plus d'institutions financières l'intègrent à leur bilan."},
-  };
-  const info = mInfo[id]||{ticker:'',what:''};
+  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
+  _currentAssetId=id;
+  const owned=U.assets[id]||0;
+  const base=a.cost*owned;
+  const appreciated=base+(U.assetValues[id]||0);
+  const daily=(a.cost*owned*a.divRate).toFixed(1);
+  const pv=appreciated-base;
 
-  $('amod-icon').innerHTML = a.icon;
-  $('amod-name').textContent = a.name;
-  $('amod-type').textContent = a.type + ' · ' + info.ticker;
-  $('amod-owned').textContent = owned + ' unité' + (owned>1?'s':'');
-  $('amod-val').innerHTML = Math.floor(appreciated) + ' <span class="coin"></span>';
-  $('amod-daily').innerHTML = daily + ' <span class="coin"></span>/j';
-  const pvColor = pv >= 0 ? 'var(--green)' : 'var(--red)';
-  $('amod-pv').innerHTML = `<span style="color:${pvColor}">${pv>=0?'+':''}${Math.floor(pv)} <span class="coin"></span></span>`;
-  $('amod-explain').textContent = info.what;
+  $('amod-icon').textContent=a.icon;
+  $('amod-name').textContent=a.name;
+  $('amod-type').textContent=a.type+' · '+(MARKET_IDS[id]?.label||'');
+  $('amod-owned').textContent=owned+' unité'+(owned!==1?'s':'');
+  $('amod-val').innerHTML=Math.floor(appreciated)+' <span class="coin"></span>';
+  $('amod-daily').innerHTML=daily+' <span class="coin"></span>/j';
+  $('amod-pv').innerHTML=`<span style="color:${pv>=0?'var(--green)':'var(--red)'}">${pv>=0?'+':''}${Math.floor(pv)} <span class="coin"></span></span>`;
+  $('amod-explain').textContent=a.realWhat||a.explain;
 
   // Live price
-  const cached = _priceCache[id];
-  if(cached){
-    $('amod-price').textContent = '$' + cached.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const chg = cached.change;
-    $('amod-change').innerHTML = `<span style="color:${chg>=0?'var(--green)':'var(--red)'}">${chg>=0?'+':''}${chg.toFixed(2)}% sur 24h</span>`;
-    $('amod-ticker').textContent = info.ticker;
+  const c=_priceCache[id];
+  if(c){
+    $('amod-price').textContent='$'+c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    $('amod-change').innerHTML=`<span style="color:${c.change>=0?'var(--green)':'var(--red)'}">${c.change>=0?'+':''}${c.change.toFixed(2)}% sur 24h</span>`;
+    $('amod-ticker').textContent=MARKET_IDS[id]?.label||'';
+    // Mini sparkline chart
+    renderSparkline(id, c.history||[]);
   } else {
-    $('amod-price').textContent = 'Prix non disponible';
-    $('amod-change').textContent = 'Active la connexion pour voir le prix live';
+    $('amod-price').textContent='Chargement…';
+    $('amod-change').textContent='';
+    $('amod-ticker').textContent='';
+    fetchMarketPrices().then(()=>{
+      const fresh=_priceCache[id];
+      if(fresh&&_currentAssetId===id){
+        $('amod-price').textContent='$'+fresh.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const cc=fresh.change>=0?'var(--green)':'var(--red)';
+        $('amod-change').innerHTML=`<span style="color:${cc}">${fresh.change>=0?'+':''}${fresh.change.toFixed(2)}% sur 24h</span>`;
+        renderSparkline(id,fresh.history||[]);
+      }
+    });
   }
 
-  // Wire buy/sell buttons
-  const scaledCost = Math.round(a.cost*(1+owned*0.1));
-  $('amod-buy-btn').innerHTML = 'Acheter (' + scaledCost + ')';
-  $('amod-buy-btn').onclick = ()=>{buyAsset(id); openAssetInfo(id);};
-  $('amod-buy-btn').disabled = U.coins < scaledCost;
-  const sellPrice = Math.round(a.cost*(1+(owned-1)*0.1)*0.8);
-  $('amod-sell-btn').innerHTML = owned>0 ? 'Vendre ('+sellPrice+')' : 'Vendre';
-  $('amod-sell-btn').onclick = ()=>{if(owned>0){sellAsset(id);closeAssetModal();}};
-  $('amod-sell-btn').disabled = owned <= 0;
+  // Wire buy/sell
+  const scaledCost=Math.round(a.cost*(1+owned*0.1));
+  $('amod-buy-btn').innerHTML=`Acheter (${scaledCost})`;
+  $('amod-buy-btn').onclick=()=>{buyAsset(id);openAssetInfo(id);};
+  $('amod-buy-btn').disabled=U.coins<scaledCost||(a.unlockLevel>getInvestorLevel().level);
+  const sellPrice=owned>0?Math.round(a.cost*(1+(owned-1)*0.1)*0.8):0;
+  $('amod-sell-btn').innerHTML=owned>0?`Vendre (${sellPrice})`:'Vendre';
+  $('amod-sell-btn').onclick=()=>{if(owned>0){sellAsset(id);closeAssetModal();}};
+  $('amod-sell-btn').disabled=owned<=0;
 
-  $('asset-modal').style.display = 'flex';
+  $('asset-modal').style.display='flex';
+}
+
+function renderSparkline(id, history){
+  // Draw a tiny SVG sparkline inside the modal's price block
+  const container=$('amod-price').parentElement;
+  const existing=container.querySelector('.amod-sparkline');
+  if(existing) existing.remove();
+  const data=history.filter(v=>v!=null);
+  if(data.length<2) return;
+  const w=280,h=40;
+  const min=Math.min(...data),max=Math.max(...data),range=max-min||1;
+  const pts=data.map((v,i)=>{
+    const x=Math.round(i/(data.length-1)*w);
+    const y=Math.round(h-(v-min)/range*h);
+    return `${x},${y}`;
+  }).join(' ');
+  const rising=data[data.length-1]>=data[0];
+  const color=rising?'#10b981':'#ef4444';
+  const svg=document.createElement('div');
+  svg.className='amod-sparkline';
+  svg.style='margin-top:8px;';
+  svg.innerHTML=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${data.length>1?(data.length-1)/(data.length-1)*w:w}" cy="${h-(data[data.length-1]-min)/range*h}" r="3" fill="${color}"/>
+    <text x="2" y="10" font-size="8" fill="var(--muted)">5j</text>
+  </svg>`;
+  container.appendChild(svg);
 }
 
 function closeAssetModal(e){
-  if(!e || e.target===$('asset-modal')) $('asset-modal').style.display='none';
+  if(!e||e.target===$('asset-modal')){
+    $('asset-modal').style.display='none';
+    _currentAssetId=null;
+  }
 }
+
+// ══════════════════════════════════════════════
+// GLOBAL ENTER KEY
+// ══════════════════════════════════════════════
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter') return;
+  const active=document.querySelector('.screen.active');
+  if(!active) return;
+  if(active.id==='screen-game'){
+    const nb=$('btn-next'),cb=$('btn-check');
+    if(nb&&nb.style.display!=='none'){e.preventDefault();nextQ();return;}
+    if(cb&&cb.style.display!=='none'&&S.curType!=='fill'){e.preventDefault();checkCurrentQ();}
+  }
+  if(active.id==='screen-lesson'){
+    const nb=$('lesson-btn-next');
+    if(nb&&nb.style.display!=='none'){e.preventDefault();lessonNext();}
+  }
+});
