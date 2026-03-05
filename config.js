@@ -36,6 +36,15 @@ function pickTheme(mode) {
   navTo('auth');
 }
 
+function applyUILang() {
+  const s = UI_STRINGS[_uiLang] || UI_STRINGS.fr;
+  const set = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+  set('lbl-nav-learn',     s.learn);
+  set('lbl-nav-portfolio', s.portfolio);
+  set('lbl-nav-shop',      s.shop);
+  set('lbl-nav-profile',   s.profile);
+}
+
 function renderUILangGrid() {
   const wrap = document.getElementById('ui-lang-btns');
   if(!wrap) return;
@@ -44,7 +53,7 @@ function renderUILangGrid() {
     const btn = document.createElement('button');
     btn.className = 'lang-ui-btn' + (code === _uiLang ? ' active' : '');
     btn.textContent = l.flag + ' ' + l.native;
-    btn.onclick = () => { _uiLang = code; localStorage.setItem('lq_ui_lang', code); renderUILangGrid(); };
+    btn.onclick = () => { _uiLang = code; localStorage.setItem('lq_ui_lang', code); applyUILang(); renderUILangGrid(); };
     wrap.appendChild(btn);
   });
 }
