@@ -94,7 +94,7 @@ function renderProfile(){
   $('ps-wealth').textContent=getTotalWealth();
   // Theme buttons
   const savedTheme = localStorage.getItem('lq_theme') || 'dark';
-  ['dark','light','claude','auto'].forEach(m => {
+  ['dark','light','claude'].forEach(m => {
     const b = document.getElementById('theme-btn-'+m);
     if(b) b.classList.toggle('active', m === savedTheme);
   });
