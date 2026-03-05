@@ -11,15 +11,19 @@ let _uiLang = localStorage.getItem('lq_ui_lang') || (() => {
 })();
 
 function setTheme(mode) {
-  localStorage.setItem('lq_theme', mode);
-  const effective = mode === 'auto'
-    ? (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light')
+  const themes = ['dark','light','claude'];
+  const effective = mode === 'random'
+    ? themes[Math.floor(Math.random() * themes.length)]
     : mode;
+  localStorage.setItem('lq_theme', effective);
   document.documentElement.setAttribute('data-theme', effective);
-  ['dark','light','claude','auto'].forEach(m => {
+  ['dark','light','claude'].forEach(m => {
     const b = document.getElementById('theme-btn-'+m);
-    if(b) b.classList.toggle('active', m === mode);
+    if(b) b.classList.toggle('active', m === effective);
   });
+  // Random button never stays "active" — it's an action, not a state
+  const rb = document.getElementById('theme-btn-random');
+  if(rb) rb.classList.remove('active');
 }
 
 function initTheme() {
