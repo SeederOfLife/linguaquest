@@ -128,6 +128,7 @@
 <div id="nav-bar" class="nav-bar" style="display:none;">
   <div class="nav-item active" id="nav-learn" onclick="navTo('learn')"><span class="ni" style="font-size:1.1rem;font-weight:900;color:inherit;">A</span><span id="lbl-nav-learn">Apprendre</span></div>
   <div class="nav-item" id="nav-portfolio" onclick="navTo('portfolio')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">$</span><span id="lbl-nav-portfolio">Portfolio</span></div>
+  <div class="nav-item" id="nav-rank" onclick="navTo('rank')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">🏆</span><span>Rang</span></div>
   <div class="nav-item" id="nav-shop" onclick="navTo('shop')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">★</span><span id="lbl-nav-shop">Boutique</span></div>
   <div class="nav-item" id="nav-profile" onclick="navTo('profile')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">◉</span><span id="lbl-nav-profile">Profil</span></div>
 </div>
@@ -171,6 +172,10 @@
     <button class="pair-swap" onclick="swapLangs()">⇄</button>
   </div>
   <button class="btn btn-primary btn-lg" onclick="goToLevels()" id="btn-start" disabled style="margin-top:12px;justify-content:center;" id="btn-start">Commencer →</button>
+  <!-- SRS Review widget -->
+  <div id="srs-widget" style="width:100%;max-width:500px;margin-top:14px;"></div>
+  <!-- Themed Event banner -->
+  <div id="event-banner" style="width:100%;max-width:500px;margin-top:8px;"></div>
 </div>
 
 <!-- ══════════════════ LEVELS ══════════════════ -->
@@ -358,6 +363,9 @@
     <button class="pf-mode-btn real-btn" id="pf-mode-real" onclick="setPortfolioMode('real')">📈 Simulé Réel</button>
   </div>
 
+  <!-- ── Market News Strip ── -->
+  <div id="market-news-strip" style="width:100%;max-width:700px;margin-bottom:12px;"></div>
+
   <!-- ── PRACTICE ZONE (coin-based, dividends, levels) ── -->
   <div id="pf-practice-zone">
   <div class="wealth-hero">
@@ -500,6 +508,16 @@
     <div class="stat-card"><div class="stat-val" id="ps-wealth" style="color:var(--gold)">0</div><div class="stat-lbl" id="lbl-ps-wealth">💎 Patrimoine</div></div>
   </div>
   <div style="width:100%;max-width:700px;margin-top:14px;">
+    <!-- Trophies section -->
+    <div style="background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-weight:800;font-size:.88rem;">🏆 Trophées</div>
+        <button class="btn btn-sm btn-secondary" onclick="navTo('trophies')" style="padding:4px 10px;font-size:.72rem;">Voir tout →</button>
+      </div>
+      <div id="trophy-progress"></div>
+      <div id="trophies-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
+    </div>
+
     <!-- Apparence / Thèmes -->
     <div style="background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:10px;">
       <div style="font-weight:800;font-size:.88rem;margin-bottom:10px;" id="lbl-appearance">🎨 Apparence</div>
@@ -584,6 +602,62 @@
     </div>
   </div>
 </div>
+
+<!-- ══════════════════ RANK SCREEN (Leaderboard + Duels) ══════════════════ -->
+<div class="screen screen-padded" id="screen-rank">
+  <div style="text-align:center;margin-bottom:14px;">
+    <div style="font-size:1.4rem;font-weight:900;">🏆 Classement & Duels</div>
+  </div>
+  <!-- Sub-tabs -->
+  <div class="rank-tabs">
+    <button class="rank-tab active" id="rank-tab-lb" onclick="switchRankTab('lb')">🌍 Classement</button>
+    <button class="rank-tab" id="rank-tab-duels" onclick="switchRankTab('duels')">⚔️ Duels</button>
+  </div>
+
+  <!-- LEADERBOARD TAB -->
+  <div id="rank-lb-zone">
+    <div class="lb-tabs">
+      <button class="lb-tab active" id="lb-tab-xp" onclick="setLbTab('xp')">⭐ XP</button>
+      <button class="lb-tab" id="lb-tab-coins" onclick="setLbTab('coins')">🪙 Pièces</button>
+      <button class="lb-tab" id="lb-tab-streak" onclick="setLbTab('streak')">🔥 Streak</button>
+    </div>
+    <div id="lb-my-rank" style="font-size:.75rem;color:var(--muted);text-align:center;margin:6px 0 10px;"></div>
+    <div id="lb-list"></div>
+  </div>
+
+  <!-- DUELS TAB -->
+  <div id="rank-duels-zone" style="display:none;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-primary" onclick="createDuel()">⚔️ Créer un duel</button>
+      <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
+    </div>
+    <div id="duel-join-zone" style="display:none;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
+          style="flex:1;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+        <button class="btn btn-primary" onclick="joinDuel()">→</button>
+      </div>
+    </div>
+    <div id="duel-lobby-content"></div>
+    <div id="my-duels-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TROPHIES SCREEN ══════════════════ -->
+<div class="screen screen-padded" id="screen-trophies">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+    <button class="btn btn-secondary btn-sm" onclick="navTo('profile')" style="padding:6px 12px;">← Retour</button>
+    <div style="font-size:1.2rem;font-weight:900;">🏆 Trophées</div>
+  </div>
+  <div id="trophy-progress" style="margin-bottom:14px;"></div>
+  <div id="trophies-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%;max-width:700px;"></div>
+</div>
+
+<!-- ══════════════════ DUEL RESULT MODAL ══════════════════ -->
+<div id="duel-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;"></div>
+
+<!-- ══════════════════ TROPHY POPUPS (injected by JS) ══════════════════ -->
 </div><!-- #app -->
 
 <script src="data.js"></script>
@@ -594,6 +668,11 @@
 <script src="speech.js"></script>
 <script src="game.js"></script>
 <script src="portfolio.js"></script>
+<script src="srs.js"></script>
+<script src="trophies.js"></script>
+<script src="leaderboard.js"></script>
+<script src="duels.js"></script>
+<script src="news.js"></script>
 <script src="boot.js"></script>
 </body>
 </html>
