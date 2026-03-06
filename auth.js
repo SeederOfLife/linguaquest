@@ -18,31 +18,7 @@ async function doLogin(){
   const origText=btn.textContent; btn.textContent='Connexion...'; btn.disabled=true;
 
   try {
-    // Check localStorage first — it's always the most recently saved version
-    const localRaw = localStorage.getItem('lq_u_' + email);
-    const localData = localRaw ? JSON.parse(localRaw) : null;
-
-    // Also try Supabase
-    let remoteData = null;
-    try {
-      const {data, error} = await _SB.from('users').select('data').eq('email', email).single();
-      if (!error && data) remoteData = data.data;
-    } catch(e) {}
-
-    // Pick the most recent version (by lastDivTime or joined timestamp)
-    let userData = null;
-    if (localData && remoteData) {
-      // Use whichever was saved more recently
-      userData = (localData.lastDivTime||0) >= (remoteData.lastDivTime||0) ? localData : remoteData;
-    } else {
-      userData = localData || remoteData;
-    }
-
-    if (!userData) {
-      // Final fallback — legacy lq_users key
-      const users = loadUsers();
-      userData = users[email] || null;
-    }
+    const userData = await loadUserFromDB(email);
 
     if (!userData) { showAuthErr('login', 'Compte introuvable. Inscris-toi !'); return; }
     if (userData.pass !== btoa(pass)) { showAuthErr('login', 'Mot de passe incorrect.'); return; }
