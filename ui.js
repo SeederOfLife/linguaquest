@@ -20,14 +20,6 @@ function navTo(tab){
 // ══════════════════════════════════════════════
 // TOP BAR
 // ══════════════════════════════════════════════
-function updateTopBar(){
-  if(!U) return;
-  $('tb-coins').textContent=Math.floor(U.coins);
-  const ab=$('avatar-btn');ab.textContent=U.name.charAt(0).toUpperCase();
-  if(U.owned.includes('avatar_diamond')) ab.style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
-  else if(U.owned.includes('avatar_gold')) ab.style.background='linear-gradient(135deg,#d97706,#fbbf24)';
-}
-
 // ══════════════════════════════════════════════
 // TOP BAR
 // ══════════════════════════════════════════════
