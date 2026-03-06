@@ -1,54 +1,73 @@
 
-// ── TTS + gating helper ─────────────────────────────────────────
-// Speaks text, keeps btn-next disabled until speech ends (or 2.5s max)
-function _speakThenUnlock(text, lang) {
-  const btn = $('btn-next');
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; }
+// ══════════════════════════════════════════════════════════════
+// TTS ENGINE
+// ══════════════════════════════════════════════════════════════
 
-  if (!window.speechSynthesis || !text) {
-    // No TTS — unlock after short visual delay
-    setTimeout(() => { if(btn){btn.disabled=false;btn.style.opacity='';} }, 400);
-    return;
+const _LANG_BCP = {fr:'fr-FR', en:'en-US', es:'es-ES', de:'de-DE', cs:'cs-CZ'};
+
+const _LANG_VOICES = {
+  fr: ['Thomas','Amelie','Marie','Julie','Nicolas','French'],
+  en: ['Daniel','Karen','Samantha','Alex','Google US English','English'],
+  es: ['Monica','Paulina','Diego','Jorge','Google español','Spanish'],
+  de: ['Anna','Markus','Helena','Google Deutsch','German'],
+  cs: ['Zuzana','Czech'],
+};
+
+let _voiceCache = [];
+function _getVoices() {
+  if (_voiceCache.length) return _voiceCache;
+  _voiceCache = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  return _voiceCache;
+}
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => { _voiceCache = window.speechSynthesis.getVoices(); };
+  _voiceCache = window.speechSynthesis.getVoices();
+}
+
+function _pickVoice(lang) {
+  const bcp   = _LANG_BCP[lang] || 'en-US';
+  const prefs = _LANG_VOICES[lang] || [];
+  const voices = _getVoices();
+  if (!voices.length) return null;
+  for (const pref of prefs) {
+    const v = voices.find(v => v.name.toLowerCase().includes(pref.toLowerCase()));
+    if (v) return v;
   }
+  const exact = voices.find(v => v.lang === bcp);
+  if (exact) return exact;
+  return voices.find(v => v.lang.startsWith(bcp.split('-')[0])) || null;
+}
 
+function _speak(text, lang, rate, onEnd) {
+  if (!window.speechSynthesis || !text) { if(onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang  = ({fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'})[lang] || 'fr-FR';
-  utt.rate  = 0.80;
-
-  // Pick best voice
-  const voices = window.speechSynthesis.getVoices();
-  const pref = ({fr:['Thomas','Amelie'],en:['Daniel','Karen'],es:['Monica','Paulina'],de:['Anna'],cs:['Zuzana']})[lang] || [];
-  const voice = pref.map(p=>voices.find(v=>v.name.includes(p))).find(Boolean)
-    || voices.find(v=>v.lang.startsWith((utt.lang.split('-')[0])));
+  const utt  = new SpeechSynthesisUtterance(text);
+  utt.lang   = _LANG_BCP[lang] || 'en-US';
+  utt.rate   = rate || 0.82;
+  const voice = _pickVoice(lang);
   if (voice) utt.voice = voice;
-
-  let unlocked = false;
-  const unlock = () => {
-    if (unlocked) return; unlocked = true;
-    if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.classList.add('voice-ready'); setTimeout(()=>btn.classList.remove('voice-ready'),600); }
-  };
-  utt.onend   = unlock;
-  utt.onerror = unlock;
-  // Safety fallback: max 3s wait
-  setTimeout(unlock, 3000);
-
+  if (onEnd) { utt.onend = onEnd; utt.onerror = onEnd; }
   window.speechSynthesis.speak(utt);
 }
 
-// Speak a word immediately (no gating) — used for clicks
+function _speakThenUnlock(text, lang) {
+  const btn = $('btn-next');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; }
+  if (!window.speechSynthesis || !text) {
+    setTimeout(() => { if(btn){btn.disabled=false;btn.style.opacity='';} }, 400);
+    return;
+  }
+  let unlocked = false;
+  const unlock = () => {
+    if (unlocked) return; unlocked = true;
+    if (btn) { btn.disabled=false; btn.style.opacity=''; btn.classList.add('voice-ready'); setTimeout(()=>btn.classList.remove('voice-ready'),600); }
+  };
+  setTimeout(unlock, 3500);
+  _speak(text, lang, 0.78, unlock);
+}
+
 function _speakClick(text, lang) {
-  if (!window.speechSynthesis || !text) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = ({fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'})[lang] || 'fr-FR';
-  utt.rate = 0.85;
-  const voices = window.speechSynthesis.getVoices();
-  const pref = ({fr:['Thomas','Amelie'],en:['Daniel','Karen'],es:['Monica','Paulina'],de:['Anna'],cs:['Zuzana']})[lang] || [];
-  const voice = pref.map(p=>voices.find(v=>v.name.includes(p))).find(Boolean)
-    || voices.find(v=>v.lang.startsWith(utt.lang.split('-')[0]));
-  if (voice) utt.voice = voice;
-  window.speechSynthesis.speak(utt);
+  _speak(text, lang, 0.85, null);
 }
 
 // ══════════════════════════════════════════════
@@ -135,37 +154,50 @@ function showResults(){
   const tot=S.cor+S.wr||1,pct=Math.round(S.cor/tot*100);
   const stars=pct>=90?3:pct>=60?2:pct>=30?1:0;
   const xpE=S.cor*15;
-
-  // Coin reward based on game type and performance
-  const coinMultipliers={mixed:3,quiz:1.5,fill:2,match:1};
+  const coinMultipliers={mixed:3,quiz:1.5,fill:2,match:1,duel:2};
   const baseCoin=Math.floor(S.cor*(coinMultipliers[S.gType]||1));
-  const coinsEarned=Math.min(baseCoin,{mixed:30,quiz:15,fill:20,match:10}[S.gType]||20);
+  let coinsEarned=Math.min(baseCoin,{mixed:30,quiz:15,fill:20,match:10,duel:25}[S.gType]||20);
+  let xpBonus=1;
+  if(S.isEventQuiz&&typeof getCurrentEvent==='function') xpBonus=getCurrentEvent().bonusXP||1;
+  const xpTotal=xpE*xpBonus;
 
   if(U){
     const key=pk(S.chap),prev=U.progress[key]||{};
     U.progress[key]={completed:stars>0,stars:Math.max(prev.stars||0,stars)};
-    U.xp=(U.xp||0)+xpE;U.coins+=coinsEarned;
+    U.xp=(U.xp||0)+xpTotal; U.coins+=coinsEarned;
     if(stars>0&&!prev.completed) U.chaptersCompleted=(U.chaptersCompleted||0)+1;
-    // Streak
+    if(S.wr===0&&S.cor>=5) U._lastPerfect=S.cor;
+    const h=new Date().getHours();
+    if(h===0||h===1) U._nightOwl=true;
+    if(h<7) U._earlyBird=true;
+    if(S.isEventQuiz&&pct>=60) U._eventsWon=(U._eventsWon||0)+1;
     const today=new Date().toDateString();
     if(U.lastDay!==today){U.streak=(U.lastDay===new Date(Date.now()-86400000).toDateString()?U.streak:0)+1;U.lastDay=today;}
-    saveU();updateTopBar();
-    // Update XP bar
-    $('xp-bar').style.width=((U.xp%500)/5)+'%';sT('xp-count',U.xp+' XP');
+    if(typeof srsUpdate==='function'&&S.qs){
+      S.qs.forEach((q,i)=>{
+        const wid=Object.keys(WD).find(id=>WD[id][S.tL]===q.correct);
+        if(wid) srsUpdate(wid, i<S.cor);
+      });
+    }
+    saveU(); updateTopBar();
+    $('xp-bar').style.width=((U.xp%500)/7)+'%'; sT('xp-count',U.xp+' XP');
+    setTimeout(()=>{ if(typeof checkTrophies==='function') checkTrophies(); },600);
+    if(S.isDuel&&typeof submitDuelScore==='function') submitDuelScore(S.score,S.cor);
+    S.isEventQuiz=false; S.isSRSReview=false; S.isDuel=false;
   }
-
   const msgs=['Continue d\'essayer !','Bon effort !','Bien joué !','Excellent ! 🎊'];
   sT('r-stars',['☆☆☆','★☆☆','★★☆','★★★'][stars]);
   sT('r-title',msgs[stars]);
   sT('r-score',pct+'%');
   sT('r-sub',`${S.cor} bonne${S.cor>1?'s':''} réponse${S.cor>1?'s':''} sur ${tot}`);
-  sT('r-correct',S.cor);sT('r-wrong',S.wr);sT('r-xp','+'+xpE);
+  sT('r-correct',S.cor); sT('r-wrong',S.wr);
+  sT('r-xp',xpBonus>1?`+${xpTotal} ✨×${xpBonus}`:`+${xpTotal}`);
   sT('coin-reward-amount','+'+coinsEarned);
-  const bd=$('r-breakdown');bd.innerHTML='';
+  const bd=$('r-breakdown'); bd.innerHTML='';
   const tdef={quiz:{i:'⚡',l:'Quiz'},fill:{i:'✏️',l:'Fill'},match:{i:'🔗',l:'Match'},sort:{i:'🧩',l:'Ordre'}};
   Object.entries(S.ts).forEach(([k,v])=>{if(v.c+v.w===0)return;const p2=Math.round(v.c/(v.c+v.w)*100);const d=document.createElement('div');d.style.cssText='background:var(--card2);border-radius:9px;padding:7px 12px;text-align:center;min-width:56px;';d.innerHTML=`<div style="font-size:.95rem">${tdef[k].i}</div><div style="font-weight:800;font-size:.76rem;">${tdef[k].l}</div><div style="font-size:.74rem;color:${p2>=70?'var(--green)':'var(--red)'};">${p2}%</div>`;bd.appendChild(d);});
   goTo('results');
-  if(stars>=2)confetti();
+  if(stars>=2) confetti();
   if(coinsEarned>0) floatCoin($('coin-reward-amount'),`+${coinsEarned} <span class="coin"></span>`);
   if(typeof speakWord!=='undefined'){const _rm={fr:{y:'Excellent ! Bravo !',n:'Continue comme ça !'},en:{y:'Well done! Excellent!',n:'Keep it up!'},es:{y:'¡Excelente trabajo!',n:'¡Sigue así!'},de:{y:'Ausgezeichnet!',n:'Weiter so!'},cs:{y:'Výborně!',n:'Pokračuj!'}};const _rl=S.nL||'fr';const _r=(_rm[_rl]||_rm.fr)[stars>=2?'y':'n'];setTimeout(()=>speakWord(_r,_rl,{rate:.9}),500);}
 }
