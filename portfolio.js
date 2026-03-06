@@ -75,13 +75,19 @@ function renderInvestorLevel(){
   const next=INVESTOR_LEVELS.find(l=>l.level===cur.level+1);
   const pct=next ? Math.min(100,Math.round((invested-cur.min)/(next.min-cur.min)*100)) : 100;
 
-  // Check if we just levelled up
-  const prevLevel=U.investorLevel||1;
-  if(cur.level>prevLevel){
-    U.investorLevel=cur.level;
-    if(cur.reward>0){ U.coins+=cur.reward; saveU(); updateTopBar(); }
-    setTimeout(()=>showLevelUpModal(cur),400);
-  } else { U.investorLevel=cur.level; }
+  // Only trigger level-up if user actually crossed a threshold THIS session
+  // (not just because they logged in with a higher level than the saved value)
+  const prevLevel = U.investorLevel || 1;
+  if(cur.level > prevLevel){
+    U.investorLevel = cur.level;
+    if(cur.reward > 0){ U.coins += cur.reward; saveU(); updateTopBar(); }
+    // Only show modal if we're already past the login/init phase
+    if(typeof _appReady !== 'undefined' && _appReady){
+      setTimeout(()=>showLevelUpModal(cur), 400);
+    }
+  } else {
+    U.investorLevel = cur.level;
+  }
 
   // Build level chips for all 8 levels
   const chips=INVESTOR_LEVELS.map(lv=>{
