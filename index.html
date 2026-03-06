@@ -524,6 +524,12 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .asset-sparkline{height:36px;width:100%;margin:6px 0;}
 
 
+
+/* ── VOICE GATING ── */
+#btn-next:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.4);transform:none!important;}
+#btn-next:disabled::after{content:' 🔊';font-size:.75em;}
+#btn-next.voice-ready{animation:voiceUnlock .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes voiceUnlock{0%{transform:scale(.94);box-shadow:0 0 0 0 rgba(124,58,237,.6);}60%{transform:scale(1.06);box-shadow:0 0 0 10px rgba(124,58,237,0);}100%{transform:scale(1);}}
 </style>
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
