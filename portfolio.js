@@ -369,6 +369,7 @@ function buyAsset(id){
   floatCoin($('assets-grid'),`-${scaledCost} <span class="coin"></span>`);
   renderPortfolio();
   toast(`${a.icon} ${a.name} niv.${U.assets[id]} · +${(a.divRate*100).toFixed(1)}%/j`);
+  setTimeout(()=>{ if(typeof checkTrophies==='function') checkTrophies(); }, 400);
 }
 
 function sellAsset(id){
