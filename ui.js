@@ -7,13 +7,16 @@ function goTo(sc){
   window.scrollTo(0,0);clearInterval(S.timer);
 }
 function navTo(tab){
-  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker',lesson:'lesson'};
-  ['learn','portfolio','shop','profile'].forEach(t=>{
+  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker',lesson:'lesson',rank:'rank',trophies:'trophies'};
+  ['learn','portfolio','shop','profile','rank'].forEach(t=>{
     const n=$('nav-'+t); if(n) n.classList.toggle('active',t===tab);
   });
-  if(tab==='portfolio') renderPortfolio();
+  if(tab==='portfolio'){ renderPortfolio(); renderMarketNews(); }
   if(tab==='shop') renderShop();
-  if(tab==='profile') renderProfile();
+  if(tab==='profile'){ renderProfile(); renderTrophiesPreview(); }
+  if(tab==='rank'){ renderLeaderboard(); renderDuelsScreen(); }
+  if(tab==='trophies'){ renderTrophies(); }
+  if(tab==='learn'){ renderSRSWidget(); renderEventBanner(); }
   if(screens[tab]) goTo(screens[tab]);
 }
 
@@ -302,3 +305,47 @@ function updateTarget(){
 
 // updateTarget is now called inside the market data wrapper below
 
+
+// ══════════════════════════════════════════════
+// RANK / LEADERBOARD TABS
+// ══════════════════════════════════════════════
+function switchRankTab(tab) {
+  const isLb = tab === 'lb';
+  $('rank-lb-zone').style.display    = isLb ? '' : 'none';
+  $('rank-duels-zone').style.display = isLb ? 'none' : '';
+  $('rank-tab-lb').classList.toggle('active', isLb);
+  $('rank-tab-duels').classList.toggle('active', !isLb);
+  if (!isLb) renderDuelsScreen();
+}
+
+function showJoinDuel() {
+  const z = $('duel-join-zone');
+  if (z) z.style.display = z.style.display === 'none' ? '' : 'none';
+}
+
+// ══════════════════════════════════════════════
+// TROPHIES PREVIEW (profile screen — top 5 earned)
+// ══════════════════════════════════════════════
+function renderTrophiesPreview() {
+  const el = $('trophies-preview');
+  const prog = $('trophy-progress');
+  if (!el || !U) return;
+  const earned = U.trophies || [];
+  const total  = typeof TROPHIES !== 'undefined' ? TROPHIES.length : 0;
+  const pct    = total ? Math.round(earned.length / total * 100) : 0;
+
+  if (prog) prog.innerHTML = `
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:5px;">${earned.length} / ${total} trophées — ${pct}%</div>
+    <div style="background:var(--card2);border-radius:8px;height:7px;overflow:hidden;">
+      <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));border-radius:8px;transition:width .6s;"></div>
+    </div>`;
+
+  if (!earned.length) { el.innerHTML = '<div style="font-size:.75rem;color:var(--muted);">Joue pour débloquer des trophées 🏆</div>'; return; }
+
+  const recentTrophies = typeof TROPHIES !== 'undefined'
+    ? TROPHIES.filter(t => earned.includes(t.id)).slice(-6)
+    : [];
+  el.innerHTML = recentTrophies.map(t =>
+    `<div title="${t.name}: ${t.desc}" style="font-size:1.5rem;cursor:default;">${t.icon}</div>`
+  ).join('') + (earned.length > 6 ? `<div style="font-size:.72rem;color:var(--muted);align-self:center;">+${earned.length-6} autres</div>` : '');
+}
