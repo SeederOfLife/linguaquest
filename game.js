@@ -71,36 +71,29 @@ function _pickVoice(lang) {
   return null;
 }
 
-// ResponsiveVoice names per language (fallback when no native voice exists)
-const _RV_VOICES = {
-  fr: 'French Female',
-  en: 'UK English Female',
-  es: 'Spanish Female',
-  de: 'Deutsch Female',
-  cs: 'Czech Female',
-};
-
-function _hasNativeVoice(lang) {
-  return _pickVoice(lang) !== null;
+// Reusable audio element for server-proxied TTS
+let _ttsAudio = null;
+function _getAudio() {
+  if (!_ttsAudio) _ttsAudio = new Audio();
+  return _ttsAudio;
 }
 
-function _speak(text, lang, rate, onEnd) {
-  if (!text) { if(onEnd) onEnd(); return; }
+// Speak via /api/tts — Vercel proxy to Google TTS, bypasses CORS
+// Falls back to native Web Speech if server unavailable
+function _speakProxy(text, lang, onEnd) {
+  const tl  = lang || 'fr';
+  const url = '/api/tts?text=' + encodeURIComponent(text) + '&lang=' + encodeURIComponent(tl);
+  const audio = _getAudio();
+  audio.pause();
+  audio.src = url;
+  audio.onended = () => { if (onEnd) onEnd(); };
+  audio.onerror = () => { _speakNative(text, lang, 0.82, onEnd); };
+  audio.play().catch(() => _speakNative(text, lang, 0.82, onEnd));
+}
 
-  // Use ResponsiveVoice when no native voice found for this language
-  if (!_hasNativeVoice(lang) && window.responsiveVoice && responsiveVoice.voiceSupport()) {
-    const rvName = _RV_VOICES[lang] || 'UK English Female';
-    responsiveVoice.speak(text, rvName, {
-      rate:  rate ? Math.max(0.1, rate - 0.5) : 0.3,
-      pitch: 1, volume: 1,
-      onend:   onEnd || undefined,
-      onerror: onEnd || undefined,
-    });
-    return;
-  }
-
-  // Native Web Speech API
-  if (!window.speechSynthesis) { if(onEnd) onEnd(); return; }
+// Native Web Speech API — used for fr/en which always have voices
+function _speakNative(text, lang, rate, onEnd) {
+  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
   const utt  = new SpeechSynthesisUtterance(text);
   utt.lang   = _LANG_BCP[lang] || 'fr-FR';
@@ -110,6 +103,20 @@ function _speak(text, lang, rate, onEnd) {
   if (voice) utt.voice = voice;
   if (onEnd) { utt.onend = onEnd; utt.onerror = onEnd; }
   window.speechSynthesis.speak(utt);
+}
+
+// Languages with reliable built-in OS voices (use native speech)
+const _NATIVE_LANGS = new Set(['fr', 'en']);
+
+function _speak(text, lang, rate, onEnd) {
+  if (!text) { if (onEnd) onEnd(); return; }
+  // fr/en: use native Web Speech (fast, offline, always works)
+  // cs/de/es: use /api/tts proxy (correct accent, real pronunciation)
+  if (_NATIVE_LANGS.has(lang) && _pickVoice(lang)) {
+    _speakNative(text, lang, rate, onEnd);
+  } else {
+    _speakProxy(text, lang, onEnd);
+  }
 }
 
 function _speakThenUnlock(text, lang) {
