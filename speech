@@ -61,28 +61,50 @@ function _pickVoice(lang) {
   return _voices.find(v => v.lang.toLowerCase().startsWith(prefix)) || null;
 }
 
+// ResponsiveVoice names per language
+const _RV_VOICE_NAMES = {
+  fr: 'French Female',
+  en: 'UK English Female',
+  es: 'Spanish Female',
+  de: 'Deutsch Female',
+  cs: 'Czech Female',
+};
+
 // ── Core TTS ────────────────────────────────────────────────────
 let _currentUtt = null;
 
 function speakWord(text, lang, opts = {}) {
-  if (!window.speechSynthesis || !text) return;
-  window.speechSynthesis.cancel();
+  if (!text) return;
+  const rate   = opts.rate   !== undefined ? opts.rate   : 0.82;
+  const pitch  = opts.pitch  !== undefined ? opts.pitch  : 1.0;
+  const volume = opts.volume !== undefined ? opts.volume : 1.0;
 
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang   = SPEECH_LANG_CODES[lang] || lang || 'fr-FR';
-  utt.rate   = opts.rate  !== undefined ? opts.rate  : 0.82;
-  utt.pitch  = opts.pitch !== undefined ? opts.pitch : 1.0;
-  utt.volume = opts.volume !== undefined ? opts.volume : 1.0;
-
-  const voice = _pickVoice(lang);
-  if (voice) utt.voice = voice;
-
-  // Visual feedback: pulse the speaker icon if present
   const speaker = document.getElementById('lq-speak-icon');
-  if (speaker) {
-    speaker.classList.add('speaking');
-    utt.onend = () => speaker.classList.remove('speaking');
+  const markDone = () => { if (speaker) speaker.classList.remove('speaking'); };
+  if (speaker) speaker.classList.add('speaking');
+
+  // Use ResponsiveVoice when no native voice exists for this language
+  const nativeVoice = _pickVoice(lang);
+  if (!nativeVoice && window.responsiveVoice && responsiveVoice.voiceSupport()) {
+    const rvName = _RV_VOICE_NAMES[lang] || 'UK English Female';
+    responsiveVoice.speak(text, rvName, {
+      rate:    Math.max(0.1, rate - 0.5),
+      pitch, volume,
+      onend:   markDone,
+      onerror: markDone,
+    });
+    return;
   }
+
+  if (!window.speechSynthesis) { markDone(); return; }
+  window.speechSynthesis.cancel();
+  const utt  = new SpeechSynthesisUtterance(text);
+  utt.lang   = SPEECH_LANG_CODES[lang] || lang || 'fr-FR';
+  utt.rate   = rate;
+  utt.pitch  = pitch;
+  utt.volume = volume;
+  if (nativeVoice) utt.voice = nativeVoice;
+  utt.onend = markDone;
 
   _currentUtt = utt;
   window.speechSynthesis.speak(utt);
