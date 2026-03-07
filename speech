@@ -6,53 +6,59 @@
 // BCP-47 language codes → browser voice tag
 const SPEECH_LANG_CODES = {
   fr: 'fr-FR',
-  en: 'en-GB',
+  en: 'en-US',
   es: 'es-ES',
   de: 'de-DE',
   cs: 'cs-CZ',
 };
 
-// Preferred voice name fragments per language (fallback chain)
+// Extended preferred voice name fragments — covers macOS, iOS, Windows, Android, Chrome
 const VOICE_PREF = {
-  fr: ['Thomas','Amelie','Google Français','fr-FR'],
-  en: ['Daniel','Karen','Google UK English','en-GB','en-US'],
-  es: ['Monica','Paulina','Google Español','es-ES'],
-  de: ['Anna','Google Deutsch','de-DE'],
+  fr: ['Thomas','Amelie','Marie','Julie','Nicolas','Audrey','Virginie',
+       'Google français','Google French','fr-FR'],
+  en: ['Daniel','Karen','Samantha','Alex','Moira','Fiona',
+       'Google US English','Google UK English Female','Google UK English Male',
+       'Microsoft Zira','Microsoft David','en-US','en-GB'],
+  es: ['Monica','Paulina','Diego','Jorge','Soledad',
+       'Google español','Google español de Estados Unidos',
+       'Microsoft Helena','Microsoft Sabina','es-ES','es-MX'],
+  de: ['Anna','Markus','Petra','Yannick',
+       'Google Deutsch','Microsoft Hedda','Microsoft Stefan','de-DE'],
   cs: ['Zuzana','Google Czech','cs-CZ'],
 };
 
 // Cache loaded voices
 let _voices = [];
-let _speechReady = false;
 
 function _loadVoices() {
-  _voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  if (_voices.length) _speechReady = true;
+  const v = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if (v.length) _voices = v;
 }
 
 if (window.speechSynthesis) {
   _loadVoices();
   window.speechSynthesis.onvoiceschanged = _loadVoices;
+  // Retry for Chrome which loads voices async
+  [100, 300, 600, 1500].forEach(ms => setTimeout(_loadVoices, ms));
 }
 
 // Pick best available voice for a language code
 function _pickVoice(lang) {
   if (!_voices.length) _loadVoices();
-  const code = SPEECH_LANG_CODES[lang] || lang;
-  const prefs = VOICE_PREF[lang] || [];
+  const code   = SPEECH_LANG_CODES[lang] || lang;
+  const prefix = code.split('-')[0];
+  const prefs  = VOICE_PREF[lang] || [];
 
-  // 1. Try preferred names first
+  // 1. Try preferred names first (most specific)
   for (const pref of prefs) {
-    const v = _voices.find(v => v.name.includes(pref));
+    const v = _voices.find(v => v.name.toLowerCase().includes(pref.toLowerCase()));
     if (v) return v;
   }
   // 2. Exact BCP-47 match
   const exact = _voices.find(v => v.lang === code);
   if (exact) return exact;
-  // 3. Language prefix match (e.g. fr-CA if fr-FR absent)
-  const prefix = _voices.find(v => v.lang.startsWith(code.split('-')[0]));
-  if (prefix) return prefix;
-  return null;
+  // 3. Language prefix match (e.g. fr-CA when fr-FR not available)
+  return _voices.find(v => v.lang.toLowerCase().startsWith(prefix)) || null;
 }
 
 // ── Core TTS ────────────────────────────────────────────────────
@@ -63,7 +69,7 @@ function speakWord(text, lang, opts = {}) {
   window.speechSynthesis.cancel();
 
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang   = SPEECH_LANG_CODES[lang] || 'fr-FR';
+  utt.lang   = SPEECH_LANG_CODES[lang] || lang || 'fr-FR';
   utt.rate   = opts.rate  !== undefined ? opts.rate  : 0.82;
   utt.pitch  = opts.pitch !== undefined ? opts.pitch : 1.0;
   utt.volume = opts.volume !== undefined ? opts.volume : 1.0;
