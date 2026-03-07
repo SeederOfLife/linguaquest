@@ -1,49 +1,84 @@
 
 // ══════════════════════════════════════════════════════════════
-// TTS ENGINE
+// TTS ENGINE — multi-language, robust voice loading
 // ══════════════════════════════════════════════════════════════
 
 const _LANG_BCP = {fr:'fr-FR', en:'en-US', es:'es-ES', de:'de-DE', cs:'cs-CZ'};
 
+// Extended voice name fragments — covers macOS, iOS, Windows, Android, Chrome
 const _LANG_VOICES = {
-  fr: ['Thomas','Amelie','Marie','Julie','Nicolas','French'],
-  en: ['Daniel','Karen','Samantha','Alex','Google US English','English'],
-  es: ['Monica','Paulina','Diego','Jorge','Google español','Spanish'],
-  de: ['Anna','Markus','Helena','Google Deutsch','German'],
-  cs: ['Zuzana','Czech'],
+  fr: ['Thomas','Amelie','Marie','Julie','Nicolas','Audrey','Virginie',
+       'Google français','Google French','fr-FR','Français'],
+  en: ['Daniel','Karen','Samantha','Alex','Moira','Veena','Fiona',
+       'Google US English','Google UK English Female','Google UK English Male',
+       'Microsoft Zira','Microsoft David','Microsoft Mark',
+       'en-US','en-GB','English'],
+  es: ['Monica','Paulina','Diego','Jorge','Juan','Soledad','Rosa',
+       'Google español','Google español de Estados Unidos',
+       'Microsoft Helena','Microsoft Sabina','Microsoft Raul',
+       'es-ES','es-MX','Spanish'],
+  de: ['Anna','Markus','Petra','Yannick','Hedda',
+       'Google Deutsch','Microsoft Hedda','Microsoft Stefan',
+       'de-DE','Deutsch','German'],
+  cs: ['Zuzana','Google Czech','cs-CZ','Czech'],
 };
 
 let _voiceCache = [];
+let _voiceLoadAttempts = 0;
+
 function _getVoices() {
   if (_voiceCache.length) return _voiceCache;
-  _voiceCache = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if (window.speechSynthesis) {
+    const v = window.speechSynthesis.getVoices();
+    if (v.length) { _voiceCache = v; }
+  }
   return _voiceCache;
 }
+
+// Robust init: Chrome needs onvoiceschanged; Safari/Firefox load sync
 if (window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => { _voiceCache = window.speechSynthesis.getVoices(); };
-  _voiceCache = window.speechSynthesis.getVoices();
+  const _initVoices = () => {
+    const v = window.speechSynthesis.getVoices();
+    if (v.length) _voiceCache = v;
+  };
+  _initVoices();
+  window.speechSynthesis.onvoiceschanged = _initVoices;
+  // Retry a few times in case Chrome is slow
+  [100, 300, 600, 1200].forEach(ms =>
+    setTimeout(() => { if (!_voiceCache.length) _initVoices(); }, ms)
+  );
 }
 
 function _pickVoice(lang) {
-  const bcp   = _LANG_BCP[lang] || 'en-US';
-  const prefs = _LANG_VOICES[lang] || [];
+  const bcp    = _LANG_BCP[lang] || 'en-US';
+  const prefix = bcp.split('-')[0];   // e.g. 'en', 'fr'
+  const prefs  = _LANG_VOICES[lang] || [];
   const voices = _getVoices();
   if (!voices.length) return null;
+
+  // 1. Preferred name fragments (most specific)
   for (const pref of prefs) {
     const v = voices.find(v => v.name.toLowerCase().includes(pref.toLowerCase()));
     if (v) return v;
   }
+  // 2. Exact BCP-47 match (e.g. 'fr-FR')
   const exact = voices.find(v => v.lang === bcp);
   if (exact) return exact;
-  return voices.find(v => v.lang.startsWith(bcp.split('-')[0])) || null;
+  // 3. Language prefix match (e.g. 'fr-CA' when 'fr-FR' absent)
+  const byPrefix = voices.find(v => v.lang.toLowerCase().startsWith(prefix));
+  if (byPrefix) return byPrefix;
+  // 4. Nothing found — let browser decide via utt.lang
+  return null;
 }
 
 function _speak(text, lang, rate, onEnd) {
   if (!window.speechSynthesis || !text) { if(onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
   const utt  = new SpeechSynthesisUtterance(text);
-  utt.lang   = _LANG_BCP[lang] || 'en-US';
+  utt.lang   = _LANG_BCP[lang] || 'fr-FR';   // Always set language
   utt.rate   = rate || 0.82;
+  utt.volume = 1.0;
+  // Only set .voice if we actually found a matching one — avoids overriding browser choice
   const voice = _pickVoice(lang);
   if (voice) utt.voice = voice;
   if (onEnd) { utt.onend = onEnd; utt.onerror = onEnd; }
