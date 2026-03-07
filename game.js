@@ -71,14 +71,41 @@ function _pickVoice(lang) {
   return null;
 }
 
+// ResponsiveVoice names per language (fallback when no native voice exists)
+const _RV_VOICES = {
+  fr: 'French Female',
+  en: 'UK English Female',
+  es: 'Spanish Female',
+  de: 'Deutsch Female',
+  cs: 'Czech Female',
+};
+
+function _hasNativeVoice(lang) {
+  return _pickVoice(lang) !== null;
+}
+
 function _speak(text, lang, rate, onEnd) {
-  if (!window.speechSynthesis || !text) { if(onEnd) onEnd(); return; }
+  if (!text) { if(onEnd) onEnd(); return; }
+
+  // Use ResponsiveVoice when no native voice found for this language
+  if (!_hasNativeVoice(lang) && window.responsiveVoice && responsiveVoice.voiceSupport()) {
+    const rvName = _RV_VOICES[lang] || 'UK English Female';
+    responsiveVoice.speak(text, rvName, {
+      rate:  rate ? Math.max(0.1, rate - 0.5) : 0.3,
+      pitch: 1, volume: 1,
+      onend:   onEnd || undefined,
+      onerror: onEnd || undefined,
+    });
+    return;
+  }
+
+  // Native Web Speech API
+  if (!window.speechSynthesis) { if(onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
   const utt  = new SpeechSynthesisUtterance(text);
-  utt.lang   = _LANG_BCP[lang] || 'fr-FR';   // Always set language
+  utt.lang   = _LANG_BCP[lang] || 'fr-FR';
   utt.rate   = rate || 0.82;
   utt.volume = 1.0;
-  // Only set .voice if we actually found a matching one — avoids overriding browser choice
   const voice = _pickVoice(lang);
   if (voice) utt.voice = voice;
   if (onEnd) { utt.onend = onEnd; utt.onerror = onEnd; }
