@@ -61,14 +61,8 @@ function _pickVoice(lang) {
   return _voices.find(v => v.lang.toLowerCase().startsWith(prefix)) || null;
 }
 
-// ResponsiveVoice names per language
-const _RV_VOICE_NAMES = {
-  fr: 'French Female',
-  en: 'UK English Female',
-  es: 'Spanish Female',
-  de: 'Deutsch Female',
-  cs: 'Czech Female',
-};
+// Reusable audio for proxy TTS
+let _speechProxyAudio = null;
 
 // ── Core TTS ────────────────────────────────────────────────────
 let _currentUtt = null;
@@ -83,29 +77,39 @@ function speakWord(text, lang, opts = {}) {
   const markDone = () => { if (speaker) speaker.classList.remove('speaking'); };
   if (speaker) speaker.classList.add('speaking');
 
-  // Use ResponsiveVoice when no native voice exists for this language
   const nativeVoice = _pickVoice(lang);
-  if (!nativeVoice && window.responsiveVoice && responsiveVoice.voiceSupport()) {
-    const rvName = _RV_VOICE_NAMES[lang] || 'UK English Female';
-    responsiveVoice.speak(text, rvName, {
-      rate:    Math.max(0.1, rate - 0.5),
-      pitch, volume,
-      onend:   markDone,
-      onerror: markDone,
+  const isNativeLang = (lang === 'fr' || lang === 'en');
+
+  // cs/de/es: use /api/tts proxy for correct pronunciation
+  if (!isNativeLang || !nativeVoice) {
+    const url = '/api/tts?text=' + encodeURIComponent(text) + '&lang=' + encodeURIComponent(lang || 'fr');
+    if (!_speechProxyAudio) _speechProxyAudio = new Audio();
+    _speechProxyAudio.pause();
+    _speechProxyAudio.src = url;
+    _speechProxyAudio.volume = volume;
+    _speechProxyAudio.onended = markDone;
+    _speechProxyAudio.onerror = () => {
+      _speakNativeSpeech(text, lang, rate, pitch, volume, nativeVoice, markDone);
+    };
+    _speechProxyAudio.play().catch(() => {
+      _speakNativeSpeech(text, lang, rate, pitch, volume, nativeVoice, markDone);
     });
     return;
   }
 
-  if (!window.speechSynthesis) { markDone(); return; }
+  _speakNativeSpeech(text, lang, rate, pitch, volume, nativeVoice, markDone);
+}
+
+function _speakNativeSpeech(text, lang, rate, pitch, volume, voice, onDone) {
+  if (!window.speechSynthesis) { if (onDone) onDone(); return; }
   window.speechSynthesis.cancel();
   const utt  = new SpeechSynthesisUtterance(text);
   utt.lang   = SPEECH_LANG_CODES[lang] || lang || 'fr-FR';
   utt.rate   = rate;
   utt.pitch  = pitch;
   utt.volume = volume;
-  if (nativeVoice) utt.voice = nativeVoice;
-  utt.onend = markDone;
-
+  if (voice) utt.voice = voice;
+  utt.onend = onDone;
   _currentUtt = utt;
   window.speechSynthesis.speak(utt);
 }
