@@ -243,27 +243,38 @@ function defaultUser(name, email){
 // Save to Supabase (upsert) + localStorage backup
 async function saveU() {
   if (!U || U.isGuest) return;
-  // Always save locally first for instant response
-  localStorage.setItem('lq_u_' + U.email, JSON.stringify(U));
-  // Then sync to Supabase
+  // Stamp every save so we can pick the freshest version across devices
+  U._savedAt = Date.now();
+  const serialised = JSON.stringify(U);
+  // Always write localStorage synchronously first
+  localStorage.setItem('lq_u_' + U.email, serialised);
+  const users = JSON.parse(localStorage.getItem('lq_users') || '{}');
+  users[U.email] = U;
+  localStorage.setItem('lq_users', JSON.stringify(users));
+  // Then push to Supabase (best-effort, may lag behind)
   try {
     await _SB.from('users').upsert({
       email: U.email,
       data: U,
       updated_at: new Date().toISOString()
     }, {onConflict: 'email'});
-  } catch(e) { /* offline — localStorage backup is enough */ }
+  } catch(e) { /* offline — localStorage is the source of truth */ }
 }
 
-// Load user from Supabase, fallback to localStorage
+// Load user — picks freshest version between Supabase and localStorage
 async function loadUserFromDB(email) {
+  const localRaw = localStorage.getItem('lq_u_' + email);
+  const localData = localRaw ? JSON.parse(localRaw) : null;
+  let remoteData = null;
   try {
     const { data, error } = await _SB.from('users').select('data').eq('email', email).single();
-    if (data && !error) return data.data;
+    if (data && !error) remoteData = data.data;
   } catch(e) {}
-  // Fallback to localStorage
-  const local = localStorage.getItem('lq_u_' + email);
-  return local ? JSON.parse(local) : null;
+  // Pick whichever was saved most recently (_savedAt is set by saveU)
+  if (localData && remoteData) {
+    return (localData._savedAt||0) >= (remoteData._savedAt||0) ? localData : remoteData;
+  }
+  return localData || remoteData || null;
 }
 
 // Legacy compat shims (keep working while migrating)
@@ -291,10 +302,5 @@ function defaultUser_OLD(name,email){
   };
 }
 
-function saveU(){if(U&&U.isGuest)return;
-  const users=loadUsers();
-  users[U.email]=U;
-  saveUsers(users);
-}
-
+// saveU is defined above as async (Supabase + localStorage) — no duplicate here
 
