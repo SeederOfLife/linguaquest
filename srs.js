@@ -56,9 +56,9 @@ function srsDueCount() {
 
 // Build a review quiz from due words
 function startSRSReview() {
-  if (!S.nL || !S.tL) { toast('❗ Choisis une langue d\'abord'); navTo('learn'); return; }
+  if (!S.nL || !S.tL) { toast(t('duel_no_lang')); navTo('learn'); return; }
   const due = srsDueWords(10);
-  if (!due.length) { toast('✅ Aucune révision en attente !'); return; }
+  if (!due.length) { toast(t('srs_no_due')); return; }
 
   // Build questions from due words — use all word IDs for wrong answers
   const allWids = Object.keys(WD);
@@ -75,7 +75,7 @@ function startSRSReview() {
   sT('g-score', 0); sT('xp-count', (U.xp||0)+' XP');
   $('g-progress').style.width = '0%';
   renderQ();
-  toast(`🧠 ${due.length} mots à réviser`);
+  toast(t('srs_toast',{n:due.length}));
 }
 
 // Render the SRS widget (injected into learn screen)
@@ -95,7 +95,7 @@ function renderSRSWidget() {
         <div class="srs-sub">${learned} mots maîtrisés · ${total} suivis</div>
       </div>
       <div class="srs-badge ${due > 0 ? 'srs-due' : 'srs-ok'}">
-        ${due > 0 ? `${due} à réviser` : '✓ À jour'}
+        ${due > 0 ? t('srs_due',{n:due}) : t('srs_ok')}
       </div>
     </div>
   `;
