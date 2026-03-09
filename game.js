@@ -71,52 +71,32 @@ function _pickVoice(lang) {
   return null;
 }
 
-// Reusable audio element for server-proxied TTS
-let _ttsAudio = null;
-function _getAudio() {
-  if (!_ttsAudio) _ttsAudio = new Audio();
-  return _ttsAudio;
-}
-
-// Speak via /api/tts — Vercel proxy to Google TTS, bypasses CORS
-// Falls back to native Web Speech if server unavailable
-function _speakProxy(text, lang, onEnd) {
-  const tl  = lang || 'fr';
-  const url = '/api/tts?text=' + encodeURIComponent(text) + '&lang=' + encodeURIComponent(tl);
-  const audio = _getAudio();
-  audio.pause();
-  audio.src = url;
-  audio.onended = () => { if (onEnd) onEnd(); };
-  audio.onerror = () => { _speakNative(text, lang, 0.82, onEnd); };
-  audio.play().catch(() => _speakNative(text, lang, 0.82, onEnd));
-}
-
-// Native Web Speech API — used for fr/en which always have voices
-function _speakNative(text, lang, rate, onEnd) {
-  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
-  window.speechSynthesis.cancel();
-  const utt  = new SpeechSynthesisUtterance(text);
-  utt.lang   = _LANG_BCP[lang] || 'fr-FR';
-  utt.rate   = rate || 0.82;
-  utt.volume = 1.0;
-  const voice = _pickVoice(lang);
-  if (voice) utt.voice = voice;
-  if (onEnd) { utt.onend = onEnd; utt.onerror = onEnd; }
-  window.speechSynthesis.speak(utt);
-}
-
-// Languages with reliable built-in OS voices (use native speech)
-const _NATIVE_LANGS = new Set(['fr', 'en']);
+// ── TTS SPEAK ─────────────────────────────────────────────────
+// For fr/en: use best native OS voice (always installed)
+// For cs/de/es: set lang ONLY — Chrome uses its cloud TTS (correct accent)
+// Never assign a voice for cs/de/es — wrong voice is worse than no voice
 
 function _speak(text, lang, rate, onEnd) {
-  if (!text) { if (onEnd) onEnd(); return; }
-  // fr/en: use native Web Speech (fast, offline, always works)
-  // cs/de/es: use /api/tts proxy (correct accent, real pronunciation)
-  if (_NATIVE_LANGS.has(lang) && _pickVoice(lang)) {
-    _speakNative(text, lang, rate, onEnd);
-  } else {
-    _speakProxy(text, lang, onEnd);
+  if (!text || !window.speechSynthesis) { if (onEnd) onEnd(); return; }
+  window.speechSynthesis.cancel();
+
+  const utt    = new SpeechSynthesisUtterance(text);
+  const bcp    = _LANG_BCP[lang] || 'fr-FR';
+  utt.lang     = bcp;
+  utt.rate     = rate || 0.82;
+  utt.volume   = 1.0;
+
+  // Only assign a voice for fr/en — for cs/de/es just set lang and
+  // let Chrome/Safari pick the correct cloud voice automatically
+  if (lang === 'fr' || lang === 'en') {
+    const v = _pickVoice(lang);
+    if (v) utt.voice = v;
   }
+  // For cs/de/es: utt.lang = 'cs-CZ'/'de-DE'/'es-ES' with no utt.voice
+  // → browser uses its built-in cloud TTS for that language
+
+  if (onEnd) { utt.onend = onEnd; utt.onerror = onEnd; }
+  window.speechSynthesis.speak(utt);
 }
 
 function _speakThenUnlock(text, lang) {
@@ -162,13 +142,13 @@ function mkFQ(id){return{type:'fill',q:wt(id,S.nL),correct:wt(id,S.tL)};}
 function mkSQ(sent,nSent){return{type:'sort',q:nSent,correct:sent,words:sent.split(' ')};}
 function mkMQ(ids){return{type:'match',ids};}
 
-function startMatchSA(ch){S.mPairs=shuf([...ch.wids]).slice(0,6);S.mSel=null;S.mDone=0;S.mTotal=S.mPairs.length;S.mEmbed=false;goTo('game');setTypePill('match');showZone('match');sT('g-text','Associe les traductions');sT('g-dir',dirLbl());sT('g-num','');sT('g-hint','Clique un mot puis sa traduction');sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(S.mPairs);sT('match-prog-txt',`0/${S.mTotal}`);$('g-progress').style.width='0%';sT('g-score',0);hideFB();hideAllBtns();showBtn('btn-skip');startTimer(60);}
+function startMatchSA(ch){S.mPairs=shuf([...ch.wids]).slice(0,6);S.mSel=null;S.mDone=0;S.mTotal=S.mPairs.length;S.mEmbed=false;goTo('game');setTypePill('match');showZone('match');sT('g-text',t('game_match_title'));sT('g-dir',dirLbl());sT('g-num','');sT('g-hint',t('game_match_hint'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(S.mPairs);sT('match-prog-txt',`0/${S.mTotal}`);$('g-progress').style.width='0%';sT('g-score',0);hideFB();hideAllBtns();showBtn('btn-skip');startTimer(60);}
 
 function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi];S.curQ=q;S.curType=q.type;const tot=S.qs.length;$('g-progress').style.width=`${(S.qi/tot)*100}%`;sT('g-dir',dirLbl());sT('g-num',`${S.qi+1} / ${tot}`);sT('g-hint','');hideFB();hideAllBtns();setTypePill(q.type);showZone(q.type);$('fuzzy-note').style.display='none';if(q.type==='quiz')renderQuiz(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
 function renderQuiz(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
 function renderFill(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
-function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text','Associe les traductions !');sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
-function renderSort(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);S.sortArr=[];const bank=$('word-bank');bank.innerHTML='';shuf([...q.words]).forEach(w=>{const t=document.createElement('div');t.className='word-token';t.textContent=w;t.onclick=()=>{_speakClick(w,S.tL);addSort(w,t);};bank.appendChild(t);});$('sentence-slots').innerHTML='<span class="slot-placeholder">Clique sur les mots…</span>';showBtn('btn-check');showBtn('btn-reset');startTimer(30);}
+function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text',t('game_match_title'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
+function renderSort(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);S.sortArr=[];const bank=$('word-bank');bank.innerHTML='';shuf([...q.words]).forEach(w=>{const t=document.createElement('div');t.className='word-token';t.textContent=w;t.onclick=()=>{_speakClick(w,S.tL);addSort(w,t);};bank.appendChild(t);});$('sentence-slots').innerHTML='<span class="slot-placeholder">'+t('slot_placeholder')+'</span>';showBtn('btn-check');showBtn('btn-reset');startTimer(30);}
 
 function renderMatchCols(ids){const ls=shuf(ids.map(id=>({id,text:wt(id,S.nL)}))),rs=shuf(ids.map(id=>({id,text:wt(id,S.tL)})));const lc=$('match-left'),rc=$('match-right');lc.innerHTML='';rc.innerHTML='';ls.forEach(it=>{lc.appendChild(mkMI(it,'left'));});rs.forEach(it=>{rc.appendChild(mkMI(it,'right'));});}
 function mkMI(it,side){const d=document.createElement('div');d.className='match-item';d.textContent=it.text;d.dataset.id=it.id;d.dataset.side=side;d.onclick=()=>{_speakClick(it.text,side==='left'?S.nL:S.tL);clickMatch(d);};return d;}
@@ -179,7 +159,7 @@ function clickMatch(el){if(el.classList.contains('matched'))return;const sel=S.m
   if(S.mDone>=S.mTotal){clearInterval(S.timer);setTimeout(()=>S.mEmbed?nextQ():showResults(),1400);}}else{sel.classList.remove('selected');el.classList.add('wrong-match');setTimeout(()=>el.classList.remove('wrong-match'),360);S.wr++;S.ts.match.w++;}S.mSel=null;}
 function skipMatch(){S.mEmbed?nextQ():showResults();}
 
-function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>{b.disabled=true;if(b.querySelector('span:last-child').textContent===q.correct)b.classList.add('correct');});if(!ok)btn.classList.add('wrong');ok?(S.score+=10,S.cor++,S.ts.quiz.c++,showFB(true,'🎉 Correct !',q.correct)):(S.wr++,S.ts.quiz.w++,showFB(false,'❌ Raté !','Réponse : '+q.correct));sT('g-score',S.score);showBtn('btn-next');
+function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>{b.disabled=true;if(b.querySelector('span:last-child').textContent===q.correct)b.classList.add('correct');});if(!ok)btn.classList.add('wrong');ok?(S.score+=10,S.cor++,S.ts.quiz.c++,showFB(true,t('game_perfect'),q.correct)):(S.wr++,S.ts.quiz.w++,showFB(false,t('game_wrong'),t('game_answer')+q.correct));sT('g-score',S.score);showBtn('btn-next');
   // Speak: native word first (short), then TARGET word with gating
   const _nw=wt(Object.keys(WD).find(id=>WD[id][S.tL]===q.correct)||'',S.nL)||'';
   if(_nw) { setTimeout(()=>_speakClick(_nw,S.nL),150); setTimeout(()=>_speakThenUnlock(q.correct,S.tL),800); }
@@ -191,14 +171,14 @@ function deacc(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLow
 function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j;}for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);return d[m][n];}
 function fuzzy(inp,cor){const clean=s=>deacc(s.replace(/[^\w\s]/gi,''));const a=clean(inp),b=clean(cor);if(a===b||deacc(inp)===deacc(cor))return'exact';const dist=lev(a,b);return dist<=(b.length<=3?1:b.length<=7?2:3)?'close':'wrong';}
 
-function doFill(q){clearInterval(S.timer);const inp=$('fill-input'),res=fuzzy(inp.value,q.correct);inp.disabled=true;if(res==='exact'){inp.className='fill-input correct';S.score+=10;S.cor++;S.ts.fill.c++;showFB(true,'🎉 Parfait !',q.correct);}else if(res==='close'){inp.className='fill-input close';S.score+=5;S.cor++;S.ts.fill.c++;const fn=$('fuzzy-note');fn.textContent=`✨ Presque ! Réponse exacte : ${q.correct}`;fn.style.display='block';showFB('close','✨ Presque !',`Réponse exacte : ${q.correct}`);}else{inp.className='fill-input wrong';S.wr++;S.ts.fill.w++;showFB(false,'❌ Pas tout à fait !','Réponse : '+q.correct);}sT('g-score',S.score);hideBtn('btn-check');showBtn('btn-next');
+function doFill(q){clearInterval(S.timer);const inp=$('fill-input'),res=fuzzy(inp.value,q.correct);inp.disabled=true;if(res==='exact'){inp.className='fill-input correct';S.score+=10;S.cor++;S.ts.fill.c++;showFB(true,t('game_perfect'),q.correct);}else if(res==='close'){inp.className='fill-input close';S.score+=5;S.cor++;S.ts.fill.c++;const fn=$('fuzzy-note');fn.textContent=t('game_close')+' '+t('game_exact_answer')+q.correct;fn.style.display='block';showFB('close',t('game_close'),t('game_exact_answer')+q.correct);}else{inp.className='fill-input wrong';S.wr++;S.ts.fill.w++;showFB(false,t('game_wrong'),t('game_answer')+q.correct);}sT('g-score',S.score);hideBtn('btn-check');showBtn('btn-next');
   const _nwf=wt(Object.keys(WD).find(id=>WD[id][S.tL]===q.correct)||'',S.nL)||'';
   if(_nwf) { setTimeout(()=>_speakClick(_nwf,S.nL),150); setTimeout(()=>_speakThenUnlock(q.correct,S.tL),800); }
   else { setTimeout(()=>_speakThenUnlock(q.correct,S.tL),200); } }
-function doSort(q){clearInterval(S.timer);const built=S.sortArr.join(' '),res=fuzzy(built,q.correct);if(res==='exact'){S.score+=10;S.cor++;S.ts.sort.c++;showFB(true,'🎉 Parfait !',q.correct);}else if(res==='close'){S.score+=5;S.cor++;S.ts.sort.c++;showFB('close','✨ Presque !',q.correct);}else{S.wr++;S.ts.sort.w++;showFB(false,'❌ Pas tout à fait !','Réponse : '+q.correct);}sT('g-score',S.score);hideBtn('btn-check');hideBtn('btn-reset');showBtn('btn-next');setTimeout(()=>_speakThenUnlock(q.correct,S.tL),300);}
+function doSort(q){clearInterval(S.timer);const built=S.sortArr.join(' '),res=fuzzy(built,q.correct);if(res==='exact'){S.score+=10;S.cor++;S.ts.sort.c++;showFB(true,t('game_perfect'),q.correct);}else if(res==='close'){S.score+=5;S.cor++;S.ts.sort.c++;showFB('close',t('game_close'),q.correct);}else{S.wr++;S.ts.sort.w++;showFB(false,t('game_wrong'),t('game_answer')+q.correct);}sT('g-score',S.score);hideBtn('btn-check');hideBtn('btn-reset');showBtn('btn-next');setTimeout(()=>_speakThenUnlock(q.correct,S.tL),300);}
 
 function addSort(word,el){if(el.style.opacity==='0.3')return;S.sortArr.push(word);el.style.opacity='0.3';el.style.pointerEvents='none';renderSlots();}
-function renderSlots(){const slots=$('sentence-slots');if(!S.sortArr.length){slots.innerHTML='<span class="slot-placeholder">Clique sur les mots…</span>';return;}slots.innerHTML='';S.sortArr.forEach((w,i)=>{const t=document.createElement('div');t.className='word-token in-sentence';t.textContent=w;t.onclick=()=>{S.sortArr.splice(i,1);reEnable(w);renderSlots();};slots.appendChild(t);});}
+function renderSlots(){const slots=$('sentence-slots');if(!S.sortArr.length){slots.innerHTML='<span class="slot-placeholder">'+t('slot_placeholder')+'</span>';return;}slots.innerHTML='';S.sortArr.forEach((w,i)=>{const t=document.createElement('div');t.className='word-token in-sentence';t.textContent=w;t.onclick=()=>{S.sortArr.splice(i,1);reEnable(w);renderSlots();};slots.appendChild(t);});}
 function reEnable(w){for(const t of $('word-bank').children)if(t.textContent===w&&t.style.opacity==='0.3'){t.style.opacity='1';t.style.pointerEvents='auto';break;}}
 function resetSort(){S.sortArr=[];renderSlots();document.querySelectorAll('#word-bank .word-token').forEach(t=>{t.style.opacity='1';t.style.pointerEvents='auto';});}
 function nextQ(){S.qi++;S.qi>=S.qs.length?showResults():renderQ();}
@@ -210,7 +190,7 @@ function onTimeout(){const q=S.curQ;if(S.curType==='quiz'){S.wr++;S.ts.quiz.w++;
 function showFB(ok,title,detail){const b=$('g-fb'),cls=ok===true?'correct-fb':ok==='close'?'close-fb':'wrong-fb';b.className=`feedback-banner show ${cls}`;sT('g-fb-icon',ok===true?'✅':ok==='close'?'✨':'❌');sT('g-fb-title',title);sT('g-fb-detail',detail);}
 function hideFB(){const b=$('g-fb');if(b)b.className='feedback-banner';}
 function showZone(type){['quiz','fill','match','sort'].forEach(z=>{const el=document.getElementById('zone-'+z);if(el)el.style.display=z===type?'block':'none';});}
-function setTypePill(type){const labels={quiz:'⚡ Quiz',fill:'✏️ Compléter',match:'🔗 Associer',sort:'🧩 Ordonner'};const p=$('g-type-pill');p.className=`type-pill ${type}`;p.textContent=labels[type]||type;}
+function setTypePill(type){const labels={quiz:'⚡ Quiz',fill:t('game_type_fill'),match:t('game_type_match'),sort:t('game_type_sort')};const p=$('g-type-pill');p.className=`type-pill ${type}`;p.textContent=labels[type]||type;}
 function hideAllBtns(){['btn-check','btn-reset','btn-next','btn-skip'].forEach(id=>hideBtn(id));}
 function showBtn(id){const e=$(id);if(e)e.style.display='inline-flex';}
 function hideBtn(id){const e=$(id);if(e)e.style.display='none';}
@@ -254,11 +234,11 @@ function showResults(){
     if(S.isDuel&&typeof submitDuelScore==='function') submitDuelScore(S.score,S.cor);
     S.isEventQuiz=false; S.isSRSReview=false; S.isDuel=false;
   }
-  const msgs=['Continue d\'essayer !','Bon effort !','Bien joué !','Excellent ! 🎊'];
+  const msgs=[t('game_result_0'),t('game_result_1'),t('game_result_2'),t('game_result_3')];
   sT('r-stars',['☆☆☆','★☆☆','★★☆','★★★'][stars]);
   sT('r-title',msgs[stars]);
   sT('r-score',pct+'%');
-  sT('r-sub',`${S.cor} bonne${S.cor>1?'s':''} réponse${S.cor>1?'s':''} sur ${tot}`);
+  sT('r-sub', t('game_r_sub',{c:S.cor, s:S.cor>1?'s':'', t:tot}));
   sT('r-correct',S.cor); sT('r-wrong',S.wr);
   sT('r-xp',xpBonus>1?`+${xpTotal} ✨×${xpBonus}`:`+${xpTotal}`);
   sT('coin-reward-amount','+'+coinsEarned);
