@@ -612,3 +612,42 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .news-bull{background:rgba(16,185,129,.15);color:var(--green);}
 .news-bear{background:rgba(239,68,68,.15);color:#f87171;}
 .news-neutral{background:rgba(255,255,255,.08);color:var(--muted);}
+
+/* ══════════════════════════════════════════════
+   SHOW/HIDE PASSWORD + FORGOT PASSWORD
+   ══════════════════════════════════════════════ */
+
+.pass-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pass-wrap .auth-input {
+  width: 100%;
+  padding-right: 44px;
+}
+.pass-eye {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  color: var(--muted);
+  transition: color .2s, transform .15s;
+  line-height: 1;
+  user-select: none;
+}
+.pass-eye:hover { color: var(--text); transform: scale(1.15); }
+.pass-eye.visible { color: var(--accent); }
+
+.forgot-link {
+  font-size: .75rem;
+  color: var(--accent3);
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity .2s;
+}
+.forgot-link:hover { opacity: .7; text-decoration: underline; }
