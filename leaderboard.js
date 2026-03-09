@@ -36,11 +36,11 @@ async function renderLeaderboard() {
   const myRank = document.getElementById('lb-my-rank');
   if (!el) return;
 
-  el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Chargement…</div>';
+  el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">${t('lb_loading')}</div>`;
 
   const players = await fetchLeaderboard();
   if (!players.length) {
-    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Impossible de charger le classement.</div>';
+    el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">${t('lb_error')}</div>`;
     return;
   }
 
@@ -64,9 +64,9 @@ async function renderLeaderboard() {
 
   if (myRank) {
     if (myIdx >= 0) {
-      myRank.textContent = myIdx < 50 ? `Tu es #${myIdx+1} sur ${sorted.length} joueurs` : `Tu es #${myIdx+1} — continue pour grimper !`;
+      myRank.textContent = myIdx < 50 ? t('lb_rank_top',{r:myIdx+1,t:sorted.length}) : t('lb_rank_climb',{r:myIdx+1});
     } else {
-      myRank.textContent = 'Joue pour apparaître dans le classement !';
+      myRank.textContent = t('lb_rank_play');
     }
   }
 }
