@@ -192,7 +192,7 @@ function getCurrentEvent() {
 
 function startEventQuiz() {
   const ev = getCurrentEvent();
-  if (!S.nL || !S.tL) { toast('❗ Choisis une langue d\'abord'); navTo('learn'); return; }
+  if (!S.nL || !S.tL) { toast(t('duel_no_lang')); navTo('learn'); return; }
   // Temporarily add event words to WD
   const ids = Object.keys(ev.words);
   ids.forEach(id => { if (!WD[id]) WD[id] = ev.words[id]; });
@@ -207,7 +207,7 @@ function startEventQuiz() {
   sT('g-score', 0); sT('xp-count', (U.xp||0)+' XP');
   $('g-progress').style.width = '0%';
   renderQ();
-  toast(`${ev.name} — XP ×${ev.bonusXP} !`);
+  toast(`${ev.name} — ${t('event_bonus',{n:ev.bonusXP})}`);
 }
 
 function renderEventBanner() {
@@ -219,7 +219,7 @@ function renderEventBanner() {
       <div class="event-badge">ÉVÉNEMENT</div>
       <div class="event-name">${ev.name}</div>
       <div class="event-desc">${ev.desc}</div>
-      <div class="event-bonus">XP ×${ev.bonusXP} · Trophée exclusif</div>
+      <div class="event-bonus">${t('event_bonus',{n:ev.bonusXP})}</div>
       <div class="event-btn">Jouer →</div>
     </div>
   `;
