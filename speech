@@ -61,14 +61,11 @@ function _pickVoice(lang) {
   return _voices.find(v => v.lang.toLowerCase().startsWith(prefix)) || null;
 }
 
-// Reusable audio for proxy TTS
-let _speechProxyAudio = null;
-
-// ── Core TTS ────────────────────────────────────────────────────
+// ── Core TTS ─────────────────────────────────────────────────────
 let _currentUtt = null;
 
 function speakWord(text, lang, opts = {}) {
-  if (!text) return;
+  if (!text || !window.speechSynthesis) return;
   const rate   = opts.rate   !== undefined ? opts.rate   : 0.82;
   const pitch  = opts.pitch  !== undefined ? opts.pitch  : 1.0;
   const volume = opts.volume !== undefined ? opts.volume : 1.0;
@@ -77,39 +74,21 @@ function speakWord(text, lang, opts = {}) {
   const markDone = () => { if (speaker) speaker.classList.remove('speaking'); };
   if (speaker) speaker.classList.add('speaking');
 
-  const nativeVoice = _pickVoice(lang);
-  const isNativeLang = (lang === 'fr' || lang === 'en');
-
-  // cs/de/es: use /api/tts proxy for correct pronunciation
-  if (!isNativeLang || !nativeVoice) {
-    const url = '/api/tts?text=' + encodeURIComponent(text) + '&lang=' + encodeURIComponent(lang || 'fr');
-    if (!_speechProxyAudio) _speechProxyAudio = new Audio();
-    _speechProxyAudio.pause();
-    _speechProxyAudio.src = url;
-    _speechProxyAudio.volume = volume;
-    _speechProxyAudio.onended = markDone;
-    _speechProxyAudio.onerror = () => {
-      _speakNativeSpeech(text, lang, rate, pitch, volume, nativeVoice, markDone);
-    };
-    _speechProxyAudio.play().catch(() => {
-      _speakNativeSpeech(text, lang, rate, pitch, volume, nativeVoice, markDone);
-    });
-    return;
-  }
-
-  _speakNativeSpeech(text, lang, rate, pitch, volume, nativeVoice, markDone);
-}
-
-function _speakNativeSpeech(text, lang, rate, pitch, volume, voice, onDone) {
-  if (!window.speechSynthesis) { if (onDone) onDone(); return; }
   window.speechSynthesis.cancel();
   const utt  = new SpeechSynthesisUtterance(text);
   utt.lang   = SPEECH_LANG_CODES[lang] || lang || 'fr-FR';
   utt.rate   = rate;
   utt.pitch  = pitch;
   utt.volume = volume;
-  if (voice) utt.voice = voice;
-  utt.onend = onDone;
+  utt.onend  = markDone;
+
+  // Only assign a specific voice for fr/en — for cs/de/es let the browser
+  // pick its own cloud voice using utt.lang only (avoids wrong voice assignment)
+  if (lang === 'fr' || lang === 'en') {
+    const v = _pickVoice(lang);
+    if (v) utt.voice = v;
+  }
+
   _currentUtt = utt;
   window.speechSynthesis.speak(utt);
 }
