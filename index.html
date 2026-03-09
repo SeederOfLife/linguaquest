@@ -82,7 +82,13 @@
       <label class="auth-label">Email</label>
       <input class="auth-input" type="email" id="login-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doLogin()">
       <label class="auth-label" id="lbl-login-pass">Mot de passe</label>
-      <input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="pass-wrap">
+        <input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="pass-eye" type="button" onclick="togglePass('login-pass',this)" tabindex="-1">👁</button>
+      </div>
+      <div style="text-align:right;margin:-4px 0 10px;">
+        <span class="forgot-link" onclick="openForgot()" id="lbl-forgot-link">Mot de passe oublié ?</span>
+      </div>
       <div class="auth-error" id="login-err"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()" id="btn-do-login">Se connecter →</button>
       <div style="text-align:center;margin-top:12px;font-size:.76rem;color:var(--muted);">Compte de démo : <span style="color:var(--accent3);cursor:pointer;font-weight:700;" id="btn-demo" onclick="demoLogin()" data-i18n="demo_link">Connexion démo →</span></div>
@@ -94,7 +100,10 @@
       <label class="auth-label" id="lbl-reg-email">Email</label>
       <input class="auth-input" type="email" id="reg-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doRegister()">
       <label class="auth-label" id="lbl-reg-pass">Mot de passe</label>
-      <input class="auth-input" type="password" id="reg-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')doRegister()">
+      <div class="pass-wrap">
+        <input class="auth-input" type="password" id="reg-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')doRegister()">
+        <button class="pass-eye" type="button" onclick="togglePass('reg-pass',this)" tabindex="-1">👁</button>
+      </div>
       <div class="auth-error" id="reg-err"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()" id="btn-do-register">Créer mon compte 🚀</button>
     </div>
@@ -665,7 +674,6 @@
 <script src="auth.js"></script>
 <script src="ui.js"></script>
 <script src="realportfolio.js"></script>
-<script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 <script src="speech.js"></script>
 <script src="game.js"></script>
 <script src="portfolio.js"></script>
@@ -675,5 +683,52 @@
 <script src="duels.js"></script>
 <script src="news.js"></script>
 <script src="boot.js"></script>
+
+<!-- ══════════════════ FORGOT PASSWORD MODAL ══════════════════ -->
+<div class="modal-overlay" id="forgot-modal" style="display:none;" onclick="closeForgot(event)">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px;">
+    <button class="modal-close" onclick="closeForgot()">✕</button>
+
+    <!-- STEP 1: enter email -->
+    <div id="forgot-step-1">
+      <div style="font-size:1.5rem;text-align:center;margin-bottom:6px;">🔑</div>
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-forgot-title">Mot de passe oublié</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;" id="lbl-forgot-sub">Entre ton email pour récupérer ton compte.</div>
+      <label class="auth-label">Email</label>
+      <input class="auth-input" type="email" id="forgot-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')forgotStep1()">
+      <div class="auth-error" id="forgot-err-1"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;" onclick="forgotStep1()" id="btn-forgot-1">Vérifier mon compte →</button>
+    </div>
+
+    <!-- STEP 2: found account, set new password -->
+    <div id="forgot-step-2" style="display:none;">
+      <div style="font-size:1.5rem;text-align:center;margin-bottom:6px;">✅</div>
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-forgot-found-title">Compte trouvé !</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;">Compte : <strong id="forgot-found-name" style="color:var(--accent3);"></strong></div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">Choisis un nouveau mot de passe.</div>
+      <label class="auth-label" id="lbl-forgot-new-pass">Nouveau mot de passe</label>
+      <div class="pass-wrap">
+        <input class="auth-input" type="password" id="forgot-new-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')forgotStep2()">
+        <button class="pass-eye" type="button" onclick="togglePass('forgot-new-pass',this)" tabindex="-1">👁</button>
+      </div>
+      <label class="auth-label" style="margin-top:10px;" id="lbl-forgot-confirm-pass">Confirme le mot de passe</label>
+      <div class="pass-wrap">
+        <input class="auth-input" type="password" id="forgot-confirm-pass" placeholder="Répète le mot de passe" onkeydown="if(event.key==='Enter')forgotStep2()">
+        <button class="pass-eye" type="button" onclick="togglePass('forgot-confirm-pass',this)" tabindex="-1">👁</button>
+      </div>
+      <div class="auth-error" id="forgot-err-2"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;" onclick="forgotStep2()" id="btn-forgot-2">Réinitialiser →</button>
+    </div>
+
+    <!-- STEP 3: success -->
+    <div id="forgot-step-3" style="display:none;text-align:center;padding:10px 0;">
+      <div style="font-size:3rem;margin-bottom:10px;">🎉</div>
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:6px;" id="lbl-forgot-success-title">Mot de passe mis à jour !</div>
+      <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px;" id="lbl-forgot-success-sub">Tu peux maintenant te connecter avec ton nouveau mot de passe.</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="closeForgot();switchTab('login')" id="btn-forgot-login">Se connecter →</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
