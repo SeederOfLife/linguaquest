@@ -153,3 +153,147 @@ function afterLogin(){
 function showChrome(){$('top-bar').style.display='flex';$('nav-bar').style.display='flex';}
 function hideChrome(){$('top-bar').style.display='none';$('nav-bar').style.display='none';}
 
+
+// ══════════════════════════════════════════════
+// SHOW / HIDE PASSWORD
+// ══════════════════════════════════════════════
+function togglePass(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? '🙈' : '👁';
+  btn.classList.toggle('visible', isHidden);
+}
+
+// ══════════════════════════════════════════════
+// FORGOT PASSWORD
+// ══════════════════════════════════════════════
+let _forgotEmail = null;
+
+function openForgot() {
+  _forgotEmail = null;
+  // Reset all steps
+  document.getElementById('forgot-step-1').style.display = 'block';
+  document.getElementById('forgot-step-2').style.display = 'none';
+  document.getElementById('forgot-step-3').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-err-1').textContent = '';
+  document.getElementById('forgot-err-1').classList.remove('show');
+  const m = document.getElementById('forgot-modal');
+  if (m) { m.style.display = 'flex'; }
+}
+
+function closeForgot(e) {
+  if (e && e.target !== document.getElementById('forgot-modal')) return;
+  const m = document.getElementById('forgot-modal');
+  if (m) m.style.display = 'none';
+}
+
+function _forgotErr(step, msg) {
+  const id = 'forgot-err-' + step;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+async function forgotStep1() {
+  const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { _forgotErr(1, 'Entre un email valide.'); return; }
+
+  const btn = document.getElementById('btn-forgot-1');
+  const orig = btn.textContent; btn.textContent = 'Recherche…'; btn.disabled = true;
+
+  try {
+    // Try Supabase first
+    let userData = null;
+    try {
+      const { data, error } = await _SB.from('users').select('data').eq('email', email).single();
+      if (data && !error) userData = data.data;
+    } catch(e) {}
+
+    // Fallback to localStorage
+    if (!userData) {
+      const users = loadUsers();
+      if (users[email]) userData = users[email];
+    }
+
+    if (!userData) {
+      _forgotErr(1, 'Aucun compte trouvé avec cet email.');
+      return;
+    }
+
+    _forgotEmail = email;
+    document.getElementById('forgot-found-name').textContent =
+      (userData.name || 'Utilisateur') + ' · ' + email;
+    document.getElementById('forgot-new-pass').value = '';
+    document.getElementById('forgot-confirm-pass').value = '';
+    document.getElementById('forgot-err-2').textContent = '';
+    document.getElementById('forgot-err-2').classList.remove('show');
+    document.getElementById('forgot-step-1').style.display = 'none';
+    document.getElementById('forgot-step-2').style.display = 'block';
+    setTimeout(() => document.getElementById('forgot-new-pass').focus(), 100);
+
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
+
+async function forgotStep2() {
+  if (!_forgotEmail) { openForgot(); return; }
+
+  const newPass    = document.getElementById('forgot-new-pass').value;
+  const confirmPass = document.getElementById('forgot-confirm-pass').value;
+
+  if (newPass.length < 6) { _forgotErr(2, 'Mot de passe trop court (min. 6 caractères).'); return; }
+  if (newPass !== confirmPass) { _forgotErr(2, 'Les mots de passe ne correspondent pas.'); return; }
+
+  const btn = document.getElementById('btn-forgot-2');
+  const orig = btn.textContent; btn.textContent = 'Mise à jour…'; btn.disabled = true;
+
+  try {
+    // Load full user data
+    let userData = null;
+    try {
+      const { data } = await _SB.from('users').select('data').eq('email', _forgotEmail).single();
+      if (data) userData = data.data;
+    } catch(e) {}
+    if (!userData) {
+      const users = loadUsers();
+      userData = users[_forgotEmail];
+    }
+    if (!userData) { _forgotErr(2, 'Erreur — réessaie.'); return; }
+
+    // Update password
+    userData.pass = btoa(newPass);
+    userData._savedAt = Date.now();
+
+    // Save to localStorage
+    const users = loadUsers();
+    users[_forgotEmail] = userData;
+    saveUsers(users);
+    localStorage.setItem('lq_u_' + _forgotEmail, JSON.stringify(userData));
+
+    // Save to Supabase
+    try {
+      await _SB.from('users').upsert({
+        email: _forgotEmail,
+        data: userData,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'email' });
+    } catch(e) { /* offline — localStorage saved */ }
+
+    // Pre-fill login email field
+    const loginEmail = document.getElementById('login-email');
+    if (loginEmail) loginEmail.value = _forgotEmail;
+
+    document.getElementById('forgot-step-2').style.display = 'none';
+    document.getElementById('forgot-step-3').style.display = 'block';
+    _forgotEmail = null;
+
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
