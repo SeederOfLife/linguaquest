@@ -204,7 +204,7 @@ async function forgotStep1() {
   if (!email || !email.includes('@')) { _forgotErr(1, 'Entre un email valide.'); return; }
 
   const btn = document.getElementById('btn-forgot-1');
-  const orig = btn.textContent; btn.textContent = 'Recherche…'; btn.disabled = true;
+  const orig = btn.textContent; btn.textContent = t('forgot_checking'); btn.disabled = true;
 
   try {
     // Try Supabase first
@@ -221,7 +221,7 @@ async function forgotStep1() {
     }
 
     if (!userData) {
-      _forgotErr(1, 'Aucun compte trouvé avec cet email.');
+      _forgotErr(1, t('forgot_not_found'));
       return;
     }
 
@@ -247,11 +247,11 @@ async function forgotStep2() {
   const newPass    = document.getElementById('forgot-new-pass').value;
   const confirmPass = document.getElementById('forgot-confirm-pass').value;
 
-  if (newPass.length < 6) { _forgotErr(2, 'Mot de passe trop court (min. 6 caractères).'); return; }
-  if (newPass !== confirmPass) { _forgotErr(2, 'Les mots de passe ne correspondent pas.'); return; }
+  if (newPass.length < 6) { _forgotErr(2, t('forgot_short')); return; }
+  if (newPass !== confirmPass) { _forgotErr(2, t('forgot_mismatch')); return; }
 
   const btn = document.getElementById('btn-forgot-2');
-  const orig = btn.textContent; btn.textContent = 'Mise à jour…'; btn.disabled = true;
+  const orig = btn.textContent; btn.textContent = t('forgot_resetting'); btn.disabled = true;
 
   try {
     // Load full user data
@@ -264,7 +264,7 @@ async function forgotStep2() {
       const users = loadUsers();
       userData = users[_forgotEmail];
     }
-    if (!userData) { _forgotErr(2, 'Erreur — réessaie.'); return; }
+    if (!userData) { _forgotErr(2, t('forgot_error')); return; }
 
     // Update password
     userData.pass = btoa(newPass);
