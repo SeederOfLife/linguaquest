@@ -43,7 +43,7 @@ async function doRegister(){
   const pass=$('reg-pass').value;
   if(!name){showAuthErr('reg','Entrez votre prénom.');return;}
   if(!email.includes('@')){showAuthErr('reg','Email invalide.');return;}
-  if(pass.length<6){showAuthErr('reg','Mot de passe trop court (min 6).');return;}
+  if(pass.length<6){showAuthErr('reg',t('forgot_short'));return;}
 
   const btn=document.querySelector('#form-register .btn-primary');
   const origText=btn.textContent; btn.textContent='Création...'; btn.disabled=true;
