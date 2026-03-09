@@ -64,7 +64,7 @@ async function renderMarketNews() {
   const el = document.getElementById('market-news-strip');
   if (!el) return;
 
-  el.innerHTML = '<div class="news-strip"><div class="news-header">📰 Actualités marché <span style="color:var(--muted);font-weight:400;font-size:.7rem;">10 min</span></div><div style="padding:10px 14px;font-size:.75rem;color:var(--muted);">Chargement…</div></div>';
+  el.innerHTML = `<div class="news-strip"><div class="news-header">${t('news_title')} <span style="color:var(--muted);font-weight:400;font-size:.7rem;">10 min</span></div><div style="padding:10px 14px;font-size:.75rem;color:var(--muted);">${t('news_loading')}</div></div>`;
 
   const news = await fetchMarketNews();
 
@@ -74,7 +74,7 @@ async function renderMarketNews() {
       <div class="news-item" onclick="${n.link ? `window.open('${n.link}','_blank')` : ''}">
         <div class="news-emoji">${n.emoji}</div>
         <div class="news-body">
-          <div class="news-title">${n.title}<span class="news-tag news-${n.tag}">${n.tag==='bull'?'↑ Haussier':n.tag==='bear'?'↓ Baissier':'→ Neutre'}</span></div>
+          <div class="news-title">${n.title}<span class="news-tag news-${n.tag}">${n.tag==='bull'?t('news_bull'):n.tag==='bear'?t('news_bear'):t('news_neutral')}</span></div>
           ${n.sub ? `<div class="news-sub">${n.sub}</div>` : ''}
         </div>
       </div>`).join('')}
