@@ -1,561 +1,299 @@
-// ── Lesson i18n helpers ──────────────────────────────────────────────────────
-function getLessonT(lesson){
-  if(!lesson) return {};
-  const lang = (typeof _uiLang !== 'undefined' && _uiLang) || 'fr';
-  return (lesson.t && (lesson.t[lang] || lesson.t['fr'])) || lesson.t && Object.values(lesson.t)[0] || {};
-}
-function s_(key, vars){
-  const lang = (typeof _uiLang !== 'undefined' && _uiLang) || 'fr';
-  const strings = (typeof UI_STRINGS !== 'undefined' && UI_STRINGS) || {};
-  const s = strings[lang] || strings['fr'] || {};
-  let str = s[key] || key;
-  if(vars) Object.entries(vars).forEach(([k,v])=>{ str=str.split('{'+k+'}').join(v); });
-  return str;
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'block':'none';
 }
 
-// ══════════════════════════════════════════════
-// DIVIDEND ENGINE
-// ══════════════════════════════════════════════
-function calcDividends(){
+async function doLogin(){
+  const email=$('login-email').value.trim().toLowerCase();
+  const pass=$('login-pass').value;
+  if(!email||!pass){showAuthErr('login','Remplis tous les champs.');return;}
+
+  // Show loading state
+  const btn=document.querySelector('#form-login .btn-primary');
+  const origText=btn.textContent; btn.textContent='Connexion...'; btn.disabled=true;
+
+  try {
+    const userData = await loadUserFromDB(email);
+
+    if (!userData) { showAuthErr('login', 'Compte introuvable. Inscris-toi !'); return; }
+    if (userData.pass !== btoa(pass)) { showAuthErr('login', 'Mot de passe incorrect.'); return; }
+
+    U = userData;
+    saveCurrent(U.email);
+    afterLogin();
+  } catch(e) {
+    // Full offline fallback
+    const users = loadUsers();
+    if (!users[email]) { showAuthErr('login', 'Compte introuvable.'); return; }
+    if (users[email].pass !== btoa(pass)) { showAuthErr('login', 'Mot de passe incorrect.'); return; }
+    U = users[email]; saveCurrent(U.email); afterLogin();
+  } finally {
+    btn.textContent = origText; btn.disabled = false;
+  }
+}
+
+async function doRegister(){
+  const name=$('reg-name').value.trim();
+  const email=$('reg-email').value.trim().toLowerCase();
+  const pass=$('reg-pass').value;
+  if(!name){showAuthErr('reg','Entrez votre prénom.');return;}
+  if(!email.includes('@')){showAuthErr('reg','Email invalide.');return;}
+  if(pass.length<6){showAuthErr('reg','Mot de passe trop court (min 6).');return;}
+
+  const btn=document.querySelector('#form-register .btn-primary');
+  const origText=btn.textContent; btn.textContent='Création...'; btn.disabled=true;
+
+  try {
+    // Check if email already exists in Supabase
+    const {data:existing} = await _SB.from('users').select('email').eq('email',email).maybeSingle();
+    if(existing){showAuthErr('reg','Cet email est déjà utilisé.');return;}
+  } catch(e) {
+    // Offline — check localStorage
+    const users=loadUsers();
+    if(users[email]){showAuthErr('reg','Cet email est déjà utilisé.');return;}
+  }
+
+  U=defaultUser(name,email); U.pass=btoa(pass);
+  // Save locally immediately
+  const users=loadUsers(); users[email]=U; saveUsers(users); saveCurrent(U.email);
+  // Save to Supabase
+  await saveU();
+  afterLogin();
+  btn.textContent=origText; btn.disabled=false;
+  toast(`Bienvenue ${name} ! Tu reçois 100 <span class="coin"></span> de départ !`);
+}
+
+function demoLogin(){
+  const users=loadUsers();
+  const demo='demo'+'@'+'linguaquest.app';
+  if(!users[demo]){
+    U=defaultUser('Démo',demo);U.pass=btoa('demo123');U.coins=350;
+    U.xp=1200;U.sessions=14;U.streak=5;U.chaptersCompleted=4;
+    U.assets={gold:2,house:1,stock:3,crypto:4};
+    ASSET_DEFS.forEach(a=>{U.assetValues[a.id]=a.cost*U.assets[a.id]*0.05;});
+    U.totalInvested=ASSET_DEFS.reduce((s,a)=>s+a.cost*U.assets[a.id],0);
+    users[demo]=U;saveUsers(users);
+  } else {U=users[demo];}
+  saveCurrent(U.email);afterLogin();
+}
+
+function doLogout(){U=null;clearCurrent();goTo('auth');hideChrome();}
+
+function showAuthErr(prefix,msg){
+  const id=prefix==='login'?'login-err':'reg-err';
+  const el=$(id);el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+function migrateUser(){
   if(!U) return;
-  const now=Date.now();
-  const elapsedDays=(now-U.lastDivTime)/(1000*60*60*24);
-  let total=0;
-  ASSET_DEFS.forEach(a=>{
-    const owned=U.assets[a.id]||0;
-    if(owned>0){
-      const invested=a.cost*owned;
-      total+=invested*a.divRate*elapsedDays;
-      U.assetValues[a.id]=(U.assetValues[a.id]||0)+invested*a.growthRate*elapsedDays;
-    }
-  });
-  U.pendingDiv=(U.pendingDiv||0)+total;
-  U.lastDivTime=now;
-  saveU();
-}
+  let changed = false;
+  const set = (key, val) => { if(U[key] === undefined){ U[key] = val; changed = true; } };
 
-function collectDividends(){
-  if(!U||U.pendingDiv<0.5) return;
-  const amount=Math.floor(U.pendingDiv);
-  U.coins+=amount; U.pendingDiv-=amount;
-  saveU(); updateTopBar();
-  floatCoin($('collect-btn'),`+${amount} <span class="coin"></span>`);
-  renderPortfolio();
-  toast(`🌱 +${amount} dividendes collectés !`);
-}
+  set('assets', {});
+  set('assetValues', {});
+  set('lessonsCompleted', {});
+  set('pendingDiv', 0);
+  set('lastDivTime', Date.now());
+  set('progress', {});
+  set('xp', 0);
+  set('sessions', 0);
+  set('streak', 0);
+  set('chaptersCompleted', 0);
 
-function getAssetWealth(){
-  if(!U) return 0;
-  return ASSET_DEFS.reduce((s,a)=>{
-    const owned=U.assets[a.id]||0;
-    if(!owned) return s;
-    return s+a.cost*owned+(U.assetValues[a.id]||0);
-  },0);
-}
-function getTotalWealth(){return Math.floor(U.coins+getAssetWealth());}
-function getDailyDividend(){
-  if(!U) return 0;
-  return ASSET_DEFS.reduce((s,a)=>s+(a.cost*(U.assets[a.id]||0)*a.divRate),0);
-}
+  // coins: only default to 0 if truly missing (never overwrite earned coins)
+  if(U.coins === undefined){ U.coins = 0; changed = true; }
 
-// ══════════════════════════════════════════════
-// INVESTOR LEVEL SYSTEM
-// ══════════════════════════════════════════════
-function getInvestorLevel(){
-  const invested=U.totalInvested||0;
-  let cur=INVESTOR_LEVELS[0];
-  for(const lv of INVESTOR_LEVELS){ if(invested>=lv.min) cur=lv; }
-  return cur;
-}
-
-function renderInvestorLevel(){
-  const bar=$('inv-level-bar'); if(!bar) return;
-  const invested=U.totalInvested||0;
-  const cur=getInvestorLevel();
-  const next=INVESTOR_LEVELS.find(l=>l.level===cur.level+1);
-  const pct=next ? Math.min(100,Math.round((invested-cur.min)/(next.min-cur.min)*100)) : 100;
-
-  // Only trigger level-up if user actually crossed a threshold THIS session
-  // (not just because they logged in with a higher level than the saved value)
-  const prevLevel = U.investorLevel || 1;
-  if(cur.level > prevLevel){
-    U.investorLevel = cur.level;
-    if(cur.reward > 0){ U.coins += cur.reward; saveU(); updateTopBar(); }
-    // Only show modal if we're already past the login/init phase
-    if(typeof _appReady !== 'undefined' && _appReady){
-      setTimeout(()=>showLevelUpModal(cur), 400);
-    }
-  } else {
-    U.investorLevel = cur.level;
+  // totalInvested: recalculate only if missing
+  if(U.totalInvested === undefined){
+    U.totalInvested = typeof ASSET_DEFS !== 'undefined'
+      ? ASSET_DEFS.reduce((s,a) => s + a.cost*(U.assets[a.id]||0), 0) : 0;
+    changed = true;
   }
 
-  // Build level chips for all 8 levels
-  const chips=INVESTOR_LEVELS.map(lv=>{
-    const unlocked=invested>=lv.min;
-    const lvTitle=(_uiLang==='en'?lv.titleEn:lv.title)||lv.title;
-    return `<div class="inv-unlock-chip ${unlocked?'done':'locked'}" title="Lv.${lv.level}: ${lvTitle}">
-      ${lv.icon} ${lvTitle}${lv.unlocksAsset&&!unlocked?' 🔒':''}
-    </div>`;
-  }).join('');
-
-  bar.innerHTML=`
-    <div class="inv-level-header">
-      <div class="inv-level-badge">${cur.icon}</div>
-      <div class="inv-level-info">
-        <div class="inv-level-title">${cur.icon} ${s_('inv_level_label',{title:(_uiLang==='en'?cur.titleEn:cur.title)||cur.title})}</div>
-        <div class="inv-level-sub">${invested.toLocaleString()} · ${next?s_('inv_next_unlock',{n:next.min.toLocaleString()}):s_('inv_max')}</div>
-      </div>
-      <div class="inv-level-num">Niv. ${cur.level}/8</div>
-    </div>
-    <div class="inv-xp-row">
-      <div class="inv-xp-bar-wrap"><div class="inv-xp-bar" style="width:${pct}%;background:${cur.color}"></div></div>
-      <div class="inv-xp-pct">${pct}%</div>
-    </div>
-    ${next&&next.unlocksAsset?`<div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">${s_('inv_next_asset',{asset:(ASSET_DEFS.find(a=>a.id===next.unlocksAsset)||{name:'?'}).name,n:next.min.toLocaleString()})}${next.reward>0?' · '+s_('inv_reward',{n:next.reward}):''}</div>`:''}
-    <div class="inv-unlock-row">${chips}</div>
-  `;
-}
-
-function showLevelUpModal(lv){
-  toast(`🎉 Niveau ${lv.level} débloqué ! ${lv.icon} ${lv.title} +${lv.reward} pièces !`);
-  confetti();
-}
-
-// ══════════════════════════════════════════════
-// FINANCE ACADEMY
-// ══════════════════════════════════════════════
-let _lessonState={lessonId:null,qi:-1,score:0,answered:false};
-
-function renderAcademy(){
-  const grid=$('lesson-grid'); if(!grid) return;
-  const investorLv=getInvestorLevel().level;
-  const completed=U.lessonsCompleted||{};
-  grid.innerHTML='';
-  FINANCE_LESSONS.forEach(lesson=>{
-    const lt=getLessonT(lesson);
-    const done=!!completed[lesson.id];
-    const locked=lesson.unlockLevel>investorLv;
-    const card=document.createElement('div');
-    card.className=`lesson-card${done?' lesson-done':''}${locked?' lesson-locked':''}`;
-    card.innerHTML=`
-      <div class="lesson-icon">${lesson.icon}</div>
-      <div class="lesson-title">${lt.title||''}</div>
-      <div class="lesson-diff">${lt.difficulty||''}</div>
-      <div class="lesson-reward">🪙 +${lesson.reward}</div>
-      ${done?'<div class="lesson-done-badge">✅</div>':''}
-      ${locked?`<div class="lesson-lock-info">${s_('lesson_locked',{n:lesson.unlockLevel})}</div>`:''}
-    `;
-    if(!locked) card.onclick=()=>openLesson(lesson.id);
-    grid.appendChild(card);
-  });
-}
-
-function openLesson(id){
-  const lesson=FINANCE_LESSONS.find(l=>l.id===id);
-  if(!lesson) return;
-  _lessonState={lessonId:id,qi:-1,score:0,answered:false};
-  const lt=getLessonT(lesson);
-  $('lesson-bc').textContent=lt.title;
-  $('lesson-intro-zone').textContent=lt.intro;
-  $('lesson-intro-zone').style.display='block';
-  $('lesson-q-card').style.display='none';
-  $('lesson-complete').style.display='none';
-  $('lesson-btn-start').style.display='inline-flex';
-  $('lesson-btn-start').textContent=`${lesson.icon} ${s_('lesson_start')} (${lt.questions.length})`;
-  $('lesson-btn-next').style.display='none';
-  $('lesson-prog-fill').style.width='0%';
-  goTo('lesson');
-}
-
-function lessonStartQuestions(){
-  $('lesson-intro-zone').style.display='none';
-  $('lesson-btn-start').style.display='none';
-  _lessonState.qi=0;
-  renderLessonQuestion();
-}
-
-function renderLessonQuestion(){
-  const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
-  if(!lesson) return;
-  const qi=_lessonState.qi;
-  const lt2=getLessonT(lesson);
-  if(qi>=lt2.questions.length){ lessonComplete(); return; }
-  const q=lt2.questions[qi];
-  const total=lt2.questions.length;
-  $('lesson-prog-fill').style.width=`${(qi/total)*100}%`;
-  $('lesson-q-num').textContent=s_('lesson_q_label',{i:qi+1,n:total});
-  $('lesson-q-text').textContent=q.q;
-  $('lesson-explain').textContent='';
-  $('lesson-explain').className='lesson-explain-bar';
-  _lessonState.answered=false;
-
-  const choicesDiv=$('lesson-choices');
-  choicesDiv.innerHTML='';
-  q.choices.forEach((choice,i)=>{
-    const btn=document.createElement('button');
-    btn.className='lesson-choice';
-    btn.textContent=choice;
-    btn.onclick=()=>pickLessonChoice(i,btn,q);
-    choicesDiv.appendChild(btn);
-  });
-
-  $('lesson-q-card').style.display='block';
-  $('lesson-btn-next').style.display='none';
-}
-
-function pickLessonChoice(idx,btn,q){
-  if(_lessonState.answered) return;
-  _lessonState.answered=true;
-  const correct=idx===q.correct;
-  if(correct) _lessonState.score++;
-  // Colour all choices
-  document.querySelectorAll('.lesson-choice').forEach((b,i)=>{
-    b.disabled=true;
-    if(i===q.correct) b.classList.add('choice-correct');
-    else if(i===idx&&!correct) b.classList.add('choice-wrong');
-  });
-  // Show explanation
-  const exp=$('lesson-explain');
-  exp.textContent=(correct?'✅ ':'❌ ')+q.explain;
-  exp.className='lesson-explain-bar show';
-  $('lesson-btn-next').style.display='inline-flex';
-  const _l2=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
-  const _lt2=getLessonT(_l2);
-  $('lesson-btn-next').textContent=_lessonState.qi+1>=_lt2.questions.length?s_('lesson_finish'):s_('lesson_next');
-}
-
-function lessonNext(){
-  _lessonState.qi++;
-  renderLessonQuestion();
-}
-
-function lessonComplete(){
-  const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
-  if(!lesson) return;
-  const score=_lessonState.score;
-  const lt3=getLessonT(lesson);
-  const total=lt3.questions.length;
-  const pct=Math.round(score/total*100);
-  const alreadyDone=(U.lessonsCompleted||{})[lesson.id];
-
-  // Award coins only first time
-  let earned=0;
-  if(!alreadyDone){
-    earned=Math.round(lesson.reward*(pct/100));
-    U.coins+=earned;
-    if(!U.lessonsCompleted) U.lessonsCompleted={};
-    U.lessonsCompleted[lesson.id]=true;
-    saveU(); updateTopBar();
-  }
-
-  $('lesson-q-card').style.display='none';
-  $('lesson-btn-next').style.display='none';
-  $('lesson-btn-start').style.display='none';
-  $('lesson-prog-fill').style.width='100%';
-  $('lesson-done-title').textContent=pct>=80?s_('lesson_done_great'):pct>=50?s_('lesson_done_good'):s_('lesson_done_keep');
-  $('lesson-done-sub').textContent=s_('lesson_done_score',{s:score,t:total,p:pct})+(alreadyDone?' '+s_('lesson_done_already'):'');
-  $('lesson-done-reward').innerHTML=earned>0?`+${earned} <span class="coin"></span>`:`🏆 ${pct}%`;
-  $('lesson-complete').style.display='block';
-  if(earned>0) confetti();
-}
-
-// ══════════════════════════════════════════════
-// PORTFOLIO SCREEN
-// ══════════════════════════════════════════════
-function renderPortfolio(){
-  if(!U) return;
-  // Safety: ensure all required fields exist (in case of old saved data)
-  if(!U.assets)      U.assets = {};
-  if(!U.assetValues) U.assetValues = {};
-  if(!U.lessonsCompleted) U.lessonsCompleted = {};
-  if(U.investorLevel === undefined) U.investorLevel = 1;
-  if(!U.totalInvested) U.totalInvested = 0;
-  calcDividends();
-  const wealth=getTotalWealth();
-  const daily=getDailyDividend();
-  const invested=U.totalInvested||0;
-  $('wealth-total').innerHTML=`${wealth.toLocaleString()} <span class="coin"></span>`;
-  $('wealth-sub').innerHTML=`+${daily.toFixed(1)} <span class="coin"></span>/j · Patrimoine en croissance constante`;
-  $('pf-coins').innerHTML=Math.floor(U.coins).toLocaleString()+' <span class="coin"></span>';
-  $('pf-div-total').innerHTML=daily.toFixed(1)+' <span class="coin"></span>/j';
-  $('pf-invested').innerHTML=invested.toLocaleString()+' <span class="coin"></span>';
-
-  // Dividend banner
-  const pending=U.pendingDiv||0;
-  const db=$('div-banner');
-  if(pending>=1){
-    db.style.display='flex';
-    $('div-amount').innerHTML=`+${Math.floor(pending)} <span class="coin"></span>`;
-    $('div-banner-sub').innerHTML=`Dividendes accumulés · Taux journalier : ${daily.toFixed(1)} <span class="coin"></span>`;
-    $('collect-btn').disabled=false;
-  } else { db.style.display='none'; }
-
-  // Investor level bar
-  renderInvestorLevel();
-
-  // Finance Academy
-  renderAcademy();
-
-  // Assets grid
-  const investorLv=getInvestorLevel().level;
-  const grid=$('assets-grid'); grid.innerHTML='';
-  ASSET_DEFS.forEach(a=>{
-    const owned=U.assets[a.id]||0;
-    const unlocked=a.unlockLevel<=investorLv;
-    const base=a.cost*owned;
-    const appreciated=base+(U.assetValues[a.id]||0);
-    const scaledCost=Math.round(a.cost*(1+owned*0.1));
-    const canBuy=U.coins>=scaledCost&&unlocked;
-    const pct=Math.min(100,owned*10);
-    const dailyEarn=(a.cost*owned*a.divRate).toFixed(1);
-    const growthPct=owned>0?((U.assetValues[a.id]||0)/Math.max(base,1)*100).toFixed(1):0;
-    const reqLv=INVESTOR_LEVELS.find(l=>l.level===a.unlockLevel);
-
-    const div=document.createElement('div');
-    div.className=`asset-card ${a.class}${!unlocked?' asset-locked':''}`;
-    div.style='position:relative;';
-    div.innerHTML=`
-      ${!unlocked?`<div class="asset-locked-overlay">
-        <div class="asset-locked-icon">🔒</div>
-        <div class="asset-locked-msg">Niveau Investisseur ${a.unlockLevel} requis<br><small>Investis ${(INVESTOR_LEVELS.find(l=>l.level===a.unlockLevel)||{min:0}).min.toLocaleString()} pièces au total</small></div>
-      </div>`:''}
-      <div class="asset-header">
-        <div class="asset-icon">${a.icon}</div>
-        <div style="flex:1">
-          <div class="asset-name">${a.name}</div>
-          <div class="asset-type">${a.type}</div>
-          <div class="asset-real-price" id="rp-${a.id}" style="font-size:.7rem;color:var(--accent3);margin-top:2px;">
-            ${unlocked?'Chargement…':'Prix masqué'}
-          </div>
-        </div>
-        <div class="asset-value">
-          <div class="asset-price">${Math.floor(appreciated).toLocaleString()} <span class="coin"></span></div>
-          <div class="asset-change">${owned>0?`+${growthPct}% depuis achat`:`Niv. ${a.unlockLevel}`}</div>
-        </div>
-      </div>
-      <div class="asset-progress">
-        <div class="asset-progress-bar"><div class="asset-progress-fill" style="width:${pct}%"></div></div>
-        <div class="asset-owned"><span>${owned} unité${owned!==1?'s':''}</span><span>${a.cost} <span class="coin"></span>/unité</span></div>
-      </div>
-      <div class="asset-div-info">🌱 ${a.divRate*100}%/j · <strong>${dailyEarn} <span class="coin"></span>/jour</strong> · Croissance +${(a.growthRate*100).toFixed(2)}%/j</div>
-      <div style="font-size:.74rem;color:var(--muted);margin:6px 0 10px;">${a.desc}</div>
-      <button class="asset-info-btn" onclick="openAssetInfo('${a.id}')">📊 Données marché réel</button>
-      <div class="asset-actions">
-        <button class="asset-buy-btn" onclick="buyAsset('${a.id}')" ${!canBuy?'disabled':''}>
-          ${owned===0?`Acheter (${scaledCost} <span class="coin"></span>)`:`+1 unité (${scaledCost} <span class="coin"></span>)`}
-        </button>
-        ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre (${Math.round(a.cost*(1+(owned-1)*0.1)*0.8)} <span class="coin"></span>)</button>`:''}
-        ${owned>0?`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:8px 12px;font-size:.78rem;color:var(--green);font-weight:700;">+${dailyEarn} <span class="coin"></span>/j</div>`:''} 
-      </div>
-    `;
-    grid.appendChild(div);
-  });
-
-  // Fetch live prices
-  setTimeout(()=>{ fetchMarketPrices(); updateTarget(); }, 0);
-}
-
-function buyAsset(id){
-  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
-  const investorLv=getInvestorLevel().level;
-  if(a.unlockLevel>investorLv){ toast('🔒 Niveau investisseur insuffisant'); return; }
-  const owned=U.assets[id]||0;
-  const scaledCost=Math.round(a.cost*(1+owned*0.1));
-  if(U.coins<scaledCost){ toast('❌ Pas assez de pièces'); return; }
-  U.coins-=scaledCost;
-  U.assets[id]=owned+1;
-  U.totalInvested=(U.totalInvested||0)+scaledCost;
-  saveU(); updateTopBar();
-  floatCoin($('assets-grid'),`-${scaledCost} <span class="coin"></span>`);
-  renderPortfolio();
-  toast(`${a.icon} ${a.name} niv.${U.assets[id]} · +${(a.divRate*100).toFixed(1)}%/j`);
-  setTimeout(()=>{ if(typeof checkTrophies==='function') checkTrophies(); }, 400);
-}
-
-function sellAsset(id){
-  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
-  const owned=U.assets[id]||0; if(owned<=0) return;
-  const lastCost=Math.round(a.cost*(1+(owned-1)*0.1));
-  const sellPrice=Math.round(lastCost*0.8);
-  U.coins+=sellPrice;
-  U.assets[id]=owned-1;
-  U.totalInvested=Math.max(0,(U.totalInvested||0)-lastCost);
-  if(U.assetValues[id]) U.assetValues[id]=Math.max(0,U.assetValues[id]-lastCost*0.05);
-  saveU(); updateTopBar();
-  floatCoin($('assets-grid'),`+${sellPrice} <span class="coin"></span>`);
-  renderPortfolio();
-  toast(`Vendu 1× ${a.name} → +${sellPrice} pièces (80%)`);
-}
-
-// ══════════════════════════════════════════════
-// REAL MARKET DATA — 8 assets
-// ══════════════════════════════════════════════
-const MARKET_IDS = {
-  gold:   {source:'yahoo',    ticker:'GC%3DF',  label:'Or / XAU',         unit:'USD/oz'},
-  house:  {source:'yahoo',    ticker:'VNQ',     label:'REIT VNQ',          unit:'USD'},
-  stock:  {source:'yahoo',    ticker:'SPY',     label:'S&P 500 ETF',       unit:'USD'},
-  crypto: {source:'coingecko',cgId:'bitcoin',   label:'Bitcoin / USD',     unit:'USD'},
-  etf:    {source:'yahoo',    ticker:'VT',      label:'ETF Monde VT',      unit:'USD'},
-  bonds:  {source:'yahoo',    ticker:'TLT',     label:'Obligations TLT',   unit:'USD'},
-  oil:    {source:'yahoo',    ticker:'CL%3DF',  label:'Pétrole WTI',       unit:'USD/baril'},
-  nasdaq: {source:'yahoo',    ticker:'QQQ',     label:'Nasdaq 100 QQQ',    unit:'USD'},
-};
-
-const _priceCache={};
-let _lastFetch=0;
-
-async function fetchMarketPrices(){
-  const now=Date.now();
-  if(now-_lastFetch<5*60*1000&&Object.keys(_priceCache).length>0){ updatePriceDisplay(); return; }
-  _lastFetch=now;
-
-  // Bitcoin via CoinGecko
-  try{
-    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',{mode:'cors'});
-    if(r.ok){const d=await r.json(); if(d.bitcoin) _priceCache.crypto={price:d.bitcoin.usd,change:d.bitcoin.usd_24h_change};}
-  }catch(e){}
-
-  // Yahoo Finance via allorigins proxy — all other tickers
-  const yahooIds=['gold','house','stock','etf','bonds','oil','nasdaq'];
-  for(const id of yahooIds){
-    const info=MARKET_IDS[id]; if(!info||info.source!=='yahoo') continue;
-    try{
-      const url=`https://query1.finance.yahoo.com/v8/finance/chart/${info.ticker}?interval=1d&range=5d`;
-      const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
-      if(r.ok){
-        const wrapper=await r.json();
-        const d=JSON.parse(wrapper.contents);
-        const res=d?.chart?.result?.[0];
-        if(res){
-          const price=res.meta.regularMarketPrice;
-          const prev=res.meta.chartPreviousClose||res.meta.previousClose;
-          _priceCache[id]={price, change:prev?((price-prev)/prev*100):0, history:res.indicators?.quote?.[0]?.close||[]};
-        }
-      }
-    }catch(e){}
-  }
-  updatePriceDisplay();
-}
-
-function updatePriceDisplay(){
-  Object.entries(MARKET_IDS).forEach(([id,info])=>{
-    const el=document.getElementById('rp-'+id); if(!el) return;
-    const c=_priceCache[id];
-    if(!c){el.innerHTML=`<span style="color:var(--muted)">${info.label} — indisponible</span>`; return;}
-    const chgColor=c.change>=0?'var(--green)':'var(--red)';
-    const chgStr=(c.change>=0?'+':'')+c.change.toFixed(2)+'%';
-    el.innerHTML=`${info.label}: <strong>$${c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong> <span style="color:${chgColor}">${chgStr}</span>`;
-  });
-}
-
-// ══════════════════════════════════════════════
-// ASSET INFO MODAL
-// ══════════════════════════════════════════════
-let _currentAssetId=null;
-
-function openAssetInfo(id){
-  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
-  _currentAssetId=id;
-  const owned=U.assets[id]||0;
-  const base=a.cost*owned;
-  const appreciated=base+(U.assetValues[id]||0);
-  const daily=(a.cost*owned*a.divRate).toFixed(1);
-  const pv=appreciated-base;
-
-  $('amod-icon').textContent=a.icon;
-  $('amod-name').textContent=a.name;
-  $('amod-type').textContent=a.type+' · '+(MARKET_IDS[id]?.label||'');
-  $('amod-owned').textContent=owned+' unité'+(owned!==1?'s':'');
-  $('amod-val').innerHTML=Math.floor(appreciated)+' <span class="coin"></span>';
-  $('amod-daily').innerHTML=daily+' <span class="coin"></span>/j';
-  $('amod-pv').innerHTML=`<span style="color:${pv>=0?'var(--green)':'var(--red)'}">${pv>=0?'+':''}${Math.floor(pv)} <span class="coin"></span></span>`;
-  $('amod-explain').textContent=a.realWhat||a.explain;
-
-  // Live price
-  const c=_priceCache[id];
-  if(c){
-    $('amod-price').textContent='$'+c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-    $('amod-change').innerHTML=`<span style="color:${c.change>=0?'var(--green)':'var(--red)'}">${c.change>=0?'+':''}${c.change.toFixed(2)}% sur 24h</span>`;
-    $('amod-ticker').textContent=MARKET_IDS[id]?.label||'';
-    // Mini sparkline chart
-    renderSparkline(id, c.history||[]);
-  } else {
-    $('amod-price').textContent='Chargement…';
-    $('amod-change').textContent='';
-    $('amod-ticker').textContent='';
-    fetchMarketPrices().then(()=>{
-      const fresh=_priceCache[id];
-      if(fresh&&_currentAssetId===id){
-        $('amod-price').textContent='$'+fresh.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-        const cc=fresh.change>=0?'var(--green)':'var(--red)';
-        $('amod-change').innerHTML=`<span style="color:${cc}">${fresh.change>=0?'+':''}${fresh.change.toFixed(2)}% sur 24h</span>`;
-        renderSparkline(id,fresh.history||[]);
-      }
+  // Ensure assetValues for all known assets
+  if(typeof ASSET_DEFS !== 'undefined'){
+    ASSET_DEFS.forEach(a => {
+      if(U.assetValues[a.id] === undefined){ U.assetValues[a.id] = 0; changed = true; }
     });
   }
 
-  // Wire buy/sell
-  const scaledCost=Math.round(a.cost*(1+owned*0.1));
-  $('amod-buy-btn').innerHTML=`Acheter (${scaledCost})`;
-  $('amod-buy-btn').onclick=()=>{buyAsset(id);openAssetInfo(id);};
-  $('amod-buy-btn').disabled=U.coins<scaledCost||(a.unlockLevel>getInvestorLevel().level);
-  const sellPrice=owned>0?Math.round(a.cost*(1+(owned-1)*0.1)*0.8):0;
-  $('amod-sell-btn').innerHTML=owned>0?`Vendre (${sellPrice})`:'Vendre';
-  $('amod-sell-btn').onclick=()=>{if(owned>0){sellAsset(id);closeAssetModal();}};
-  $('amod-sell-btn').disabled=owned<=0;
-
-  $('asset-modal').style.display='flex';
-}
-
-function renderSparkline(id, history){
-  // Draw a tiny SVG sparkline inside the modal's price block
-  const container=$('amod-price').parentElement;
-  const existing=container.querySelector('.amod-sparkline');
-  if(existing) existing.remove();
-  const data=history.filter(v=>v!=null);
-  if(data.length<2) return;
-  const w=280,h=40;
-  const min=Math.min(...data),max=Math.max(...data),range=max-min||1;
-  const pts=data.map((v,i)=>{
-    const x=Math.round(i/(data.length-1)*w);
-    const y=Math.round(h-(v-min)/range*h);
-    return `${x},${y}`;
-  }).join(' ');
-  const rising=data[data.length-1]>=data[0];
-  const color=rising?'#10b981':'#ef4444';
-  const svg=document.createElement('div');
-  svg.className='amod-sparkline';
-  svg.style='margin-top:8px;';
-  svg.innerHTML=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px">
-    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="${data.length>1?(data.length-1)/(data.length-1)*w:w}" cy="${h-(data[data.length-1]-min)/range*h}" r="3" fill="${color}"/>
-    <text x="2" y="10" font-size="8" fill="var(--muted)">5j</text>
-  </svg>`;
-  container.appendChild(svg);
-}
-
-function closeAssetModal(e){
-  if(!e||e.target===$('asset-modal')){
-    $('asset-modal').style.display='none';
-    _currentAssetId=null;
+  // Calculate real investor level — never reset to 1
+  if(typeof INVESTOR_LEVELS !== 'undefined' && INVESTOR_LEVELS.length){
+    let realLevel = 1;
+    const invested = U.totalInvested || 0;
+    for(const lv of INVESTOR_LEVELS){ if(invested >= lv.min) realLevel = lv.level; }
+    if(U.investorLevel === undefined || U.investorLevel < realLevel){
+      U.investorLevel = realLevel; changed = true;
+    }
+  } else {
+    if(U.investorLevel === undefined){ U.investorLevel = 1; changed = true; }
   }
+
+  // Only save if something was actually missing — don't overwrite fresh data
+  if(changed) saveU();
+}
+
+let _appReady = false;
+function afterLogin(){
+  migrateUser();
+  showChrome();
+  calcDividends();
+  updateTopBar();
+  navTo('learn');
+  // Mark app as ready AFTER init — level-up modal only fires after this
+  setTimeout(()=>{ _appReady = true; }, 800);
+}
+
+function showChrome(){$('top-bar').style.display='flex';$('nav-bar').style.display='flex';}
+function hideChrome(){$('top-bar').style.display='none';$('nav-bar').style.display='none';}
+
+
+// ══════════════════════════════════════════════
+// SHOW / HIDE PASSWORD
+// ══════════════════════════════════════════════
+function togglePass(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? '🙈' : '👁';
+  btn.classList.toggle('visible', isHidden);
 }
 
 // ══════════════════════════════════════════════
-// GLOBAL ENTER KEY
+// FORGOT PASSWORD
 // ══════════════════════════════════════════════
-document.addEventListener('keydown',function(e){
-  if(e.key!=='Enter') return;
-  const active=document.querySelector('.screen.active');
-  if(!active) return;
-  if(active.id==='screen-game'){
-    const nb=$('btn-next'),cb=$('btn-check');
-    if(nb&&nb.style.display!=='none'){e.preventDefault();nextQ();return;}
-    if(cb&&cb.style.display!=='none'&&S.curType!=='fill'){e.preventDefault();checkCurrentQ();}
+let _forgotEmail = null;
+
+function openForgot() {
+  _forgotEmail = null;
+  // Reset all steps
+  document.getElementById('forgot-step-1').style.display = 'block';
+  document.getElementById('forgot-step-2').style.display = 'none';
+  document.getElementById('forgot-step-3').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-err-1').textContent = '';
+  document.getElementById('forgot-err-1').classList.remove('show');
+  const m = document.getElementById('forgot-modal');
+  if (m) { m.style.display = 'flex'; }
+}
+
+function closeForgot(e) {
+  if (e && e.target !== document.getElementById('forgot-modal')) return;
+  const m = document.getElementById('forgot-modal');
+  if (m) m.style.display = 'none';
+}
+
+function _forgotErr(step, msg) {
+  const id = 'forgot-err-' + step;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+async function forgotStep1() {
+  const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { _forgotErr(1, 'Entre un email valide.'); return; }
+
+  const btn = document.getElementById('btn-forgot-1');
+  const orig = btn.textContent; btn.textContent = t('forgot_checking'); btn.disabled = true;
+
+  try {
+    // Try Supabase first
+    let userData = null;
+    try {
+      const { data, error } = await _SB.from('users').select('data').eq('email', email).single();
+      if (data && !error) userData = data.data;
+    } catch(e) {}
+
+    // Fallback to localStorage
+    if (!userData) {
+      const users = loadUsers();
+      if (users[email]) userData = users[email];
+    }
+
+    if (!userData) {
+      _forgotErr(1, t('forgot_not_found'));
+      return;
+    }
+
+    _forgotEmail = email;
+    document.getElementById('forgot-found-name').textContent =
+      (userData.name || 'Utilisateur') + ' · ' + email;
+    document.getElementById('forgot-new-pass').value = '';
+    document.getElementById('forgot-confirm-pass').value = '';
+    document.getElementById('forgot-err-2').textContent = '';
+    document.getElementById('forgot-err-2').classList.remove('show');
+    document.getElementById('forgot-step-1').style.display = 'none';
+    document.getElementById('forgot-step-2').style.display = 'block';
+    setTimeout(() => document.getElementById('forgot-new-pass').focus(), 100);
+
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
   }
-  if(active.id==='screen-lesson'){
-    const nb=$('lesson-btn-next');
-    if(nb&&nb.style.display!=='none'){e.preventDefault();lessonNext();}
+}
+
+async function forgotStep2() {
+  if (!_forgotEmail) { openForgot(); return; }
+
+  const newPass    = document.getElementById('forgot-new-pass').value;
+  const confirmPass = document.getElementById('forgot-confirm-pass').value;
+
+  if (newPass.length < 6) { _forgotErr(2, t('forgot_short')); return; }
+  if (newPass !== confirmPass) { _forgotErr(2, t('forgot_mismatch')); return; }
+
+  const btn = document.getElementById('btn-forgot-2');
+  const orig = btn.textContent; btn.textContent = t('forgot_resetting'); btn.disabled = true;
+
+  try {
+    // Load full user data
+    let userData = null;
+    try {
+      const { data } = await _SB.from('users').select('data').eq('email', _forgotEmail).single();
+      if (data) userData = data.data;
+    } catch(e) {}
+    if (!userData) {
+      const users = loadUsers();
+      userData = users[_forgotEmail];
+    }
+    if (!userData) { _forgotErr(2, t('forgot_error')); return; }
+
+    // Update password
+    userData.pass = btoa(newPass);
+    userData._savedAt = Date.now();
+
+    // Save to localStorage
+    const users = loadUsers();
+    users[_forgotEmail] = userData;
+    saveUsers(users);
+    localStorage.setItem('lq_u_' + _forgotEmail, JSON.stringify(userData));
+
+    // Save to Supabase
+    try {
+      await _SB.from('users').upsert({
+        email: _forgotEmail,
+        data: userData,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'email' });
+    } catch(e) { /* offline — localStorage saved */ }
+
+    // Pre-fill login email field
+    const loginEmail = document.getElementById('login-email');
+    if (loginEmail) loginEmail.value = _forgotEmail;
+
+    document.getElementById('forgot-step-2').style.display = 'none';
+    document.getElementById('forgot-step-3').style.display = 'block';
+    _forgotEmail = null;
+
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
   }
-});
+}
