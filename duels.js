@@ -32,8 +32,8 @@ function _randCode() {
 
 // ── CREATE DUEL ──────────────────────────────────────────────
 async function createDuel() {
-  if (!U || U.isGuest) { toast('❗ Connecte-toi pour créer un duel'); return; }
-  if (!S.nL || !S.tL)  { toast('❗ Choisis une langue d\'abord'); navTo('learn'); return; }
+  if (!U || U.isGuest) { toast(t('duel_login')); return; }
+  if (!S.nL || !S.tL)  { toast(t('duel_no_lang')); navTo('learn'); return; }
 
   const allIds = Object.keys(WD);
   const ids    = allIds.sort(()=>Math.random()-.5).slice(0, 8);
@@ -58,30 +58,30 @@ async function createDuel() {
     _currentDuel = { code, qs, role:'creator' };
     renderDuelLobby(code, 'creator');
   } catch(e) {
-    toast('❌ Erreur création duel — vérifie ta connexion');
+    toast(t('duel_error'));
     console.error(e);
   }
 }
 
 // ── JOIN DUEL ────────────────────────────────────────────────
 async function joinDuel() {
-  if (!U || U.isGuest) { toast('❗ Connecte-toi pour rejoindre un duel'); return; }
+  if (!U || U.isGuest) { toast(t('duel_join_login')); return; }
   const input = document.getElementById('duel-code-input');
   const code  = (input?.value || '').trim().toUpperCase();
-  if (code.length !== 6) { toast('❗ Code à 6 caractères'); return; }
+  if (code.length !== 6) { toast(t('duel_code_len')); return; }
 
   try {
     const { data, error } = await _SB.from('duels').select('*').eq('code', code).single();
-    if (error || !data) { toast('❌ Duel introuvable'); return; }
-    if (data.status !== 'open') { toast('❌ Ce duel est déjà terminé'); return; }
-    if (data.creator_email === U.email) { toast('❌ Tu ne peux pas jouer contre toi-même !'); return; }
+    if (error || !data) { toast(t('duel_not_found')); return; }
+    if (data.status !== 'open') { toast(t('duel_done')); return; }
+    if (data.creator_email === U.email) { toast(t('duel_self')); return; }
 
     S.nL = data.lang_native;
     S.tL = data.lang_target;
     _currentDuel = { code, qs: data.questions, role:'challenger', data };
     startDuelGame();
   } catch(e) {
-    toast('❌ Erreur — vérifie ta connexion');
+    toast(t('duel_conn_error'));
     console.error(e);
   }
 }
@@ -104,7 +104,7 @@ function startDuelGame() {
   banner.className = 'duel-banner';
   banner.innerHTML = `⚔️ DUEL EN COURS · Code : <b>${_currentDuel.code}</b>`;
   document.getElementById('game-inner')?.prepend(banner);
-  toast(`⚔️ Duel — ${role==='creator' ? 'joue et partage ton code !' : 'bonne chance !'}`);
+  toast(role==='creator' ? t('duel_go_creator') : t('duel_go_challenger'));
 }
 
 // Called from showResults — submit score if it's a duel
@@ -114,7 +114,7 @@ async function submitDuelScore(score, correct) {
   try {
     if (role === 'creator') {
       await _SB.from('duels').update({ creator_score: score, creator_correct: correct, status:'waiting' }).eq('code', code);
-      toast('✅ Score envoyé ! Partage le code ' + code + ' à ton ami');
+      toast(t('duel_score_sent',{c:code}));
       renderDuelLobby(code, 'creator', score);
     } else {
       const { data } = await _SB.from('duels').select('creator_score,creator_name,creator_correct').eq('code', code).single();
@@ -132,11 +132,11 @@ function showDuelResult(myScore, myCorrect, opponentData) {
     checkTrophies();
   }
   const el = document.getElementById('duel-result-modal');
-  if (!el) { toast(won ? '🏆 Tu as gagné le duel !' : '😤 Tu as perdu — revanche ?'); return; }
+  if (!el) { toast(won ? '🏆 '+t('duel_win') : '😤 '+t('duel_lose')); return; }
   el.innerHTML = `
     <div class="duel-result ${won?'duel-win':'duel-lose'}">
       <div style="font-size:3rem;">${won?'🏆':'😤'}</div>
-      <div class="duel-result-title">${won ? 'Victoire !' : 'Défaite'}</div>
+      <div class="duel-result-title">${won ? t('duel_win') : t('duel_lose')}</div>
       <div class="duel-scores">
         <div class="duel-score-block">
           <div class="duel-score-name">👤 Toi</div>
@@ -144,7 +144,7 @@ function showDuelResult(myScore, myCorrect, opponentData) {
         </div>
         <div style="font-size:1.4rem;color:var(--muted);">vs</div>
         <div class="duel-score-block">
-          <div class="duel-score-name">${opponentData?.creator_name||'Adversaire'}</div>
+          <div class="duel-score-name">${opponentData?.creator_name||t('duel_opponent')}</div>
           <div class="duel-score-val">${opponentData?.creator_score||0} pts (${opponentData?.creator_correct||0}✓)</div>
         </div>
       </div>
@@ -169,8 +169,8 @@ function renderDuelLobby(code, role, score) {
       <div style="font-size:3rem;margin-bottom:8px;">⚔️</div>
       <div style="font-size:1.4rem;font-weight:900;">Code du duel</div>
       <div class="duel-code-display">${code}</div>
-      <div style="color:var(--muted);font-size:.8rem;margin-bottom:16px;">Partage ce code à ton adversaire</div>
-      ${score !== undefined ? `<div style="color:var(--green);font-weight:800;margin-bottom:12px;">Ton score : ${score} pts ✓ En attente de l\'adversaire…</div>` : ''}
+      <div style="color:var(--muted);font-size:.8rem;margin-bottom:16px;">${t('duel_share_code')}</div>
+      ${score !== undefined ? `<div style="color:var(--green);font-weight:800;margin-bottom:12px;">${t('duel_your_score',{s:score})} ${t('duel_wait')}</div>` : ''}
       <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${code}');toast('Code copié !')">📋 Copier le code</button>
       <button class="btn btn-secondary" onclick="startDuelGame()" style="margin-left:8px;">Jouer maintenant →</button>
     </div>`;
