@@ -36,6 +36,16 @@ function pickTheme(mode) {
   navTo('auth');
 }
 
+// ── Translation helper ──────────────────────────────────────────
+// t('key') → current UI string
+// t('key', {n:5}) → replaces {n} with 5
+function t(key, vars) {
+  const s = UI_STRINGS[_uiLang] || UI_STRINGS.fr;
+  let str = s[key] || (UI_STRINGS.fr[key]) || key;
+  if (vars) Object.entries(vars).forEach(([k,v]) => { str = str.replace(new RegExp('{'+k+'}','g'), v); });
+  return str;
+}
+
 function applyUILang() {
   const s = UI_STRINGS[_uiLang] || UI_STRINGS.fr;
   const set = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
@@ -158,6 +168,19 @@ function applyUILang() {
   set('theme-btn-random', s.theme_random);
   set('btn-change-lang', s.btn_change_lang);
   set('btn-logout', s.btn_logout);
+
+  // FORGOT PASSWORD MODAL
+  set('lbl-forgot-link',         s.forgot_link);
+  set('lbl-forgot-title',        s.forgot_title);
+  set('lbl-forgot-sub',          s.forgot_sub);
+  set('btn-forgot-1',            s.forgot_check);
+  set('lbl-forgot-found-title',  s.forgot_found_title);
+  set('lbl-forgot-new-pass',     s.forgot_new_pass);
+  set('lbl-forgot-confirm-pass', s.forgot_confirm_pass);
+  set('btn-forgot-2',            s.forgot_reset);
+  set('lbl-forgot-success-title',s.forgot_success_title);
+  set('lbl-forgot-success-sub',  s.forgot_success_sub);
+  set('btn-forgot-login',        s.forgot_login);
 
   // QR MODAL
   set('lbl-qr-title', s.qr_title);
