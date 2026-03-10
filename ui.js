@@ -11,7 +11,7 @@ function navTo(tab){
   ['learn','portfolio','shop','profile','rank'].forEach(t=>{
     const n=$('nav-'+t); if(n) n.classList.toggle('active',t===tab);
   });
-  if(tab==='portfolio'){ renderPortfolio(); renderMarketNews(); }
+  if(tab==='portfolio'){ renderPortfolio(); }
   if(tab==='shop') renderShop();
   if(tab==='profile'){ renderProfile(); renderTrophiesPreview(); }
   if(tab==='rank'){ renderLeaderboard(); renderDuelsScreen(); }
