@@ -324,8 +324,8 @@ function renderPortfolio(){
         <div style="flex:1">
           <div class="asset-name">${a.name}</div>
           <div class="asset-type">${a.type}</div>
-          <div class="asset-real-price" id="rp-${a.id}" style="font-size:.7rem;color:var(--accent3);margin-top:2px;">
-            ${unlocked?'Chargement…':'Prix masqué'}
+          <div class="asset-real-price" id="rp-${a.id}" style="font-size:.78rem;font-weight:700;color:var(--accent3);margin-top:3px;">
+            ${unlocked?'Chargement prix réel…':'Prix masqué'}
           </div>
         </div>
         <div class="asset-value">
@@ -435,17 +435,44 @@ async function fetchMarketPrices(){
       }
     }catch(e){}
   }
+  applyRealPriceGrowth();
   updatePriceDisplay();
+}
+
+// Drive practice asset appreciation from real market % change
+function applyRealPriceGrowth(){
+  if(!U) return;
+  if(!U._lastRealPrice) U._lastRealPrice={};
+  let changed=false;
+  ASSET_DEFS.forEach(a=>{
+    const owned=U.assets[a.id]||0;
+    const cache=_priceCache[a.id];
+    if(!cache) return;
+    const last=U._lastRealPrice[a.id];
+    if(!last){
+      U._lastRealPrice[a.id]=cache.price;
+      changed=true;
+      return;
+    }
+    if(owned>0 && last!==cache.price){
+      const pct=(cache.price-last)/last;
+      const base=a.cost*owned;
+      U.assetValues[a.id]=(U.assetValues[a.id]||0)+base*pct;
+      changed=true;
+    }
+    U._lastRealPrice[a.id]=cache.price;
+  });
+  if(changed) saveU();
 }
 
 function updatePriceDisplay(){
   Object.entries(MARKET_IDS).forEach(([id,info])=>{
     const el=document.getElementById('rp-'+id); if(!el) return;
     const c=_priceCache[id];
-    if(!c){el.innerHTML=`<span style="color:var(--muted)">${info.label} — indisponible</span>`; return;}
+    if(!c){el.innerHTML=`<span style="color:var(--muted);font-size:.7rem;">prix indisponible</span>`; return;}
     const chgColor=c.change>=0?'var(--green)':'var(--red)';
-    const chgStr=(c.change>=0?'+':'')+c.change.toFixed(2)+'%';
-    el.innerHTML=`${info.label}: <strong>$${c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong> <span style="color:${chgColor}">${chgStr}</span>`;
+    const chgSign=c.change>=0?'+':'';
+    el.innerHTML=`<span style="font-weight:800;color:var(--text);">$${c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span> <span style="color:${chgColor};font-weight:700;">${chgSign}${c.change.toFixed(2)}% aujourd'hui</span>`;
   });
 }
 
