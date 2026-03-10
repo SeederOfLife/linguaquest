@@ -126,27 +126,55 @@ function showLevelUpModal(lv){
 // ══════════════════════════════════════════════
 let _lessonState={lessonId:null,qi:-1,score:0,answered:false};
 
+function isLessonUnlocked(lesson, completed){
+  if(!lesson.prereq) return true;
+  return !!completed[lesson.prereq];
+}
+
 function renderAcademy(){
   const grid=$('lesson-grid'); if(!grid) return;
-  const investorLv=getInvestorLevel().level;
   const completed=U.lessonsCompleted||{};
+  const lang=(typeof _uiLang!=='undefined'&&_uiLang)||'fr';
   grid.innerHTML='';
-  FINANCE_LESSONS.forEach(lesson=>{
-    const lt=getLessonT(lesson);
-    const done=!!completed[lesson.id];
-    const locked=lesson.unlockLevel>investorLv;
-    const card=document.createElement('div');
-    card.className=`lesson-card${done?' lesson-done':''}${locked?' lesson-locked':''}`;
-    card.innerHTML=`
-      <div class="lesson-icon">${lesson.icon}</div>
-      <div class="lesson-title">${lt.title||''}</div>
-      <div class="lesson-diff">${lt.difficulty||''}</div>
-      <div class="lesson-reward">🪙 +${lesson.reward}</div>
-      ${done?'<div class="lesson-done-badge">✅</div>':''}
-      ${locked?`<div class="lesson-lock-info">${s_('lesson_locked',{n:lesson.unlockLevel})}</div>`:''}
-    `;
-    if(!locked) card.onclick=()=>openLesson(lesson.id);
-    grid.appendChild(card);
+
+  // Group lessons by topic
+  const topicOrder=['bases','bourse','risque','macro','avance'];
+  const byTopic={};
+  FINANCE_LESSONS.forEach(l=>{
+    const t=l.topic||'bases';
+    if(!byTopic[t]) byTopic[t]=[];
+    byTopic[t].push(l);
+  });
+
+  topicOrder.forEach(topicId=>{
+    const lessons=byTopic[topicId]; if(!lessons||!lessons.length) return;
+    const topicDef=(typeof LESSON_TOPICS!=='undefined'&&LESSON_TOPICS)?
+      LESSON_TOPICS.find(t=>t.id===topicId):null;
+    const topicLabel=topicDef?(topicDef.label[lang]||topicDef.label.fr||topicId):topicId;
+
+    const doneCount=lessons.filter(l=>!!completed[l.id]).length;
+    const header=document.createElement('div');
+    header.className='academy-topic-header';
+    header.innerHTML=`<span class="academy-topic-label">${topicLabel}</span><span class="academy-topic-progress">${doneCount}/${lessons.length}</span>`;
+    grid.appendChild(header);
+
+    lessons.forEach(lesson=>{
+      const lt=getLessonT(lesson);
+      const done=!!completed[lesson.id];
+      const unlocked=isLessonUnlocked(lesson,completed);
+      const card=document.createElement('div');
+      card.className=`lesson-card${done?' lesson-done':''}${!unlocked?' lesson-locked':''}`;
+      card.innerHTML=`
+        <div class="lesson-icon">${lesson.icon}</div>
+        <div class="lesson-title">${lt.title||''}</div>
+        <div class="lesson-diff">${lt.difficulty||''}</div>
+        <div class="lesson-reward">🪙 +${lesson.reward}</div>
+        ${done?'<div class="lesson-done-badge">✅</div>':''}
+        ${!unlocked?'<div class="lesson-lock-info">🔒</div>':''}
+      `;
+      if(unlocked) card.onclick=()=>openLesson(lesson.id);
+      grid.appendChild(card);
+    });
   });
 }
 
