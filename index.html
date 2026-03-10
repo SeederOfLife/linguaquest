@@ -366,16 +366,7 @@
 <!-- ══════════════════ PORTFOLIO SCREEN ══════════════════ -->
 <div class="screen screen-padded" id="screen-portfolio">
 
-  <!-- ── Portfolio mode toggle ── -->
-  <div class="pf-mode-toggle">
-    <button class="pf-mode-btn active" id="pf-mode-practice" onclick="setPortfolioMode('practice')">🎮 Pratique</button>
-    <button class="pf-mode-btn real-btn" id="pf-mode-real" onclick="setPortfolioMode('real')">📈 Simulé Réel</button>
-  </div>
-
-  <!-- ── Market News Strip ── -->
-
-  <!-- ── PRACTICE ZONE (coin-based, dividends, levels) ── -->
-  <div id="pf-practice-zone">
+  <!-- ── PORTFOLIO ── -->
   <div class="wealth-hero">
     <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;" id="lbl-wealth-hero">◈ Patrimoine total</div>
     <div class="wealth-total" id="wealth-total">0 <span class="coin"></span></div>
@@ -465,10 +456,7 @@
   <!-- Ad slot — portfolio -->
 </div>
   <div class="assets-grid" id="assets-grid"></div>
-  </div><!-- end pf-practice-zone -->
 
-  <!-- ── REAL PORTFOLIO ZONE ── -->
-  <div id="pf-real-zone" style="display:none;"></div>
 
 </div>
 
@@ -662,7 +650,7 @@
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="ui.js"></script>
-<script src="realportfolio.js"></script>
+
 <script src="speech.js"></script>
 <script src="game.js"></script>
 <script src="portfolio.js"></script>
