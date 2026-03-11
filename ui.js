@@ -142,16 +142,75 @@ function lvStars(id){const cs=CHAPTERS[id]||[];if(!cs.length)return 0;return Mat
 function pk(cid){return`${S.nL}-${S.tL}-${cid}`;}
 function stHTML(n){return[0,1,2].map(i=>`<span style="color:${i<n?'var(--accent4)':'rgba(255,255,255,.1)'}">★</span>`).join('');}
 
-function goToChaps(lvId){S.level=lvId;const T=LANGS[S.tL],lv=LEVELS.find(l=>l.id===lvId);sT('bc-level2',lvId);sT('chapters-title',`${T.flag} ${lvId} — Chapitres`);sT('chapters-sub',lv.desc);renderChaps();goTo('chapters');}
+function goToChaps(lvId){S.level=lvId;S._activeTopic='conv';const T=LANGS[S.tL],lv=LEVELS.find(l=>l.id===lvId);sT('bc-level2',lvId);sT('chapters-title',`${T.flag} ${lvId}`);renderTopicTabs();renderChaps();goTo('chapters');}
+function renderTopicTabs(){
+  const wrap=$('topic-tabs'); if(!wrap) return;
+  const lang=S.nL||'fr';
+  // Count chapters per topic (include DIY)
+  const allCs=CHAPTERS[S.level]||[];
+  const diyCs=(U.diyLessons||[]).filter(d=>d.level===S.level);
+  const counts={};
+  allCs.forEach(c=>{ counts[c.topic]=(counts[c.topic]||0)+1; });
+  if(diyCs.length) counts['diy']=diyCs.length;
+  wrap.innerHTML='';
+  (typeof TOPIC_DEFS!=='undefined'?TOPIC_DEFS:[]).forEach(t=>{
+    const n=counts[t.id]||0;
+    const btn=document.createElement('button');
+    btn.className='topic-tab'+(S._activeTopic===t.id?' active':'')+(n===0?' empty':'');
+    btn.innerHTML=`${t.icon} ${t.label[lang]||t.label.fr}${n?` <span class="topic-count">${n}</span>`:''}`;
+    btn.onclick=()=>{ S._activeTopic=t.id; renderTopicTabs(); renderChaps(); };
+    wrap.appendChild(btn);
+  });
+}
+
 function renderChaps(){
-  const list=$('chapters-list');list.innerHTML='';
-  const cs=CHAPTERS[S.level]||[];
+  const list=$('chapters-list'); list.innerHTML='';
+  const topic=S._activeTopic||'conv';
+  const lang=S.nL||'fr';
+
+  // DIY tab
+  if(topic==='diy'){
+    const diys=(U.diyLessons||[]).filter(d=>d.level===S.level);
+    if(!diys.length){
+      list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">Aucune leçon créée.<br>Clique sur ＋ pour créer la tienne !</div>';
+      return;
+    }
+    diys.forEach((d,i)=>{
+      const el=document.createElement('div');
+      el.className='chapter-item available diy-chapter';
+      el.innerHTML=`<div class="chapter-num">✨</div>
+        <div style="flex:1">
+          <div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${d.title}</div>
+          <div style="font-size:.74rem;color:var(--muted);">${d.pairs.length} paires · Ma leçon</div>
+        </div>
+        <button class="diy-del-btn" onclick="event.stopPropagation();deleteDIY(${i})" title="Supprimer">🗑</button>`;
+      el.onclick=()=>startDIYLesson(d);
+      list.appendChild(el);
+    });
+    return;
+  }
+
+  // Normal chapters filtered by topic
+  const allCs=CHAPTERS[S.level]||[];
+  const cs=allCs.filter(c=>c.topic===topic);
+  if(!cs.length){
+    list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">Contenu à venir… 🚧</div>';
+    return;
+  }
   cs.forEach((ch,i)=>{
-    const p=U?.progress[pk(ch.id)],done=p?.completed,locked=i>0&&!U?.progress[pk(cs[i-1].id)]?.completed;
-    const title=ch.title[S.nL]||ch.title.fr,sub=ch.subtitle[S.nL]||ch.subtitle.fr;
+    const p=U?.progress[pk(ch.id)],done=p?.completed;
+    // unlock: first of topic always open, then sequential within topic
+    const locked=i>0&&!U?.progress[pk(cs[i-1].id)]?.completed;
+    const title=ch.title[lang]||ch.title.fr,sub=ch.subtitle[lang]||ch.subtitle.fr;
     const d=document.createElement('div');d.className=`chapter-item ${locked?'locked':done?'done':'available'}`;
     d.innerHTML=`<div class="chapter-num">${locked?'🔒':done?'✓':(i+1)}</div>
-      <div style="flex:1"><div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${title}</div><div style="font-size:.74rem;color:var(--muted);">${sub}</div><div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;"><span class="game-chip">🎲 Mixte</span><span class="game-chip">⚡ Quiz</span><span class="game-chip">✏️ Fill</span><span class="game-chip">🔗 Match</span></div></div>
+      <div style="flex:1">
+        <div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${title}</div>
+        <div style="font-size:.74rem;color:var(--muted);">${sub}</div>
+        <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">
+          <span class="game-chip">🎲 Mixte</span><span class="game-chip">⚡ Quiz</span><span class="game-chip">✏️ Fill</span><span class="game-chip">🔗 Match</span>
+        </div>
+      </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <div>${stHTML(p?.stars||0)}</div>
         ${!locked?`<button class="btn-qr" onclick="event.stopPropagation();openQR('${ch.id}')">📱 QR</button>`:''}
@@ -159,7 +218,46 @@ function renderChaps(){
     if(!locked) d.onclick=()=>goToSel(ch.id);
     list.appendChild(d);
   });
-  if(!cs.length) list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;">Contenu à venir… 🚧</div>';
+}
+
+// ── DIY Lessons ──────────────────────────────────
+function openDIY(){
+  $('diy-title').value='';
+  $('diy-words').value='';
+  $('diy-modal').style.display='flex';
+  setTimeout(()=>$('diy-title').focus(),50);
+}
+function closeDIY(){ $('diy-modal').style.display='none'; }
+function saveDIY(){
+  const title=($('diy-title').value||'').trim();
+  const raw=($('diy-words').value||'');
+  if(!title){ toast('❌ Donne un titre à ta leçon'); return; }
+  const pairs=raw.split('\\n').map(l=>l.trim()).filter(l=>l.includes('=')).map(l=>{
+    const [a,b]=l.split('=').map(s=>s.trim());
+    return {native:a,target:b};
+  }).filter(p=>p.native&&p.target);
+  if(pairs.length<2){ toast('❌ Minimum 2 paires (ex: chien = dog)'); return; }
+  if(!U.diyLessons) U.diyLessons=[];
+  U.diyLessons.push({title, level:S.level||'A1', pairs, created:Date.now()});
+  saveU();
+  closeDIY();
+  S._activeTopic='diy';
+  renderTopicTabs();
+  renderChaps();
+  toast(`✨ "${title}" créée · ${pairs.length} paires`);
+}
+function deleteDIY(idx){
+  if(!confirm('Supprimer cette lecon ?')) return;
+  U.diyLessons.splice(idx,1);
+  saveU(); renderTopicTabs(); renderChaps();
+}
+function startDIYLesson(d){
+  // Inject as temporary chapter and launch game select
+  S._diyLesson=d;
+  sT('gsel-title', d.title);
+  sT('gsel-sub', `${d.pairs.length} paires · Ma leçon`);
+  sT('bc-p3','DIY'); sT('bc-l3',d.level||''); sT('bc-c3',d.title);
+  goTo('game-select');
 }
 function goToSel(cid){S.chap=cid;const cs=CHAPTERS[S.level]||[],ch=cs.find(c=>c.id===cid);const N=LANGS[S.nL],T=LANGS[S.tL];sT('bc-p3',`${N.flag}→${T.flag}`);sT('bc-l3',S.level);sT('bc-c3',ch?.title?.[S.nL]||cid);sT('gsel-title',ch?.title?.[S.nL]||cid);sT('gsel-sub',ch?.subtitle?.[S.nL]||'');goTo('game-select');}
 
