@@ -449,8 +449,11 @@
   <!-- INVESTOR LEVEL -->
   <div class="inv-level-bar" id="inv-level-bar"></div>
 <div class="academy-section" id="academy-section">
-    <div class="academy-title">🎓 <span id="lbl-academy-title">Finance Academy</span></div>
-    <div class="lesson-grid" id="lesson-grid"></div>
+    <button class="academy-toggle-btn" id="academy-toggle" onclick="toggleAcademy()">
+      🎓 <span id="lbl-academy-title">Finance Academy</span>
+      <span class="academy-toggle-arrow" id="academy-arrow">▼</span>
+    </button>
+    <div class="lesson-grid" id="lesson-grid" style="display:none;"></div>
   </div>
 
   <!-- Ad slot — portfolio -->
