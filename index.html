@@ -214,8 +214,25 @@
     <span id="bc-level2"></span>
   </div>
   <div class="section-title" id="chapters-title">Chapitres</div>
-  <div class="section-sub" id="chapters-sub"></div>
+  <!-- Topic tabs -->
+  <div class="topic-tabs" id="topic-tabs"></div>
   <div class="chapters-list" id="chapters-list"></div>
+  <!-- DIY button -->
+  <button class="diy-add-btn" onclick="openDIY()">＋ Créer ma propre leçon</button>
+</div>
+
+<!-- ══════════════════ DIY LESSON MODAL ══════════════════ -->
+<div class="modal-overlay" id="diy-modal" style="display:none;" onclick="if(event.target===this)closeDIY()">
+  <div class="modal-box" style="max-width:480px;width:94%;">
+    <div style="font-weight:900;font-size:1.1rem;margin-bottom:14px;">✏️ Créer une leçon</div>
+    <input id="diy-title" class="diy-input" placeholder="Titre de la leçon…" style="margin-bottom:10px;">
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">Paires de mots — un par ligne : <strong>mot natif = traduction</strong></div>
+    <textarea id="diy-words" class="diy-textarea" placeholder="chien = dog&#10;chat = cat&#10;maison = house"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn btn-secondary" onclick="closeDIY()" style="flex:1;">Annuler</button>
+      <button class="btn btn-primary" onclick="saveDIY()" style="flex:2;">Enregistrer →</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════ GAME SELECT ══════════════════ -->
