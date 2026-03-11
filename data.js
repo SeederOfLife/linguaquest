@@ -502,7 +502,7 @@ const FINANCE_LESSONS = [
 
   {id:'taux_interet', topic:'macro', prereq:'inflation_deep', icon:'🏛️', reward:120,
    t:{
-    fr:{title:'Les Taux d'Intérêt', difficulty:'Avancé',
+    fr:{title:"Les Taux d'Intérêt", difficulty:'Avancé',
      intro:"Les taux d'intérêt fixés par les banques centrales (Fed, BCE) sont le levier le plus puissant de l'économie mondiale. Comprendre leur impact te permet d'anticiper les mouvements des marchés.",
      questions:[
       {q:"Quand la banque centrale hausse les taux, que se passe-t-il aux obligations existantes ?", choices:["Elles montent car les intérêts sont plus élevés","Elles baissent car les nouvelles obligations offrent un meilleur rendement","Leur valeur ne change pas","Elles sont annulées"], correct:1, explain:"Si tu possèdes une obligation à 2% et que de nouvelles sont émises à 5%, ton obligation à 2% vaut moins sur le marché secondaire. Relation inverse taux/prix."},
@@ -700,7 +700,6 @@ const FINANCE_LESSONS = [
       {q:"Co je strategie 'covered call'?", choices:["Kupovat Calls bez vlastnictví akcií","Prodávat Call opce na akcie které již vlastníš k generování dodatečného příjmu","Krýt portfolio zlatem","Strategie zakázaná pro retailové investory"], correct:1, explain:"Pokud vlastníš 100 akcií Apple, můžeš prodat Call za 200$. Pokud Apple nedosáhne 200$, prémii si ponecháš jako příjem."},
      ]},
    }},
-];
 ];
 
 
