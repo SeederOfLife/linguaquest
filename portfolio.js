@@ -341,39 +341,34 @@ function renderPortfolio(){
 
     const div=document.createElement('div');
     div.className=`asset-card ${a.class}${!unlocked?' asset-locked':''}`;
-    div.style='position:relative;';
     div.innerHTML=`
       ${!unlocked?`<div class="asset-locked-overlay">
         <div class="asset-locked-icon">🔒</div>
-        <div class="asset-locked-msg">Niveau Investisseur ${a.unlockLevel} requis<br><small>Investis ${(INVESTOR_LEVELS.find(l=>l.level===a.unlockLevel)||{min:0}).min.toLocaleString()} pièces au total</small></div>
+        <div class="asset-locked-msg">Niveau Investisseur ${a.unlockLevel} requis</div>
       </div>`:''}
-      <div class="asset-header">
-        <div class="asset-icon">${a.icon}</div>
-        <div style="flex:1">
-          <div class="asset-name">${a.name}</div>
-          <div class="asset-type">${a.type}</div>
-          <div class="asset-real-price" id="rp-${a.id}" style="font-size:.78rem;font-weight:700;color:var(--accent3);margin-top:3px;">
-            ${unlocked?'Chargement prix réel…':'Prix masqué'}
-          </div>
+      <div class="asset-card-header">
+        <div class="asset-card-icon">${a.icon}</div>
+        <div class="asset-card-info">
+          <div class="asset-card-name">${a.name} <span class="asset-card-ticker">${a.type}</span></div>
+          <div class="asset-card-real" id="rp-${a.id}">${unlocked?'Chargement…':'—'}</div>
         </div>
-        <div class="asset-value">
-          <div class="asset-price">${Math.floor(appreciated).toLocaleString()} <span class="coin"></span></div>
-          <div class="asset-change">${owned>0?`+${growthPct}% depuis achat`:`Niv. ${a.unlockLevel}`}</div>
+        <div class="asset-card-right">
+          <div class="asset-card-value">${Math.floor(appreciated).toLocaleString()} <span class="coin"></span></div>
+          <div class="asset-card-sub">${owned>0?`${owned} unité${owned!==1?'s':''} · +${growthPct}%`:`Niv. ${a.unlockLevel}`}</div>
         </div>
       </div>
-      <div class="asset-progress">
-        <div class="asset-progress-bar"><div class="asset-progress-fill" style="width:${pct}%"></div></div>
-        <div class="asset-owned"><span>${owned} unité${owned!==1?'s':''}</span><span>${a.cost} <span class="coin"></span>/unité</span></div>
+      ${owned>0?`<div class="asset-card-divbar"><div class="asset-card-divbar-fill ${a.class}" style="width:${pct}%"></div></div>`:''}
+      <div class="asset-card-meta">
+        <span>🌱 ${a.divRate*100}%/j</span>
+        ${owned>0?`<span class="asset-meta-earn">+${dailyEarn} <span class="coin"></span>/j</span>`:''}
+        <span>📈 +${(a.growthRate*100).toFixed(2)}%/j</span>
       </div>
-      <div class="asset-div-info">🌱 ${a.divRate*100}%/j · <strong>${dailyEarn} <span class="coin"></span>/jour</strong> · Croissance +${(a.growthRate*100).toFixed(2)}%/j</div>
-      <div style="font-size:.74rem;color:var(--muted);margin:6px 0 10px;">${a.desc}</div>
-      <button class="asset-info-btn" onclick="openAssetInfo('${a.id}')">📊 Données marché réel</button>
-      <div class="asset-actions">
+      <div class="asset-card-actions">
         <button class="asset-buy-btn" onclick="buyAsset('${a.id}')" ${!canBuy?'disabled':''}>
-          ${owned===0?`Acheter (${scaledCost} <span class="coin"></span>)`:`+1 unité (${scaledCost} <span class="coin"></span>)`}
+          ${owned===0?'Acheter':'+1 unité'} <span class="asset-btn-cost">${scaledCost} <span class="coin"></span></span>
         </button>
-        ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre (${Math.round(a.cost*(1+(owned-1)*0.1)*0.8)} <span class="coin"></span>)</button>`:''}
-        ${owned>0?`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:8px 12px;font-size:.78rem;color:var(--green);font-weight:700;">+${dailyEarn} <span class="coin"></span>/j</div>`:''} 
+        ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre</button>`:''}
+        <button class="asset-info-btn-sm" onclick="openAssetInfo('${a.id}')">📊</button>
       </div>
     `;
     grid.appendChild(div);
