@@ -126,6 +126,17 @@ function showLevelUpModal(lv){
 // ══════════════════════════════════════════════
 let _lessonState={lessonId:null,qi:-1,score:0,answered:false};
 
+let _academyOpen = false;
+
+function toggleAcademy(){
+  _academyOpen = !_academyOpen;
+  const grid = $('lesson-grid');
+  const arrow = $('academy-arrow');
+  if(grid) grid.style.display = _academyOpen ? 'grid' : 'none';
+  if(arrow) arrow.textContent = _academyOpen ? '▲' : '▼';
+  if(_academyOpen) renderAcademy();
+}
+
 function isLessonUnlocked(lesson, completed){
   if(!lesson.prereq) return true;
   return !!completed[lesson.prereq];
@@ -133,6 +144,7 @@ function isLessonUnlocked(lesson, completed){
 
 function renderAcademy(){
   const grid=$('lesson-grid'); if(!grid) return;
+  if(!_academyOpen) return; // only render when visible
   const completed=U.lessonsCompleted||{};
   const lang=(typeof _uiLang!=='undefined'&&_uiLang)||'fr';
   grid.innerHTML='';
