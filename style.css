@@ -498,7 +498,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 /* ── FINANCE ACADEMY ── */
 .academy-section{width:100%;max-width:700px;margin-bottom:14px;}
-.academy-title{font-size:1rem;font-weight:900;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.academy-toggle-btn{width:100%;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:900;color:var(--text);text-align:left;transition:all .2s;}
+.academy-toggle-btn:hover{border-color:var(--accent);background:rgba(255,255,255,.04);}
+.academy-toggle-arrow{margin-left:auto;font-size:.75rem;color:var(--muted);transition:transform .2s;}
 .lesson-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
 @media(max-width:480px){.lesson-grid{grid-template-columns:1fr;}}
 .lesson-card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
