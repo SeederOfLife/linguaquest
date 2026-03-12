@@ -15,6 +15,7 @@ function navTo(tab){
   if(tab==='shop') renderShop();
   if(tab==='profile'){ renderProfile(); renderTrophiesPreview(); }
   if(tab==='rank'){ renderLeaderboard(); renderDuelsScreen(); }
+  if(tab!=='rank' && typeof stopDuelRefresh==='function') stopDuelRefresh();
   if(tab==='trophies'){ renderTrophies(); }
   if(tab==='learn'){ renderSRSWidget(); renderEventBanner(); }
   if(screens[tab]) goTo(screens[tab]);
@@ -37,35 +38,72 @@ function updateTopBar(){
 // ══════════════════════════════════════════════
 // SHOP
 // ══════════════════════════════════════════════
+let _shopCat = 'all';
 function renderShop(){
   if(!U) return;
   $('shop-coins').textContent=Math.floor(U.coins);
+
+  // Build category tabs
+  const tabs=$('shop-tabs');
+  if(tabs){
+    const cats=[
+      {id:'all',   label:'Tout'},
+      {id:'consumable', label:'⚡ Boosts'},
+      {id:'cosmetic',   label:'💎 Style'},
+      {id:'premium',    label:'🎁 Bonus'},
+      {id:'duel',       label:'⚔️ Duels'},
+    ];
+    tabs.innerHTML=cats.map(c=>`<button class="topic-tab${_shopCat===c.id?' active':''}" onclick="_shopCat='${c.id}';renderShop()">${c.label}</button>`).join('');
+  }
+
   const grid=$('shop-grid');grid.innerHTML='';
-  SHOP_ITEMS.forEach(item=>{
-    const owned=U.owned.includes(item.id);
-    const canBuy=!owned&&U.coins>=item.price;
+  const items=_shopCat==='all' ? SHOP_ITEMS : SHOP_ITEMS.filter(x=>x.type===_shopCat);
+  items.forEach(item=>{
+    const owned=U.owned?.includes(item.id);
+    const stacks=item.stacks; // consumables can be re-bought
+    const alreadyHas=owned&&!stacks;
+    const canBuy=!alreadyHas&&Math.floor(U.coins)>=item.price;
+    const uses=item.stacks?(U.shopUses?.[item.id]||0):null;
+    const catColor={consumable:'var(--accent3)',cosmetic:'var(--gold)',premium:'var(--green)',duel:'var(--accent2)'}[item.type]||'var(--muted)';
     const div=document.createElement('div');
-    div.className='shop-item'+(owned?' owned':'');
+    div.className='shop-item'+(alreadyHas?' owned':'');
     div.innerHTML=`
-      ${owned?'<div class="owned-badge">✓ Possédé</div>':''}
+      ${alreadyHas?'<div class="owned-badge">✓ Possédé</div>':''}
+      <div style="margin-bottom:5px;"><span class="shop-cat-badge" style="background:${catColor}22;color:${catColor};">${{consumable:'Boost',cosmetic:'Style',premium:'Bonus',duel:'Duel'}[item.type]||item.type}</span></div>
       <div class="shop-icon">${item.icon}</div>
       <div class="shop-name">${item.name}</div>
       <div class="shop-desc">${item.desc}</div>
+      ${uses!==null?`<div style="font-size:.72rem;color:var(--accent3);margin-bottom:4px;">✓ ${uses} en stock</div>`:''}
       <div class="shop-price">${item.price>0?`<span class="coin"></span> ${item.price}`:'🎁 Gratuit'}</div>
-      <button class="btn btn-sm ${owned?'btn-secondary':'btn-primary'}" style="margin-top:10px;width:100%;justify-content:center;" onclick="buyShop('${item.id}')" ${owned||(!canBuy&&item.price>0)?'disabled':''}>
-        ${owned?'Possédé ✓':item.price===0?'Réclamer':'Acheter'}
+      <button class="btn btn-sm ${alreadyHas?'btn-secondary':'btn-primary'}" style="margin-top:10px;width:100%;justify-content:center;" onclick="buyShop('${item.id}')" ${alreadyHas||(!canBuy&&item.price>0)?'disabled':''}>
+        ${alreadyHas?'Possédé ✓':item.price===0?'Réclamer':'Acheter'}
       </button>
     `;
     grid.appendChild(div);
   });
+  if(!items.length) grid.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;grid-column:1/-1;">Aucun article dans cette catégorie</div>';
 }
 
 function buyShop(id){
   const item=SHOP_ITEMS.find(x=>x.id===id);
-  if(!item||U.owned.includes(id)) return;
-  if(item.price>0&&U.coins<item.price){toast('❌ Pas assez de pièces !');return;}
+  if(!item) return;
+  if(!item.stacks && U.owned?.includes(id)){toast('Déjà possédé');return;}
+  if(item.price>0&&Math.floor(U.coins)<item.price){toast('❌ Pas assez de pièces !');return;}
   U.coins-=item.price;
-  U.owned.push(id);
+  if(item.stacks){
+    if(!U.shopUses) U.shopUses={};
+    U.shopUses[id]=(U.shopUses[id]||0)+1;
+  } else {
+    if(!U.owned) U.owned=[];
+    U.owned.push(id);
+  }
+  // Apply instant effects
+  if(id==='bonus_coins'){ U.coins+=(item.bonus||50); toast('🎁 +'+item.bonus+' pièces !'); }
+  if(id==='xp_boost')   { U.xpBoostSessions=3; toast('⚡ XP x2 pendant 3 sessions !'); }
+  if(id==='streak_shield'){ U.streakShield=true; toast('🛡️ Bouclier série actif !'); }
+  if(id==='hint_pack')  { U.hints=(U.hints||0)+5; toast('💡 +5 indices ajoutés !'); }
+  if(id==='duel_token') { U.duelTokens=(U.duelTokens||0)+1; toast('⚔️ Jeton duel +1 !'); }
+  if(id==='coin_magnet'){ U.coinMagnet=true; toast('🧲 Aimant à pièces actif !'); }
   saveU();updateTopBar();renderShop();
   toast(`${item.icon} ${item.name} acheté !`);
 }
