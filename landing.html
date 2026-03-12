@@ -348,6 +348,26 @@
     }
   </style>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
+  <!-- Supabase for session check -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    // Auto-redirect if already logged in
+    (async () => {
+      try {
+        const _SB = supabase.createClient(
+          'https://luufdddauoucmjiixrax.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4'
+        );
+        const { data: { session } } = await _SB.auth.getSession();
+        if (session) {
+          // Already logged in — show "continue" banner and redirect after 2s
+          const banner = document.getElementById('logged-in-banner');
+          if (banner) banner.style.display = 'flex';
+          setTimeout(() => { window.location.href = 'index.html'; }, 2500);
+        }
+      } catch(e) { /* fail silently */ }
+    })();
+  </script>
 </head>
 <body>
 
@@ -355,6 +375,12 @@
 <div class="stars" id="stars"></div>
 
 <div class="page">
+
+  <!-- ── LOGGED IN BANNER ── -->
+  <div id="logged-in-banner" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;padding:14px 28px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;box-shadow:0 8px 30px rgba(124,58,237,.5);align-items:center;gap:12px;white-space:nowrap;">
+    ✅ Déjà connecté — redirection en cours…
+    <a href="index.html" style="color:#fff;text-decoration:underline;font-weight:900;">Aller maintenant →</a>
+  </div>
 
   <!-- ── NAV ── -->
   <nav>
