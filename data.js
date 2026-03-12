@@ -765,14 +765,24 @@ const FINANCE_LESSONS = [
 
 // SHOP ITEMS
 const SHOP_ITEMS=[
-  {id:'streak_shield',name:'Bouclier Série',icon:'🛡️',price:40,desc:'Protège ta série 1 fois si tu rates un jour',type:'consumable'},
-  {id:'xp_boost',name:'Boost XP ×2',icon:'⚡',price:60,desc:'Double tes XP pendant 3 sessions',type:'consumable'},
-  {id:'hint_pack',name:'Pack Indices',icon:'💡',price:25,desc:'5 indices gratuits pour les questions difficiles',type:'consumable'},
-  {id:'avatar_gold',name:'Avatar Doré',icon:'👑',price:100,desc:'Badge exclusif sur ton profil',type:'cosmetic'},
-  {id:'avatar_diamond',name:'Avatar Diamant',icon:'💎',price:200,desc:'Le badge le plus rare de LinguaQuest',type:'cosmetic'},
-  {id:'bonus_coins',name:'Bonus Pièces',icon:'<span class="coin"></span>',price:0,desc:'Reçois 50 pièces bonus chaque semaine',type:'premium'},
+  // Boosts
+  {id:'streak_shield', name:'Bouclier Série',  icon:'🛡️', price:40,  type:'consumable', stacks:true, desc:'Protège ta série 1 fois si tu rates un jour. Se consomme automatiquement.'},
+  {id:'xp_boost',      name:'Boost XP x2',     icon:'⚡', price:60,  type:'consumable', stacks:true, desc:'Double tes XP pendant 3 sessions consécutives.'},
+  {id:'hint_pack',     name:'Pack Indices',     icon:'💡', price:25,  type:'consumable', stacks:true, desc:'5 indices pour t\'aider sur les questions difficiles.'},
+  {id:'coin_magnet',   name:'Aimant a Pieces',  icon:'🧲', price:80,  type:'consumable', stacks:true, desc:'+30% de pieces gagnees pendant ta prochaine session.'},
+  {id:'time_freeze',   name:'Gel du Chrono',    icon:'⏸️', price:35,  type:'consumable', stacks:true, desc:'Stoppe le chrono sur 3 questions difficiles.'},
+  {id:'second_chance', name:'Seconde Chance',   icon:'🔄', price:50,  type:'consumable', stacks:true, desc:'Reessaie une question ratee sans perdre les points.'},
+  // Cosmetics
+  {id:'avatar_gold',    name:'Avatar Dore',     icon:'👑', price:100, type:'cosmetic', desc:'Badge dore exclusif sur ton profil et dans le classement.'},
+  {id:'avatar_diamond', name:'Avatar Diamant',  icon:'💎', price:250, type:'cosmetic', desc:'Le badge le plus rare de LinguaQuest. Prestige maximum.'},
+  {id:'avatar_fire',    name:'Avatar Flamme',   icon:'🔥', price:150, type:'cosmetic', desc:'Badge flamme pour les joueurs avec un streak legendaire.'},
+  // Bonus
+  {id:'bonus_coins',   name:'Bonus Pieces',     icon:'🪙', price:0,   type:'premium', bonus:50, desc:'Reclame 50 pieces bonus gratuites une fois.'},
+  {id:'dividend_boost',name:'Boost Dividendes', icon:'📈', price:120, type:'premium', desc:'Augmente tous tes dividendes de +10% pendant 7 jours.'},
+  // Duels
+  {id:'duel_token',    name:'Jeton Duel',       icon:'⚔️', price:20,  type:'duel', stacks:true, desc:'Cree un duel avec mise sans avoir les pieces en reserve.'},
+  {id:'duel_rematch',  name:'Revanche Rapide',  icon:'🔁', price:15,  type:'duel', stacks:true, desc:'Rejoue immediatement le meme duel avec les memes questions.'},
 ];
-
 // ══════════════════════════════════════════════
 // UI STRINGS — full interface translations
 // ══════════════════════════════════════════════
