@@ -301,6 +301,41 @@
       max-width: 800px;
     }
 
+
+    /* ── ARTICLE GRID ── */
+    .article-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; }
+    .article-card { background: var(--card); border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 26px; }
+    .article-h3 { font-size: 1.02rem; font-weight: 900; margin-bottom: 12px; }
+    .article-p { font-size: .87rem; color: var(--muted); line-height: 1.75; font-weight: 600; margin-bottom: 10px; }
+    .article-p:last-child { margin-bottom: 0; }
+
+    /* ── COMPARE TABLE ── */
+    .compare-table { border: 1px solid rgba(255,255,255,.08); border-radius: 18px; overflow: hidden; }
+    .compare-header, .compare-row { display: grid; grid-template-columns: 2fr 1.6fr 1.4fr 1.4fr; }
+    .compare-header { background: rgba(255,255,255,.04); padding: 12px 16px; }
+    .compare-col-head { font-size: .78rem; font-weight: 900; color: var(--muted); text-align: center; }
+    .compare-col-head.highlight-col { color: var(--accent3); }
+    .compare-row { padding: 13px 16px; border-top: 1px solid rgba(255,255,255,.05); align-items: center; }
+    .compare-row:hover { background: rgba(255,255,255,.02); }
+    .compare-label { font-size: .84rem; font-weight: 700; color: var(--text); }
+    .compare-val { font-size: .78rem; font-weight: 700; text-align: center; color: var(--muted); }
+    .compare-val.highlight-col { color: var(--green); }
+    .highlight-col { background: rgba(6,182,212,.04); }
+    @media (max-width: 600px) {
+      .compare-header, .compare-row { grid-template-columns: 1.4fr 1.2fr 1fr 1fr; }
+      .compare-val, .compare-label { font-size: .7rem; }
+    }
+
+    /* ── FAQ ── */
+    .faq-list { display: flex; flex-direction: column; gap: 10px; }
+    .faq-item { background: var(--card); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; overflow: hidden; }
+    .faq-q { width: 100%; background: none; border: none; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; font-family: 'Nunito', sans-serif; font-size: .92rem; font-weight: 800; color: var(--text); cursor: pointer; text-align: left; gap: 12px; }
+    .faq-q:hover { background: rgba(255,255,255,.03); }
+    .faq-arrow { color: var(--muted); font-size: .7rem; flex-shrink: 0; transition: transform .2s; }
+    .faq-q.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a { display: none; padding: 0 20px 16px; font-size: .86rem; color: var(--muted); line-height: 1.75; font-weight: 600; border-top: 1px solid rgba(255,255,255,.05); padding-top: 14px; }
+    .faq-a.open { display: block; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
       nav { padding: 12px 18px; }
@@ -357,7 +392,13 @@
 
 <div class="ad-section">
     <div class="ad-lbl">Publicité</div>
-
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-7915647470407065"
+         data-ad-slot="auto"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 
   <div class="divider"></div>
@@ -431,7 +472,13 @@
 
 <div class="ad-section">
     <div class="ad-lbl">Publicité</div>
-
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-7915647470407065"
+         data-ad-slot="auto"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 
   <div class="divider"></div>
@@ -516,6 +563,179 @@
     </div>
   </section>
 
+
+  <div class="divider"></div>
+
+  <!-- ── GUIDE ÉDITORIAL ── -->
+  <section id="guide" style="max-width:860px;">
+    <div class="section-label">Guide</div>
+    <h2 class="section-title">Pourquoi apprendre une langue étrangère en 2026 ?</h2>
+    <p class="section-sub">Tout ce que la science dit sur l'apprentissage des langues — et comment en tirer le meilleur parti.</p>
+
+    <div class="article-grid">
+      <div class="article-card">
+        <h3 class="article-h3">🧠 Les bienfaits cognitifs prouvés</h3>
+        <p class="article-p">Parler deux langues ou plus retarde l'apparition de la démence de 4 à 5 ans en moyenne selon plusieurs études neurologiques. Le cerveau bilingue est constamment entraîné à basculer entre deux systèmes linguistiques, ce qui renforce les connexions neuronales dans le cortex préfrontal — la zone responsable de l'attention, de la résolution de problèmes et de la mémoire de travail.</p>
+        <p class="article-p">Des recherches publiées dans le <em>Journal of Experimental Psychology</em> montrent que les apprenants bilingues obtiennent de meilleurs résultats dans les tâches multitâches et font preuve d'une plus grande flexibilité cognitive. En résumé : apprendre une langue, c'est faire de la musculation pour le cerveau.</p>
+      </div>
+
+      <div class="article-card">
+        <h3 class="article-h3">💼 Un avantage professionnel décisif</h3>
+        <p class="article-p">Dans un marché du travail mondialisé, parler une seconde langue augmente en moyenne le salaire de 5 à 20 % selon les secteurs et les pays. L'anglais reste la lingua franca des affaires, mais l'espagnol (580 millions de locuteurs natifs), l'allemand (économie la plus puissante d'Europe) et le tchèque (marché d'Europe centrale en plein essor) ouvrent des portes très spécifiques.</p>
+        <p class="article-p">Les recruteurs citent régulièrement la maîtrise d'une langue étrangère comme un signal fort de discipline, de persévérance et d'ouverture culturelle — des qualités universellement recherchées.</p>
+      </div>
+
+      <div class="article-card">
+        <h3 class="article-h3">⏱️ Combien de temps faut-il pour apprendre ?</h3>
+        <p class="article-p">L'Institut des Services Étrangers américain (FSI) estime que les langues romanes (espagnol, français) nécessitent environ 600-750 heures d'étude pour atteindre un niveau professionnel. L'allemand, plus grammaticalement complexe, demande 750 heures. Le tchèque, avec ses sept cas grammaticaux, se situe dans la même fourchette pour un locuteur français.</p>
+        <p class="article-p">Mais voici la bonne nouvelle : la recherche en acquisition des langues montre que <strong>15 à 30 minutes de pratique quotidienne constante</strong> surpassent largement des sessions sporadiques de plusieurs heures. C'est précisément pour cette raison que LinguaQuest est conçu pour des sessions courtes et répétées — la régularité prime sur la durée.</p>
+      </div>
+
+      <div class="article-card">
+        <h3 class="article-h3">🔬 La répétition espacée : la science derrière l'app</h3>
+        <p class="article-p">LinguaQuest utilise l'algorithme SM-2 (SuperMemo 2), le même système utilisé par des millions d'étudiants en médecine, en droit et en langues à travers le monde. Le principe est simple : chaque mot appris est revu à un intervalle de temps croissant, juste avant que ton cerveau ne soit sur le point de l'oublier.</p>
+        <p class="article-p">Résultat : à mémoire de travail égale, la répétition espacée permet de retenir <strong>deux fois plus de vocabulaire</strong> en deux fois moins de temps qu'un apprentissage traditionnel. Contrairement aux flashcards simples, SM-2 adapte le rythme individuellement pour chaque mot selon tes performances réelles.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── MÉTHODES COMPARÉES ── -->
+  <section id="methodes" style="max-width:860px;">
+    <div class="section-label">Comparaison</div>
+    <h2 class="section-title">LinguaQuest vs autres méthodes</h2>
+    <p class="section-sub">Toutes les méthodes ne se valent pas. Voici ce qui distingue les approches gamifiées basées sur la science.</p>
+
+    <div class="compare-table">
+      <div class="compare-header">
+        <div class="compare-col-head"></div>
+        <div class="compare-col-head highlight-col">LinguaQuest</div>
+        <div class="compare-col-head">Manuel scolaire</div>
+        <div class="compare-col-head">Cours particuliers</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Répétition espacée</div>
+        <div class="compare-val highlight-col">✅ Algorithme SM-2</div>
+        <div class="compare-val">❌ Aucune</div>
+        <div class="compare-val">⚠️ Dépend du prof</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Disponibilité</div>
+        <div class="compare-val highlight-col">✅ 24h/24, mobile</div>
+        <div class="compare-val">✅ N'importe où</div>
+        <div class="compare-val">❌ Horaires fixes</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Coût mensuel</div>
+        <div class="compare-val highlight-col">✅ Gratuit</div>
+        <div class="compare-val">⚠️ 20–60 €</div>
+        <div class="compare-val">❌ 40–120 €</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Motivation long terme</div>
+        <div class="compare-val highlight-col">✅ Gamification + récompenses</div>
+        <div class="compare-val">❌ Faible</div>
+        <div class="compare-val">⚠️ Variable</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Prononciation audio</div>
+        <div class="compare-val highlight-col">✅ TTS natif</div>
+        <div class="compare-val">❌ Aucune</div>
+        <div class="compare-val">✅ Oui</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Finance Academy</div>
+        <div class="compare-val highlight-col">✅ Inclus</div>
+        <div class="compare-val">❌ Non</div>
+        <div class="compare-val">❌ Non</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── FAQ ── -->
+  <section id="faq" style="max-width:780px;">
+    <div class="section-label">Questions fréquentes</div>
+    <h2 class="section-title">Tout ce que tu veux savoir</h2>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          LinguaQuest est-il vraiment gratuit ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Oui, entièrement. Créer un compte, accéder à tous les niveaux, jouer, investir en bourse virtuelle, débloquer des trophées — tout est gratuit sans limite de temps. L'application est financée par des publicités non-intrusives sur la page d'accueil.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Quelles langues puis-je apprendre ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          LinguaQuest supporte cinq langues : le français 🇫🇷, l'anglais 🇬🇧, l'espagnol 🇪🇸, l'allemand 🇩🇪 et le tchèque 🇨🇿. Tu peux apprendre dans n'importe quelle direction — par exemple apprendre l'allemand depuis l'espagnol, ou le tchèque depuis le français. Toutes les combinaisons sont disponibles. D'autres langues sont prévues.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Combien de temps dois-je pratiquer par jour ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          La recherche scientifique est claire : 15 à 20 minutes par jour suffisent, à condition d'être régulier. Le système de répétition espacée de LinguaQuest est optimisé pour ces sessions courtes. Le simulateur de bourse t'encourage également à revenir chaque jour pour collecter tes dividendes — ce qui crée une habitude naturelle.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Je débute complètement — est-ce adapté ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Absolument. Le niveau A1 (débutant complet) commence par les salutations, les chiffres et les couleurs. Chaque chapitre introduit 8 mots clés et 3 phrases modèles. Tu peux progresser à ton rythme — le système ne te force jamais à aller trop vite. Les niveaux A1 à C2 sont disponibles pour accompagner ta progression jusqu'à la maîtrise.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Qu'est-ce que le simulateur de bourse virtuelle ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          En jouant aux quiz, tu gagnes des pièces. Ces pièces peuvent être investies dans 8 actifs virtuels : or, immobilier, S&P 500, Bitcoin, ETF monde, obligations, pétrole et Nasdaq 100. Les prix de ces actifs sont basés sur les cours réels des marchés. C'est une façon concrète d'apprendre les bases de la finance — les dividendes, la diversification, la volatilité — tout en jouant.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Comment fonctionnent les duels ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Un duel te génère un code unique de 6 caractères. Tu l'envoies à un ami, il rejoint le duel et répond aux mêmes questions. Vos scores sont ensuite comparés. Les duels sont asynchrones — pas besoin d'être connectés en même temps. C'est idéal pour défier un collègue, un élève ou un ami à distance.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Mes données sont-elles en sécurité ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Oui. LinguaQuest n'utilise que ton email et ton pseudo pour créer ton compte. Les données de progression sont stockées de manière sécurisée sur Supabase (infrastructure PostgreSQL chiffrée). Nous ne vendons jamais tes données et ne te contactons pas à des fins commerciales. Consulte notre <a href="privacy.html" style="color:var(--accent3);">politique de confidentialité</a> complète pour plus de détails.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Puis-je créer mes propres leçons ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Oui ! La fonctionnalité "Mes Leçons" te permet de créer des leçons personnalisées avec tes propres paires de mots. C'est parfait pour les enseignants qui veulent préparer leurs élèves sur un vocabulaire spécifique, ou pour quiconque veut mémoriser un corpus précis (vocabulaire professionnel, expressions idiomatiques, termes techniques, etc.).
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- ── CTA ── -->
   <div class="cta-section">
     <h2 class="cta-title">Prêt à commencer<br>ton aventure linguistique ?</h2>
@@ -540,6 +760,17 @@
 </div><!-- .page -->
 
 <script>
+
+  // FAQ accordion
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const ans = item.querySelector('.faq-a');
+    const isOpen = ans.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-a.open').forEach(a => { a.classList.remove('open'); a.previousElementSibling.classList.remove('open'); });
+    if (!isOpen) { ans.classList.add('open'); btn.classList.add('open'); }
+  }
+
   // Generate stars
   const sc = document.getElementById('stars');
   for (let i = 0; i < 120; i++) {
