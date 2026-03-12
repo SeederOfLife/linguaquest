@@ -9,7 +9,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="style.css">
   <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
+  <!-- AdSense intentionally not loaded here — app screens have no publisher content.
+       Ads are served only on landing.html and privacy.html -->
 </head>
 <body>
 <div class="stars" id="stars"></div>
@@ -487,9 +488,8 @@
     <div class="coin-display"><span><span class="coin"></span></span><span id="shop-coins">0</span></div>
     <span style="font-size:.8rem;color:var(--muted);" id="lbl-shop-coins-lbl">pièces disponibles</span>
   </div>
-
-  <!-- Ad slot — shop -->
-</div>
+  <!-- Shop category tabs -->
+  <div class="topic-tabs" id="shop-tabs" style="margin-bottom:10px;"></div>
   <div class="shop-grid" id="shop-grid"></div>
 </div>
 
@@ -632,10 +632,14 @@
 
   <!-- DUELS TAB -->
   <div id="rank-duels-zone" style="display:none;">
+
+    <!-- Action buttons -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <button class="btn btn-primary" onclick="createDuel()">⚔️ Créer un duel</button>
+      <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
       <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
     </div>
+
+    <!-- Join by code -->
     <div id="duel-join-zone" style="display:none;margin-bottom:14px;">
       <div style="display:flex;gap:8px;align-items:center;">
         <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
@@ -644,8 +648,66 @@
         <button class="btn btn-primary" onclick="joinDuel()">→</button>
       </div>
     </div>
+
+    <!-- Lobby / current duel info -->
     <div id="duel-lobby-content"></div>
+
+    <!-- Open duels waiting for challengers -->
+    <div id="open-duels-list"></div>
+
+    <!-- My past duels -->
     <div id="my-duels-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ CREATE DUEL MODAL ══════════════════ -->
+<div class="modal-overlay" id="duel-create-modal" style="display:none;" onclick="if(event.target===this)closeCreateDuel()">
+  <div class="modal-box" style="max-width:460px;width:94%;" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeCreateDuel()">✕</button>
+    <div style="font-weight:900;font-size:1.1rem;margin-bottom:16px;">⚔️ Créer un duel</div>
+
+    <!-- Exercise type -->
+    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:8px;">TYPE D'EXERCICE</div>
+    <div class="duel-type-grid" id="duel-type-grid">
+      <button class="duel-type-btn active" data-type="mixed"   onclick="selectDuelType(this,'mixed')">🎲 Mixte</button>
+      <button class="duel-type-btn"        data-type="quiz"    onclick="selectDuelType(this,'quiz')">⚡ Quiz</button>
+      <button class="duel-type-btn"        data-type="fill"    onclick="selectDuelType(this,'fill')">✏️ Fill</button>
+      <button class="duel-type-btn"        data-type="match"   onclick="selectDuelType(this,'match')">🔗 Match</button>
+    </div>
+
+    <!-- Level / chapter selection -->
+    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin:14px 0 8px;">NIVEAU</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="duel-level-grid">
+      <button class="duel-type-btn active" data-lv="any" onclick="selectDuelLevel(this,'any')">🔀 Aléatoire</button>
+      <button class="duel-type-btn" data-lv="A1" onclick="selectDuelLevel(this,'A1')">A1</button>
+      <button class="duel-type-btn" data-lv="A2" onclick="selectDuelLevel(this,'A2')">A2</button>
+      <button class="duel-type-btn" data-lv="B1" onclick="selectDuelLevel(this,'B1')">B1</button>
+      <button class="duel-type-btn" data-lv="B2" onclick="selectDuelLevel(this,'B2')">B2</button>
+    </div>
+
+    <!-- Bet -->
+    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin:14px 0 8px;">MISE (optionnel)</div>
+    <div style="background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span class="coin" style="font-size:1rem;"></span>
+        <input type="number" id="duel-bet-input" min="0" max="9999" value="0" placeholder="0"
+          style="flex:1;background:transparent;border:none;color:var(--gold);font-size:1.4rem;font-weight:900;font-family:'Nunito',sans-serif;outline:none;width:80px;">
+        <span style="font-size:.78rem;color:var(--muted);">pièces</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="bet-quick-btn" onclick="setBet(0)">Gratuit</button>
+        <button class="bet-quick-btn" onclick="setBet(50)">50</button>
+        <button class="bet-quick-btn" onclick="setBet(100)">100</button>
+        <button class="bet-quick-btn" onclick="setBet(200)">200</button>
+        <button class="bet-quick-btn" onclick="setBet(500)">500</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:8px;">Le gagnant empoche la mise des deux joueurs. Si l'adversaire refuse la mise, il peut rejoindre sans parier.</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeCreateDuel()" style="flex:1;">Annuler</button>
+      <button class="btn btn-primary" onclick="confirmCreateDuel()" style="flex:2;">Créer le duel →</button>
+    </div>
   </div>
 </div>
 
