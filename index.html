@@ -13,17 +13,20 @@
   <link rel="canonical" href="https://linguaquest-six.vercel.app/landing.html">
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    :root {
-      --bg:     #0a0a14;
-      --card:   #141428;
-      --card2:  #1c1c34;
-      --accent: #7c3aed;
-      --accent2:#ec4899;
-      --accent3:#06b6d4;
-      --gold:   #fbbf24;
-      --green:  #10b981;
-      --text:   #f1f5f9;
-      --muted:  #94a3b8;
+    :root,[data-theme="dark"]{
+      --bg:#0a0a14;--card:#141428;--card2:#1c1c34;--card3:#222240;
+      --accent:#7c3aed;--accent2:#ec4899;--accent3:#06b6d4;--accent4:#f59e0b;
+      --gold:#fbbf24;--green:#10b981;--red:#ef4444;--text:#f1f5f9;--muted:#94a3b8;
+    }
+    [data-theme="light"]{
+      --bg:#f0f0ff;--card:#ffffff;--card2:#f0effe;--card3:#e4e0fd;
+      --accent:#7c3aed;--accent2:#ec4899;--accent3:#06b6d4;--accent4:#f59e0b;
+      --gold:#d97706;--green:#059669;--red:#dc2626;--text:#1e1b4b;--muted:#6b7280;
+    }
+    [data-theme="claude"]{
+      --bg:#1c1c1f;--card:#26262b;--card2:#2e2e35;--card3:#38383f;
+      --accent:#e07b39;--accent2:#d4652a;--accent3:#f5a46a;--accent4:#f5a623;
+      --gold:#f5a623;--green:#3d9970;--red:#e05252;--text:#ffffff;--muted:#8c8c99;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -34,6 +37,7 @@
       min-height: 100vh;
       overflow-x: hidden;
       line-height: 1.6;
+      transition: background .3s, color .3s;
     }
 
     /* ── STARS ── */
@@ -53,7 +57,7 @@
       position: sticky; top: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 32px;
-      background: rgba(10,10,20,.92);
+      background: rgba(var(--nav-rgb,10,10,20),.95);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,.06);
     }
@@ -183,7 +187,7 @@
       background: var(--card);
       border: 1px solid rgba(255,255,255,.07);
       border-radius: 20px; padding: 28px 26px;
-      transition: transform .25s, border-color .25s, box-shadow .25s;
+      transition: transform .25s, border-color .25s, box-shadow .25s, background .3s;
       position: relative; overflow: hidden;
     }
     .feat-card::before {
@@ -202,7 +206,7 @@
     .steps { display: flex; flex-direction: column; gap: 24px; max-width: 700px; margin: 0 auto; }
     .step {
       display: flex; gap: 22px; align-items: flex-start;
-      background: var(--card); border: 1px solid rgba(255,255,255,.07);
+      background: var(--card); transition:background .3s; border: 1px solid rgba(255,255,255,.07);
       border-radius: 18px; padding: 24px 26px;
     }
     .step-num {
@@ -222,7 +226,7 @@
       gap: 16px;
     }
     .lang-card {
-      background: var(--card2);
+      background: var(--card2); transition:background .3s;
       border: 1px solid rgba(255,255,255,.07);
       border-radius: 18px; padding: 26px 20px;
       text-align: center;
@@ -235,7 +239,7 @@
 
     /* ── STATS BANNER ── */
     .stats-banner {
-      background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(236,72,153,.1));
+      background: linear-gradient(135deg, rgba(124,58,237,.12), rgba(236,72,153,.08));
       border: 1px solid rgba(124,58,237,.2);
       border-radius: 24px; padding: 40px 32px;
       display: flex; flex-wrap: wrap; gap: 32px;
@@ -274,7 +278,7 @@
 
     /* ── FOOTER ── */
     footer {
-      background: rgba(0,0,0,.3);
+      background: var(--card2, rgba(0,0,0,.3));
       border-top: 1px solid rgba(255,255,255,.06);
       padding: 32px 32px;
       display: flex; flex-wrap: wrap; gap: 16px;
@@ -304,7 +308,7 @@
 
     /* ── ARTICLE GRID ── */
     .article-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; }
-    .article-card { background: var(--card); border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 26px; }
+    .article-card { background: var(--card); transition:background .3s; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 26px; }
     .article-h3 { font-size: 1.02rem; font-weight: 900; margin-bottom: 12px; }
     .article-p { font-size: .87rem; color: var(--muted); line-height: 1.75; font-weight: 600; margin-bottom: 10px; }
     .article-p:last-child { margin-bottom: 0; }
@@ -328,7 +332,7 @@
 
     /* ── FAQ ── */
     .faq-list { display: flex; flex-direction: column; gap: 10px; }
-    .faq-item { background: var(--card); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; overflow: hidden; }
+    .faq-item { background: var(--card); transition:background .3s; border: 1px solid rgba(255,255,255,.07); border-radius: 14px; overflow: hidden; }
     .faq-q { width: 100%; background: none; border: none; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; font-family: 'Nunito', sans-serif; font-size: .92rem; font-weight: 800; color: var(--text); cursor: pointer; text-align: left; gap: 12px; }
     .faq-q:hover { background: rgba(255,255,255,.03); }
     .faq-arrow { color: var(--muted); font-size: .7rem; flex-shrink: 0; transition: transform .2s; }
@@ -345,18 +349,7 @@
     .nav-hide-sm { }
     @media(max-width:600px){ .nav-hide-sm{display:none;} }
 
-    /* ── Theme: light ── */
-    [data-theme="light"] { --bg:#f0f4ff; --card:#fff; --card2:#f5f7ff; --text:#1e1e35; --muted:#6b7280; --accent:#7c3aed; --accent2:#ec4899; --accent3:#0891b2; --gold:#d97706; --green:#059669; }
-    [data-theme="light"] body { background:var(--bg); color:var(--text); }
-    [data-theme="light"] nav { background:rgba(240,244,255,.95); border-bottom-color:rgba(0,0,0,.07); }
-    [data-theme="light"] .feat-card, [data-theme="light"] .step, [data-theme="light"] .lang-card { background:#fff; border-color:rgba(0,0,0,.08); }
-    [data-theme="light"] .compare-table { border-color:rgba(0,0,0,.1); }
-    [data-theme="light"] .faq-item { background:#fff; border-color:rgba(0,0,0,.08); }
-    [data-theme="light"] footer { background:rgba(0,0,0,.04); }
 
-    /* ── Theme: claude ── */
-    [data-theme="claude"] { --bg:#1a1a2e; --card:#16213e; --card2:#0f3460; --text:#e2e8f0; --muted:#94a3b8; --accent:#e94560; --accent2:#f59e0b; --accent3:#06b6d4; }
-    [data-theme="claude"] nav { background:rgba(26,26,46,.95); }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
