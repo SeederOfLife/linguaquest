@@ -82,7 +82,7 @@ function demoLogin(){
   saveCurrent(U.email);afterLogin();
 }
 
-function doLogout(){U=null;clearCurrent();goTo('auth');hideChrome();}
+function doLogout(){U=null;clearCurrent();window.location.href='index.html';}
 
 function showAuthErr(prefix,msg){
   const id=prefix==='login'?'login-err':'reg-err';
