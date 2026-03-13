@@ -148,6 +148,7 @@
 
 <!-- ══════════════════ LEARN SCREEN ══════════════════ -->
 <div class="screen screen-padded" id="screen-learn">
+  <div class="learn-center-wrap">
   <div style="text-align:center;margin:4px 0 12px;">
     <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:2px;">
       <svg class="lq-logo-svg" width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="animation-duration:5s;filter:drop-shadow(0 0 10px rgba(245,158,11,.5));">
@@ -186,9 +187,8 @@
   </div>
   <button class="btn btn-primary btn-lg" onclick="goToLevels()" id="btn-start" disabled style="margin-top:12px;justify-content:center;" id="btn-start">Commencer →</button>
   <!-- SRS Review widget -->
-  <div id="srs-widget" style="width:100%;max-width:500px;margin-top:14px;"></div>
-  <!-- Themed Event banner -->
-  <div id="event-banner" style="width:100%;max-width:500px;margin-top:8px;"></div>
+  <div id="srs-widget" style="width:100%;margin-top:14px;"></div>
+  </div><!-- /learn-center-wrap -->
 </div>
 
 <!-- ══════════════════ LEVELS ══════════════════ -->
@@ -787,5 +787,7 @@
   </div>
 </div>
 
+  <!-- ── FLOATING EVENT BANNER ── -->
+  <div id="event-float"></div>
 </body>
 </html>
