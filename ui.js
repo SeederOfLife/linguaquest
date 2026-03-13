@@ -167,13 +167,47 @@ function syncDots(){const s1=!!S.nL,s2=!!(S.nL&&S.tL&&S.nL!==S.tL);$('dot1').cla
 function goToLevels(){if(!S.nL||!S.tL)return;const N=LANGS[S.nL],T=LANGS[S.tL],pair=`${N.flag} → ${T.flag} ${T.name}`;sT('bc-pair',pair);sT('bc-pair2',pair);sT('levels-title',`${T.flag} ${T.name} — Niveaux`);renderLevels();goTo('levels');}
 function renderLevels(){
   const g=$('levels-grid');g.innerHTML='';
+  if(!U.unlockedLevels) U.unlockedLevels=['A1'];
   LEVELS.forEach((lv,i)=>{
-    const has=!!CHAPTERS[lv.id],prevOk=i===0||lvDone(LEVELS[i-1].id),locked=!has||(!prevOk&&i>0),done=lvDone(lv.id),stars=lvStars(lv.id);
-    const d=document.createElement('div');d.className=`level-card ${lv.id} ${locked?'locked':done?'completed':'available'}`;
-    d.innerHTML=`${locked?'<span style="position:absolute;top:9px;right:9px;">🔒</span>':''}<span class="level-badge">${lv.id}</span><div class="level-title">${lv.label.split('—')[1].trim()}</div><div class="level-desc">${lv.desc}</div><div class="level-stars">${stHTML(stars)}</div>`;
-    if(!locked) d.onclick=()=>goToChaps(lv.id);
+    const has=!!CHAPTERS[lv.id];
+    const unlocked=U.unlockedLevels.includes(lv.id)||(i===0);
+    const done=lvDone(lv.id),stars=lvStars(lv.id);
+    const canAfford=Math.floor(U.coins)>=(lv.price||0);
+    const d=document.createElement('div');
+    d.className=`level-card ${lv.id} ${!unlocked?'locked':done?'completed':'available'}`;
+    if(!unlocked){
+      d.innerHTML=`
+        <span class="level-badge">${lv.id}</span>
+        <div class="level-title">${lv.label.split('—')[1].trim()}</div>
+        <div class="level-desc">${lv.desc}</div>
+        <button class="btn-unlock-level ${canAfford?'can-afford':'cant-afford'}"
+          onclick="event.stopPropagation();buyLevel('${lv.id}')">
+          ${canAfford?'🔓':'🔒'} ${lv.price} 🪙
+        </button>`;
+    } else {
+      d.innerHTML=`
+        <span class="level-badge">${lv.id}</span>
+        <div class="level-title">${lv.label.split('—')[1].trim()}</div>
+        <div class="level-desc">${lv.desc}</div>
+        <div class="level-stars">${stHTML(stars)}</div>`;
+      d.onclick=()=>goToChaps(lv.id);
+    }
     g.appendChild(d);
   });
+}
+function buyLevel(lvId){
+  if(!U.unlockedLevels) U.unlockedLevels=['A1'];
+  if(U.unlockedLevels.includes(lvId)) return;
+  const lv=LEVELS.find(l=>l.id===lvId);
+  if(!lv) return;
+  if(Math.floor(U.coins)<lv.price){ toast('❌ Pas assez de pièces !'); return; }
+  if(!confirm(`Débloquer ${lvId} pour ${lv.price} pièces ?`)) return;
+  U.coins-=lv.price;
+  U.unlockedLevels.push(lvId);
+  saveU();
+  toast(`🔓 Niveau ${lvId} débloqué !`);
+  renderLevels();
+  updateTopBar();
 }
 function lvDone(id){const cs=CHAPTERS[id]||[];return cs.length>0&&cs.every(c=>U?.progress[pk(c.id)]?.completed);}
 function lvStars(id){const cs=CHAPTERS[id]||[];if(!cs.length)return 0;return Math.round(cs.reduce((a,c)=>a+(U?.progress[pk(c.id)]?.stars||0),0)/cs.length);}
