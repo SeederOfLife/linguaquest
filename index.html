@@ -336,6 +336,28 @@
     .faq-a { display: none; padding: 0 20px 16px; font-size: .86rem; color: var(--muted); line-height: 1.75; font-weight: 600; border-top: 1px solid rgba(255,255,255,.05); padding-top: 14px; }
     .faq-a.open { display: block; }
 
+
+    /* ── Theme dots ── */
+    .nav-themes { display:flex; gap:5px; align-items:center; }
+    .theme-dot { background:rgba(255,255,255,.08); border:2px solid transparent; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:.85rem; transition:all .2s; display:flex; align-items:center; justify-content:center; }
+    .theme-dot:hover { border-color:rgba(255,255,255,.3); transform:scale(1.1); }
+    .theme-dot.active { border-color:var(--accent,#7c3aed); background:rgba(124,58,237,.2); }
+    .nav-hide-sm { }
+    @media(max-width:600px){ .nav-hide-sm{display:none;} }
+
+    /* ── Theme: light ── */
+    [data-theme="light"] { --bg:#f0f4ff; --card:#fff; --card2:#f5f7ff; --text:#1e1e35; --muted:#6b7280; --accent:#7c3aed; --accent2:#ec4899; --accent3:#0891b2; --gold:#d97706; --green:#059669; }
+    [data-theme="light"] body { background:var(--bg); color:var(--text); }
+    [data-theme="light"] nav { background:rgba(240,244,255,.95); border-bottom-color:rgba(0,0,0,.07); }
+    [data-theme="light"] .feat-card, [data-theme="light"] .step, [data-theme="light"] .lang-card { background:#fff; border-color:rgba(0,0,0,.08); }
+    [data-theme="light"] .compare-table { border-color:rgba(0,0,0,.1); }
+    [data-theme="light"] .faq-item { background:#fff; border-color:rgba(0,0,0,.08); }
+    [data-theme="light"] footer { background:rgba(0,0,0,.04); }
+
+    /* ── Theme: claude ── */
+    [data-theme="claude"] { --bg:#1a1a2e; --card:#16213e; --card2:#0f3460; --text:#e2e8f0; --muted:#94a3b8; --accent:#e94560; --accent2:#f59e0b; --accent3:#06b6d4; }
+    [data-theme="claude"] nav { background:rgba(26,26,46,.95); }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
       nav { padding: 12px 18px; }
@@ -348,26 +370,8 @@
     }
   </style>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
-  <!-- Supabase for session check -->
+  <!-- Supabase SDK (used for login modal) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script>
-    // Auto-redirect if already logged in
-    (async () => {
-      try {
-        const _SB = supabase.createClient(
-          'https://luufdddauoucmjiixrax.supabase.co',
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4'
-        );
-        const { data: { session } } = await _SB.auth.getSession();
-        if (session) {
-          // Already logged in — show "continue" banner and redirect after 2s
-          const banner = document.getElementById('logged-in-banner');
-          if (banner) banner.style.display = 'flex';
-          setTimeout(() => { window.location.href = 'app.html'; }, 2500);
-        }
-      } catch(e) { /* fail silently */ }
-    })();
-  </script>
 </head>
 <body>
 
@@ -376,23 +380,50 @@
 
 <div class="page">
 
-  <!-- ── LOGGED IN BANNER ── -->
-  <div id="logged-in-banner" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;padding:14px 28px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;box-shadow:0 8px 30px rgba(124,58,237,.5);align-items:center;gap:12px;white-space:nowrap;">
-    ✅ Déjà connecté — redirection en cours…
-    <a href="app.html" style="color:#fff;text-decoration:underline;font-weight:900;">Aller maintenant →</a>
-  </div>
-
   <!-- ── NAV ── -->
   <nav>
-    <a href="landing.html" class="nav-logo">🌍 LQ</a>
+    <a href="index.html" class="nav-logo">🌍 LQ</a>
     <div class="nav-links">
-      <a href="#fonctionnalites">Fonctionnalités</a>
-      <a href="#langues">Langues</a>
-      <a href="#comment">Comment ça marche</a>
-      <a href="privacy.html">Confidentialité</a>
-      <a href="app.html" class="nav-cta">Jouer gratuitement →</a>
+      <a href="#fonctionnalites" class="nav-hide-sm">Fonctionnalités</a>
+      <a href="#langues" class="nav-hide-sm">Langues</a>
+      <a href="#comment" class="nav-hide-sm">Comment ça marche</a>
+      <!-- Theme switcher -->
+      <div class="nav-themes" id="nav-themes">
+        <button class="theme-dot dark active" onclick="setLandingTheme('dark')" title="Sombre">🌙</button>
+        <button class="theme-dot light" onclick="setLandingTheme('light')" title="Clair">☀️</button>
+        <button class="theme-dot claude" onclick="setLandingTheme('claude')" title="Claude">🤖</button>
+      </div>
+      <button class="nav-cta" id="nav-login-btn" onclick="openLoginModal()">Se connecter →</button>
     </div>
   </nav>
+
+  <!-- ── LOGIN MODAL ── -->
+  <div id="login-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeLoginModal()">
+    <div style="background:var(--card,#141428);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:32px 28px;width:92%;max-width:400px;position:relative;">
+      <button onclick="closeLoginModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted,#94a3b8);font-size:1.3rem;cursor:pointer;">✕</button>
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:24px;background:rgba(255,255,255,.06);border-radius:12px;padding:4px;">
+        <button id="ltab-login" onclick="switchLTab('login')" style="flex:1;padding:9px;border:none;border-radius:9px;font-family:Nunito,sans-serif;font-weight:800;font-size:.88rem;cursor:pointer;background:var(--accent,#7c3aed);color:#fff;transition:all .2s;">Connexion</button>
+        <button id="ltab-reg" onclick="switchLTab('reg')" style="flex:1;padding:9px;border:none;border-radius:9px;font-family:Nunito,sans-serif;font-weight:800;font-size:.88rem;cursor:pointer;background:none;color:var(--muted,#94a3b8);transition:all .2s;">Inscription</button>
+      </div>
+      <!-- Login form -->
+      <div id="lform-login">
+        <input id="l-email" type="email" placeholder="Email" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:var(--text,#f1f5f9);font-family:Nunito,sans-serif;font-size:.9rem;margin-bottom:10px;box-sizing:border-box;">
+        <input id="l-pass" type="password" placeholder="Mot de passe" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:var(--text,#f1f5f9);font-family:Nunito,sans-serif;font-size:.9rem;margin-bottom:14px;box-sizing:border-box;">
+        <div id="l-err" style="color:#f87171;font-size:.8rem;font-weight:700;margin-bottom:10px;display:none;"></div>
+        <button onclick="landingLogin()" style="width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#ec4899);border:none;border-radius:12px;color:#fff;font-family:Nunito,sans-serif;font-weight:900;font-size:.95rem;cursor:pointer;">Connexion →</button>
+        <button onclick="landingDemo()" style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:var(--muted,#94a3b8);font-family:Nunito,sans-serif;font-weight:800;font-size:.85rem;cursor:pointer;">Essayer la démo</button>
+      </div>
+      <!-- Register form -->
+      <div id="lform-reg" style="display:none;">
+        <input id="r-name" type="text" placeholder="Prénom" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:var(--text,#f1f5f9);font-family:Nunito,sans-serif;font-size:.9rem;margin-bottom:10px;box-sizing:border-box;">
+        <input id="r-email" type="email" placeholder="Email" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:var(--text,#f1f5f9);font-family:Nunito,sans-serif;font-size:.9rem;margin-bottom:10px;box-sizing:border-box;">
+        <input id="r-pass" type="password" placeholder="Mot de passe (6+ caractères)" style="width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:var(--text,#f1f5f9);font-family:Nunito,sans-serif;font-size:.9rem;margin-bottom:14px;box-sizing:border-box;">
+        <div id="r-err" style="color:#f87171;font-size:.8rem;font-weight:700;margin-bottom:10px;display:none;"></div>
+        <button onclick="landingRegister()" style="width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#ec4899);border:none;border-radius:12px;color:#fff;font-family:Nunito,sans-serif;font-weight:900;font-size:.95rem;cursor:pointer;">Créer mon compte →</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── HERO ── -->
   <div class="hero">
@@ -786,15 +817,135 @@
 </div><!-- .page -->
 
 <script>
+  // ── Theme ──────────────────────────────────────
+  const SB_URL='https://luufdddauoucmjiixrax.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4';
 
-  // FAQ accordion
+  function setLandingTheme(t){
+    localStorage.setItem('lq_theme',t);
+    document.documentElement.setAttribute('data-theme',t);
+    document.querySelectorAll('.theme-dot').forEach(b=>b.classList.toggle('active',b.classList.contains(t)));
+  }
+  (function(){ setLandingTheme(localStorage.getItem('lq_theme')||'dark'); })();
+
+  // ── Auto-redirect if already logged in ─────────
+  (function(){
+    try {
+      const email=JSON.parse(localStorage.getItem('lq_current')||'null');
+      if(email && localStorage.getItem('lq_u_'+email)){
+        window.location.href='app.html'; return;
+      }
+    } catch(e){}
+  })();
+
+  // ── Login modal ────────────────────────────────
+  function openLoginModal(){
+    document.getElementById('login-modal').style.display='flex';
+    setTimeout(()=>document.getElementById('l-email')?.focus(),80);
+  }
+  function closeLoginModal(){ document.getElementById('login-modal').style.display='none'; }
+
+  function switchLTab(tab){
+    document.getElementById('lform-login').style.display=tab==='login'?'block':'none';
+    document.getElementById('lform-reg').style.display=tab==='reg'?'block':'none';
+    const on='background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border-radius:9px;';
+    const off='background:none;color:#94a3b8;border-radius:9px;';
+    document.getElementById('ltab-login').style.cssText=tab==='login'?on:off;
+    document.getElementById('ltab-reg').style.cssText=tab==='reg'?on:off;
+  }
+
+  function showLErr(id,msg){
+    const el=document.getElementById(id);
+    el.textContent=msg; el.style.display='block';
+    setTimeout(()=>el.style.display='none',4000);
+  }
+
+  async function landingLogin(){
+    const email=(document.getElementById('l-email').value||'').trim().toLowerCase();
+    const pass=document.getElementById('l-pass').value;
+    if(!email||!pass){showLErr('l-err','Remplis tous les champs.');return;}
+    const btn=document.querySelector('#lform-login button');
+    btn.textContent='Connexion...'; btn.disabled=true;
+    try {
+      const localRaw=localStorage.getItem('lq_u_'+email);
+      const localData=localRaw?JSON.parse(localRaw):null;
+      if(localData&&localData.pass===btoa(pass)){
+        localStorage.setItem('lq_current',JSON.stringify(email));
+        window.location.href='app.html'; return;
+      }
+      const _SB=supabase.createClient(SB_URL,SB_KEY);
+      const {data,error}=await _SB.from('users').select('data').eq('email',email).single();
+      if(error||!data){showLErr('l-err','Compte introuvable.');return;}
+      const u=data.data;
+      if(!u||u.pass!==btoa(pass)){showLErr('l-err','Mot de passe incorrect.');return;}
+      localStorage.setItem('lq_u_'+email,JSON.stringify(u));
+      const users=JSON.parse(localStorage.getItem('lq_users')||'{}');
+      users[email]=u; localStorage.setItem('lq_users',JSON.stringify(users));
+      localStorage.setItem('lq_current',JSON.stringify(email));
+      window.location.href='app.html';
+    } catch(e){ showLErr('l-err','Erreur. Verifie ta connexion.'); }
+    finally{ btn.textContent='Connexion →'; btn.disabled=false; }
+  }
+
+  async function landingRegister(){
+    const name=(document.getElementById('r-name').value||'').trim();
+    const email=(document.getElementById('r-email').value||'').trim().toLowerCase();
+    const pass=document.getElementById('r-pass').value;
+    if(!name){showLErr('r-err','Entre ton prenom.');return;}
+    if(!email.includes('@')){showLErr('r-err','Email invalide.');return;}
+    if(pass.length<6){showLErr('r-err','Mot de passe trop court (6 min).');return;}
+    const btn=document.querySelector('#lform-reg button');
+    btn.textContent='Creation...'; btn.disabled=true;
+    try {
+      const _SB=supabase.createClient(SB_URL,SB_KEY);
+      const {data:existing}=await _SB.from('users').select('email').eq('email',email).maybeSingle();
+      if(existing){showLErr('r-err','Email deja utilise.');return;}
+      const U={name,email,pass:btoa(pass),joined:Date.now(),
+        xp:0,coins:100,sessions:0,streak:0,lastDay:null,chaptersCompleted:0,
+        progress:{},assets:{},assetValues:{},lastDivTime:Date.now(),
+        pendingDiv:0,totalInvested:0,owned:[],avatar:'',
+        lessonsCompleted:{},investorLevel:1,unlockedLevels:['A1'],_savedAt:Date.now()};
+      localStorage.setItem('lq_u_'+email,JSON.stringify(U));
+      const users=JSON.parse(localStorage.getItem('lq_users')||'{}');
+      users[email]=U; localStorage.setItem('lq_users',JSON.stringify(users));
+      localStorage.setItem('lq_current',JSON.stringify(email));
+      await _SB.from('users').upsert({email,data:U});
+      window.location.href='app.html';
+    } catch(e){ showLErr('r-err','Erreur. Reessaie.'); }
+    finally{ btn.textContent='Creer mon compte →'; btn.disabled=false; }
+  }
+
+  function landingDemo(){
+    const demo='demo@linguaquest.app';
+    const users=JSON.parse(localStorage.getItem('lq_users')||'{}');
+    if(!users[demo]){
+      const U={name:'Demo',email:demo,pass:btoa('demo123'),joined:Date.now(),
+        xp:1200,coins:350,sessions:14,streak:5,chaptersCompleted:4,progress:{},
+        assets:{gold:2,house:1,stock:3,crypto:4},assetValues:{gold:0,house:0,stock:0,crypto:0},
+        lastDivTime:Date.now(),pendingDiv:0,totalInvested:0,
+        owned:[],avatar:'',lessonsCompleted:{},investorLevel:1,unlockedLevels:['A1'],_savedAt:Date.now()};
+      users[demo]=U; localStorage.setItem('lq_users',JSON.stringify(users));
+      localStorage.setItem('lq_u_'+demo,JSON.stringify(U));
+    }
+    localStorage.setItem('lq_current',JSON.stringify(demo));
+    window.location.href='app.html';
+  }
+
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Enter') return;
+    const m=document.getElementById('login-modal');
+    if(m&&m.style.display==='flex'){
+      document.getElementById('lform-login').style.display!=='none'?landingLogin():landingRegister();
+    }
+  });
+
+  // ── FAQ accordion ──────────────────────────────
   function toggleFaq(btn) {
-    const item = btn.closest('.faq-item');
-    const ans = item.querySelector('.faq-a');
-    const isOpen = ans.classList.contains('open');
-    // Close all
-    document.querySelectorAll('.faq-a.open').forEach(a => { a.classList.remove('open'); a.previousElementSibling.classList.remove('open'); });
-    if (!isOpen) { ans.classList.add('open'); btn.classList.add('open'); }
+    const item=btn.closest('.faq-item');
+    const ans=item.querySelector('.faq-a');
+    const isOpen=ans.classList.contains('open');
+    document.querySelectorAll('.faq-a.open').forEach(a=>{a.classList.remove('open');a.previousElementSibling.classList.remove('open');});
+    if(!isOpen){ans.classList.add('open');btn.classList.add('open');}
   }
 
   // Generate stars
