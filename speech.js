@@ -38,8 +38,8 @@ function _loadVoices() {
 if (window.speechSynthesis) {
   _loadVoices();
   window.speechSynthesis.onvoiceschanged = _loadVoices;
-  // Retry for Chrome which loads voices async
-  [100, 300, 600, 1500].forEach(ms => setTimeout(_loadVoices, ms));
+  // Retry for Chrome which loads voices async — longer waits for desktop
+  [100, 300, 600, 1000, 2000, 3500].forEach(ms => setTimeout(_loadVoices, ms));
 }
 
 // Pick best available voice for a language code
@@ -82,15 +82,21 @@ function speakWord(text, lang, opts = {}) {
   utt.volume = volume;
   utt.onend  = markDone;
 
-  // Only assign a specific voice for fr/en — for cs/de/es let the browser
-  // pick its own cloud voice using utt.lang only (avoids wrong voice assignment)
-  if (lang === 'fr' || lang === 'en') {
+  // Try to assign best voice for all languages (including cs/de/es on desktop)
+  const _trySpeak = () => {
     const v = _pickVoice(lang);
     if (v) utt.voice = v;
-  }
+    _currentUtt = utt;
+    window.speechSynthesis.speak(utt);
+  };
 
-  _currentUtt = utt;
-  window.speechSynthesis.speak(utt);
+  // If voices not loaded yet (common on desktop Chrome), wait and retry once
+  if (_voices.length === 0) {
+    _loadVoices();
+    setTimeout(() => { _loadVoices(); _trySpeak(); }, 350);
+  } else {
+    _trySpeak();
+  }
 }
 
 // Speak the current exercise question (native lang) + correct answer (target lang)
