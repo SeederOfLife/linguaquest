@@ -17,7 +17,8 @@ function navTo(tab){
   if(tab==='rank'){ renderLeaderboard(); renderDuelsScreen(); }
   if(tab!=='rank' && typeof stopDuelRefresh==='function') stopDuelRefresh();
   if(tab==='trophies'){ renderTrophies(); }
-  if(tab==='learn'){ renderSRSWidget(); renderEventBanner(); }
+  if(tab==='learn'){ renderSRSWidget(); }
+  renderEventBanner();
   if(screens[tab]) goTo(screens[tab]);
 }
 
@@ -201,11 +202,11 @@ function buyLevel(lvId){
   const lv=LEVELS.find(l=>l.id===lvId);
   if(!lv) return;
   if(Math.floor(U.coins)<lv.price){ toast('❌ Pas assez de pièces !'); return; }
-  if(!confirm(`Débloquer ${lvId} pour ${lv.price} pièces ?`)) return;
+  if(!confirm(t('level_unlock_confirm').replace('{id}',lvId).replace('{n}',lv.price))) return;
   U.coins-=lv.price;
   U.unlockedLevels.push(lvId);
   saveU();
-  toast(`🔓 Niveau ${lvId} débloqué !`);
+  toast(t('level_unlocked').replace('{id}',lvId));
   renderLevels();
   updateTopBar();
 }
@@ -244,7 +245,7 @@ function renderChaps(){
   if(topic==='diy'){
     const diys=(U.diyLessons||[]).filter(d=>d.level===S.level);
     if(!diys.length){
-      list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">Aucune leçon créée.<br>Clique sur ＋ pour créer la tienne !</div>';
+      list.innerHTML=`<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">${t('diy_no_lessons')}</div>`;
       return;
     }
     diys.forEach((d,i)=>{
@@ -255,7 +256,7 @@ function renderChaps(){
           <div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${d.title}</div>
           <div style="font-size:.74rem;color:var(--muted);">${d.pairs.length} paires · Ma leçon</div>
         </div>
-        <button class="diy-del-btn" onclick="event.stopPropagation();deleteDIY(${i})" title="Supprimer">🗑</button>`;
+        <button class="diy-del-btn" onclick="event.stopPropagation();deleteDIY(${i})" title=""+t('diy_delete_btn')+"">🗑</button>`;
       el.onclick=()=>startDIYLesson(d);
       list.appendChild(el);
     });
@@ -266,7 +267,7 @@ function renderChaps(){
   const allCs=CHAPTERS[S.level]||[];
   const cs=allCs.filter(c=>c.topic===topic);
   if(!cs.length){
-    list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">Contenu à venir… 🚧</div>';
+    list.innerHTML=`<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">${t('content_coming')}</div>`;
     return;
   }
   cs.forEach((ch,i)=>{
@@ -303,12 +304,12 @@ function closeDIY(){ $('diy-modal').style.display='none'; }
 function saveDIY(){
   const title=($('diy-title').value||'').trim();
   const raw=($('diy-words').value||'');
-  if(!title){ toast('❌ Donne un titre à ta leçon'); return; }
+  if(!title){ toast(t('diy_title_required')); return; }
   const pairs=raw.split('\\n').map(l=>l.trim()).filter(l=>l.includes('=')).map(l=>{
     const [a,b]=l.split('=').map(s=>s.trim());
     return {native:a,target:b};
   }).filter(p=>p.native&&p.target);
-  if(pairs.length<2){ toast('❌ Minimum 2 paires (ex: chien = dog)'); return; }
+  if(pairs.length<2){ toast(t('diy_min_pairs')); return; }
   if(!U.diyLessons) U.diyLessons=[];
   U.diyLessons.push({title, level:S.level||'A1', pairs, created:Date.now()});
   saveU();
@@ -316,10 +317,10 @@ function saveDIY(){
   S._activeTopic='diy';
   renderTopicTabs();
   renderChaps();
-  toast(`✨ "${title}" créée · ${pairs.length} paires`);
+  toast(`✨ "${title}" `+t('diy_created').replace('{n}',pairs.length));
 }
 function deleteDIY(idx){
-  if(!confirm('Supprimer cette lecon ?')) return;
+  if(!confirm(t('diy_delete_confirm'))) return;
   U.diyLessons.splice(idx,1);
   saveU(); renderTopicTabs(); renderChaps();
 }
@@ -388,7 +389,7 @@ function updateLpPair(){
     el.innerHTML=`${N.flag} ${N.name} &rarr; ${T.flag} ${T.name}`;
     el.style.color='var(--accent3)';
   } else if(_lpNative===_lpTarget&&_lpNative){
-    el.textContent='Choisis deux langues différentes';
+    el.textContent=t('choose_two_langs');
     el.style.color='var(--red)';
   } else {
     el.textContent='';
@@ -397,7 +398,7 @@ function updateLpPair(){
 
 function applyLangChange(){
   if(!_lpNative||!_lpTarget||_lpNative===_lpTarget){
-    toast('Choisis deux langues différentes !');
+    toast(t('choose_two_langs')+'!');
     return;
   }
   S.nL=_lpNative; S.tL=_lpTarget;
@@ -448,7 +449,7 @@ function updateTarget(){
     if(missing<=0){
       tEl.innerHTML='<span style="color:var(--green)">&#10003; Atteint !</span>';
     } else if(daily<=0){
-      tEl.textContent="Investis d'abord";
+      tEl.textContent=t('invest_first');
       tEl.style.color='var(--muted)';
     } else {
       const days=missing/daily;
