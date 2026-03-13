@@ -1,791 +1,836 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="dark">
+<html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinguaQuest</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="style.css">
-  <!-- Google AdSense — script required on all pages for domain verification -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinguaQuest — Apprends 5 langues en jouant et investissant</title>
+  <meta name="description" content="LinguaQuest est une application gratuite pour apprendre le français, l'anglais, l'espagnol, l'allemand et le tchèque grâce à des quiz ludiques, un système de répétition espacée et un simulateur d'investissement.">
+  <meta name="keywords" content="apprendre langue, quiz langue, français, anglais, espagnol, allemand, tchèque, application gratuite, répétition espacée, vocabulaire">
+  <meta property="og:title" content="LinguaQuest — Apprends 5 langues en jouant">
+  <meta property="og:description" content="Quiz interactifs, répétition espacée, duels et simulateur d'investissement. Gratuit, sans publicité intrusive.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://linguaquest-six.vercel.app/landing.html">
+  <link rel="canonical" href="https://linguaquest-six.vercel.app/landing.html">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+    :root {
+      --bg:     #0a0a14;
+      --card:   #141428;
+      --card2:  #1c1c34;
+      --accent: #7c3aed;
+      --accent2:#ec4899;
+      --accent3:#06b6d4;
+      --gold:   #fbbf24;
+      --green:  #10b981;
+      --text:   #f1f5f9;
+      --muted:  #94a3b8;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── STARS ── */
+    .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .star {
+      position: absolute; border-radius: 50%; background: white;
+      animation: twinkle var(--d,3s) ease-in-out infinite alternate;
+      opacity: var(--o,.2);
+    }
+    @keyframes twinkle { to { opacity: calc(var(--o,.2) * 0.1); } }
+
+    /* ── LAYOUT ── */
+    .page { position: relative; z-index: 1; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 32px;
+      background: rgba(10,10,20,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .nav-logo {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2) 50%, var(--accent3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: .88rem;
+      font-weight: 700; transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff !important;
+      padding: 8px 20px; border-radius: 50px;
+      font-weight: 800 !important; font-size: .85rem !important;
+      transition: transform .2s, box-shadow .2s !important;
+    }
+    .nav-cta:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 20px rgba(124,58,237,.4) !important; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 92vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 60px 24px 80px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.35);
+      color: #a78bfa;
+      font-size: .75rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 50px; margin-bottom: 28px;
+      animation: fadeUp .6s ease both;
+    }
+    .hero-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2.6rem, 8vw, 5.2rem);
+      line-height: 1.08;
+      margin-bottom: 22px;
+      animation: fadeUp .7s .1s ease both;
+    }
+    .hero-title .grad {
+      background: linear-gradient(135deg, var(--accent), var(--accent2) 45%, var(--accent3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(.95rem, 2.5vw, 1.2rem);
+      color: var(--muted); max-width: 580px;
+      margin-bottom: 40px; font-weight: 600;
+      animation: fadeUp .7s .2s ease both;
+    }
+    .hero-btns {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 56px;
+      animation: fadeUp .7s .3s ease both;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; border: none; padding: 14px 32px;
+      border-radius: 50px; font-family: 'Nunito', sans-serif;
+      font-size: 1rem; font-weight: 900; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 20px rgba(124,58,237,.35);
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(124,58,237,.5); }
+    .btn-secondary {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.15);
+      color: var(--text); padding: 14px 32px;
+      border-radius: 50px; font-family: 'Nunito', sans-serif;
+      font-size: 1rem; font-weight: 800; cursor: pointer;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: background .2s, transform .2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,.12); transform: translateY(-2px); }
+
+    .hero-flags {
+      display: flex; gap: 18px; justify-content: center; align-items: center;
+      animation: fadeUp .7s .4s ease both;
+    }
+    .flag-chip {
+      background: var(--card); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 50px; padding: 8px 18px;
+      font-size: .88rem; font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+      transition: transform .2s, border-color .2s;
+    }
+    .flag-chip:hover { transform: translateY(-3px); border-color: rgba(124,58,237,.4); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── SECTION ── */
+    section { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: .72rem; font-weight: 900; letter-spacing: 2.5px;
+      text-transform: uppercase; color: var(--accent3);
+      margin-bottom: 10px; text-align: center;
+    }
+    .section-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      text-align: center; margin-bottom: 12px; line-height: 1.15;
+    }
+    .section-sub {
+      color: var(--muted); text-align: center; max-width: 520px;
+      margin: 0 auto 52px; font-size: .95rem; font-weight: 600;
+    }
+
+    /* ── FEATURES GRID ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feat-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 20px; padding: 28px 26px;
+      transition: transform .25s, border-color .25s, box-shadow .25s;
+      position: relative; overflow: hidden;
+    }
+    .feat-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity: 0; transition: opacity .25s;
+    }
+    .feat-card:hover { transform: translateY(-5px); border-color: rgba(124,58,237,.3); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+    .feat-card:hover::before { opacity: 1; }
+    .feat-icon { font-size: 2.2rem; margin-bottom: 14px; }
+    .feat-title { font-weight: 900; font-size: 1.05rem; margin-bottom: 7px; }
+    .feat-desc { font-size: .85rem; color: var(--muted); line-height: 1.6; font-weight: 600; }
+
+    /* ── HOW IT WORKS ── */
+    .steps { display: flex; flex-direction: column; gap: 24px; max-width: 700px; margin: 0 auto; }
+    .step {
+      display: flex; gap: 22px; align-items: flex-start;
+      background: var(--card); border: 1px solid rgba(255,255,255,.07);
+      border-radius: 18px; padding: 24px 26px;
+    }
+    .step-num {
+      min-width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Fredoka One', cursive; font-size: 1.2rem; color: #fff;
+      flex-shrink: 0;
+    }
+    .step-title { font-weight: 900; font-size: 1rem; margin-bottom: 5px; }
+    .step-desc { font-size: .85rem; color: var(--muted); font-weight: 600; }
+
+    /* ── LANGUAGES ── */
+    .langs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .lang-card {
+      background: var(--card2);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 18px; padding: 26px 20px;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .lang-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+    .lang-flag { font-size: 2.8rem; margin-bottom: 10px; }
+    .lang-name { font-weight: 900; font-size: 1rem; margin-bottom: 4px; }
+    .lang-native { font-size: .78rem; color: var(--muted); font-weight: 600; }
+
+    /* ── STATS BANNER ── */
+    .stats-banner {
+      background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(236,72,153,.1));
+      border: 1px solid rgba(124,58,237,.2);
+      border-radius: 24px; padding: 40px 32px;
+      display: flex; flex-wrap: wrap; gap: 32px;
+      justify-content: space-around; align-items: center;
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-lbl { font-size: .8rem; color: var(--muted); font-weight: 700; margin-top: 2px; }
+
+    /* ── AD SLOT ── */
+    .ad-section {
+      padding: 40px 24px;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .ad-lbl { font-size: .68rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center;
+      padding: 80px 24px 100px;
+      background: radial-gradient(ellipse at center, rgba(124,58,237,.12) 0%, transparent 70%);
+    }
+    .cta-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      margin-bottom: 16px;
+    }
+    .cta-sub { color: var(--muted); font-size: 1rem; font-weight: 600; margin-bottom: 36px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: rgba(0,0,0,.3);
+      border-top: 1px solid rgba(255,255,255,.06);
+      padding: 32px 32px;
+      display: flex; flex-wrap: wrap; gap: 16px;
+      justify-content: space-between; align-items: center;
+    }
+    footer .f-logo {
+      font-family: 'Fredoka One', cursive; font-size: 1.3rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    footer .f-links { display: flex; gap: 20px; flex-wrap: wrap; }
+    footer .f-links a {
+      color: var(--muted); text-decoration: none; font-size: .8rem;
+      font-weight: 700; transition: color .2s;
+    }
+    footer .f-links a:hover { color: var(--text); }
+    footer .f-copy { font-size: .75rem; color: var(--muted); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(124,58,237,.3), rgba(236,72,153,.2), transparent);
+      margin: 0 auto;
+      max-width: 800px;
+    }
+
+
+    /* ── ARTICLE GRID ── */
+    .article-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; }
+    .article-card { background: var(--card); border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 26px; }
+    .article-h3 { font-size: 1.02rem; font-weight: 900; margin-bottom: 12px; }
+    .article-p { font-size: .87rem; color: var(--muted); line-height: 1.75; font-weight: 600; margin-bottom: 10px; }
+    .article-p:last-child { margin-bottom: 0; }
+
+    /* ── COMPARE TABLE ── */
+    .compare-table { border: 1px solid rgba(255,255,255,.08); border-radius: 18px; overflow: hidden; }
+    .compare-header, .compare-row { display: grid; grid-template-columns: 2fr 1.6fr 1.4fr 1.4fr; }
+    .compare-header { background: rgba(255,255,255,.04); padding: 12px 16px; }
+    .compare-col-head { font-size: .78rem; font-weight: 900; color: var(--muted); text-align: center; }
+    .compare-col-head.highlight-col { color: var(--accent3); }
+    .compare-row { padding: 13px 16px; border-top: 1px solid rgba(255,255,255,.05); align-items: center; }
+    .compare-row:hover { background: rgba(255,255,255,.02); }
+    .compare-label { font-size: .84rem; font-weight: 700; color: var(--text); }
+    .compare-val { font-size: .78rem; font-weight: 700; text-align: center; color: var(--muted); }
+    .compare-val.highlight-col { color: var(--green); }
+    .highlight-col { background: rgba(6,182,212,.04); }
+    @media (max-width: 600px) {
+      .compare-header, .compare-row { grid-template-columns: 1.4fr 1.2fr 1fr 1fr; }
+      .compare-val, .compare-label { font-size: .7rem; }
+    }
+
+    /* ── FAQ ── */
+    .faq-list { display: flex; flex-direction: column; gap: 10px; }
+    .faq-item { background: var(--card); border: 1px solid rgba(255,255,255,.07); border-radius: 14px; overflow: hidden; }
+    .faq-q { width: 100%; background: none; border: none; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; font-family: 'Nunito', sans-serif; font-size: .92rem; font-weight: 800; color: var(--text); cursor: pointer; text-align: left; gap: 12px; }
+    .faq-q:hover { background: rgba(255,255,255,.03); }
+    .faq-arrow { color: var(--muted); font-size: .7rem; flex-shrink: 0; transition: transform .2s; }
+    .faq-q.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a { display: none; padding: 0 20px 16px; font-size: .86rem; color: var(--muted); line-height: 1.75; font-weight: 600; border-top: 1px solid rgba(255,255,255,.05); padding-top: 14px; }
+    .faq-a.open { display: block; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 12px 18px; }
+      .nav-links { gap: 12px; }
+      .hero { padding: 40px 18px 60px; }
+      .hero-flags { gap: 8px; }
+      .flag-chip { padding: 6px 12px; font-size: .78rem; }
+      section { padding: 56px 18px; }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
+  <!-- Supabase for session check -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    // Auto-redirect if already logged in
+    (async () => {
+      try {
+        const _SB = supabase.createClient(
+          'https://luufdddauoucmjiixrax.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4'
+        );
+        const { data: { session } } = await _SB.auth.getSession();
+        if (session) {
+          // Already logged in — show "continue" banner and redirect after 2s
+          const banner = document.getElementById('logged-in-banner');
+          if (banner) banner.style.display = 'flex';
+          setTimeout(() => { window.location.href = 'app.html'; }, 2500);
+        }
+      } catch(e) { /* fail silently */ }
+    })();
+  </script>
 </head>
 <body>
+
+<!-- ── STARS ── -->
 <div class="stars" id="stars"></div>
-<div id="app">
 
-<!-- ══════════════════ THEME PICKER ══════════════════ -->
-<div class="screen" id="screen-theme-picker" style="padding-top:0;">
-  <div style="text-align:center;max-width:380px;width:100%;padding:40px 16px 0;">
-    <div style="display:flex;justify-content:center;margin-bottom:12px;">
-      <svg class="lq-logo-svg" width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <defs><radialGradient id="gtp" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-        <g class="lq-logo-ring">
-          <circle cx="50" cy="50" r="28" fill="none" stroke="url(#gtp)" stroke-width="1.2" opacity=".7"/>
-          <circle cx="50" cy="22" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="50" cy="78" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="31" cy="39" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="69" cy="39" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="31" cy="61" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="69" cy="61" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="50" cy="50" r="44" fill="none" stroke="url(#gtp)" stroke-width=".8" stroke-dasharray="4 5" opacity=".3"/>
-        </g>
-        <g class="lq-logo-star">
-          <polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#gtp)" fill-opacity=".15" stroke="url(#gtp)" stroke-width="1"/>
-        </g>
-        <circle cx="50" cy="50" r="4" fill="url(#gtp)" opacity=".9"/>
-        <circle cx="50" cy="50" r="2" fill="#fff" opacity=".8"/>
-      </svg>
+<div class="page">
+
+  <!-- ── LOGGED IN BANNER ── -->
+  <div id="logged-in-banner" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;padding:14px 28px;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.95rem;box-shadow:0 8px 30px rgba(124,58,237,.5);align-items:center;gap:12px;white-space:nowrap;">
+    ✅ Déjà connecté — redirection en cours…
+    <a href="app.html" style="color:#fff;text-decoration:underline;font-weight:900;">Aller maintenant →</a>
+  </div>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <a href="landing.html" class="nav-logo">🌍 LQ</a>
+    <div class="nav-links">
+      <a href="#fonctionnalites">Fonctionnalités</a>
+      <a href="#langues">Langues</a>
+      <a href="#comment">Comment ça marche</a>
+      <a href="privacy.html">Confidentialité</a>
+      <a href="app.html" class="nav-cta">Jouer gratuitement →</a>
     </div>
-    <div class="logo">LinguaQuest</div>
-    <div class="tagline" id="lbl-tagline">Apprends. Investis. Maîtrise.</div>
-    <p style="font-weight:800;font-size:1rem;margin-top:8px;" id="lbl-pick-theme">Choisis ton thème</p>
-    <div class="theme-pick-grid">
-      <button class="theme-pick-btn" onclick="pickTheme('dark')">
-        <div class="theme-pick-icon">🌙</div><div class="theme-pick-name" id="lbl-theme-dark">Sombre</div>
-      </button>
-      <button class="theme-pick-btn" onclick="pickTheme('light')">
-        <div class="theme-pick-icon">☀️</div><div class="theme-pick-name" id="lbl-theme-light">Clair</div>
-      </button>
-      <button class="theme-pick-btn" onclick="pickTheme('claude')">
-        <div class="theme-pick-icon">🤖</div><div class="theme-pick-name" id="lbl-theme-claude">Claude</div>
-      </button>
-      <button class="theme-pick-btn" onclick="pickTheme('random')">
-        <div class="theme-pick-icon">🎲</div><div class="theme-pick-name" id="lbl-theme-random">Aléatoire</div>
-      </button>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-badge">✨ Entièrement gratuit · 5 langues</div>
+    <h1 class="hero-title">
+      Apprends une langue<br><span class="grad">en jouant et en investissant</span>
+    </h1>
+    <p class="hero-sub">
+      LinguaQuest combine des quiz interactifs, la répétition espacée scientifique et un simulateur de bourse pour rendre l'apprentissage des langues addictif et concret.
+    </p>
+    <div class="hero-btns">
+      <a href="app.html" class="btn-primary">🚀 Commencer maintenant</a>
+      <a href="#comment" class="btn-secondary">Voir comment ça marche</a>
+    </div>
+    <div class="hero-flags">
+      <div class="flag-chip">🇫🇷 Français</div>
+      <div class="flag-chip">🇬🇧 Anglais</div>
+      <div class="flag-chip">🇪🇸 Espagnol</div>
+      <div class="flag-chip">🇩🇪 Allemand</div>
+      <div class="flag-chip">🇨🇿 Tchèque</div>
     </div>
   </div>
-</div>
 
-<!-- ══════════════════ AUTH SCREEN ══════════════════ -->
-<div class="screen active" id="screen-auth" style="justify-content:center;padding-top:40px;">
-  <div style="text-align:center;margin-bottom:8px;">
-    <div style="display:flex;justify-content:center;margin-bottom:8px;">
-      <svg class="lq-logo-svg" width="90" height="90" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <defs><radialGradient id="ga" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-        <g class="lq-logo-ring"><circle cx="50" cy="50" r="28" fill="none" stroke="url(#ga)" stroke-width="1.2" opacity=".7"/><circle cx="50" cy="22" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="50" cy="78" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="31" cy="39" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="69" cy="39" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="31" cy="61" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="69" cy="61" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="50" cy="50" r="44" fill="none" stroke="url(#ga)" stroke-width=".8" stroke-dasharray="4 5" opacity=".3"/></g>
-        <g class="lq-logo-star"><polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#ga)" fill-opacity=".15" stroke="url(#ga)" stroke-width="1"/></g>
-        <circle cx="50" cy="50" r="4" fill="url(#ga)" opacity=".9"/><circle cx="50" cy="50" r="2" fill="#fff" opacity=".8"/>
-      </svg>
-    </div>
-    <div class="logo">LinguaQuest</div>
-    <div class="tagline" id="lbl-tagline-auth">Apprends. Investis. Maîtrise.</div>
+<div class="ad-section">
+    <div class="ad-lbl">Publicité</div>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-7915647470407065"
+         data-ad-slot="auto"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
-  <div class="auth-card card-accent">
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')" data-i18n="tab_login">Se connecter</button>
-      <button class="auth-tab" id="tab-register" onclick="switchTab('register')" data-i18n="tab_register">S'inscrire</button>
+
+  <div class="divider"></div>
+
+  <!-- ── STATS ── -->
+  <section>
+    <div class="stats-banner">
+      <div class="stat-item"><div class="stat-num">5</div><div class="stat-lbl">Langues disponibles</div></div>
+      <div class="stat-item"><div class="stat-num">500+</div><div class="stat-lbl">Mots et expressions</div></div>
+      <div class="stat-item"><div class="stat-num">4</div><div class="stat-lbl">Types de quiz</div></div>
+      <div class="stat-item"><div class="stat-num">26</div><div class="stat-lbl">Trophées à débloquer</div></div>
+      <div class="stat-item"><div class="stat-num">100%</div><div class="stat-lbl">Gratuit</div></div>
     </div>
-    <!-- LOGIN -->
-    <div id="form-login">
-      <label class="auth-label">Email</label>
-      <input class="auth-input" type="email" id="login-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-      <label class="auth-label" id="lbl-login-pass">Mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-        <button class="pass-eye" type="button" onclick="togglePass('login-pass',this)" tabindex="-1">👁</button>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ── FEATURES ── -->
+  <section id="fonctionnalites">
+    <div class="section-label">Fonctionnalités</div>
+    <h2 class="section-title">Tout ce dont tu as besoin pour progresser</h2>
+    <p class="section-sub">LinguaQuest n'est pas un simple dictionnaire — c'est une expérience d'apprentissage complète.</p>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-title">Quiz interactifs</div>
+        <div class="feat-desc">Quatre types d'exercices — QCM, texte à trou, phrases à remettre en ordre, et jeu d'association — pour ne jamais s'ennuyer.</div>
       </div>
-      <div style="text-align:right;margin:-4px 0 10px;">
-        <span class="forgot-link" onclick="openForgot()" id="lbl-forgot-link">Mot de passe oublié ?</span>
+      <div class="feat-card">
+        <div class="feat-icon">🧠</div>
+        <div class="feat-title">Répétition espacée (SRS)</div>
+        <div class="feat-desc">L'algorithme SM-2 suit tes performances et te repose les mots au bon moment — exactement comme les étudiants de médecine le font.</div>
       </div>
-      <div class="auth-error" id="login-err"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()" id="btn-do-login">Se connecter →</button>
-      <div style="text-align:center;margin-top:12px;font-size:.76rem;color:var(--muted);">Compte de démo : <span style="color:var(--accent3);cursor:pointer;font-weight:700;" id="btn-demo" onclick="demoLogin()" data-i18n="demo_link">Connexion démo →</span></div>
-    </div>
-    <!-- REGISTER -->
-    <div id="form-register" style="display:none;">
-      <label class="auth-label" id="lbl-reg-name">Prénom / Pseudo</label>
-      <input class="auth-input" type="text" id="reg-name" placeholder="Marie" onkeydown="if(event.key==='Enter')doRegister()">
-      <label class="auth-label" id="lbl-reg-email">Email</label>
-      <input class="auth-input" type="email" id="reg-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doRegister()">
-      <label class="auth-label" id="lbl-reg-pass">Mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="reg-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')doRegister()">
-        <button class="pass-eye" type="button" onclick="togglePass('reg-pass',this)" tabindex="-1">👁</button>
+      <div class="feat-card">
+        <div class="feat-icon">📈</div>
+        <div class="feat-title">Simulateur de bourse</div>
+        <div class="feat-desc">Investis tes pièces gagnées dans de l'or, des actions, de l'immobilier ou des cryptos. Apprends la finance en même temps que les langues.</div>
       </div>
-      <div class="auth-error" id="reg-err"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()" id="btn-do-register">Créer mon compte 🚀</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;">
-      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
-      <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;" id="lbl-or-guest">ou continuer sans compte</span>
-      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
-    </div>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;gap:8px;" id="btn-guest" onclick="guestLogin()"><span id="lbl-guest-btn">👤 Continuer en invité</span></button>
-    <div style="text-align:center;margin-top:8px;font-size:.7rem;color:var(--muted);" id="lbl-guest-warn">La progression ne sera pas sauvegardée</div>
-    <div style="text-align:center;margin-top:18px;font-size:.68rem;color:var(--muted);opacity:.6;">
-      <a href="landing.html" style="color:var(--muted);text-decoration:none;margin:0 8px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">À propos</a>·
-      <a href="privacy.html" style="color:var(--muted);text-decoration:none;margin:0 8px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Confidentialité</a>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ TOP BAR (logged in) ══════════════════ -->
-<div id="top-bar" class="top-bar" style="display:none;">
-  <div style="display:flex;align-items:center;gap:7px;">
-    <svg class="lq-logo-svg" width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="animation-duration:5s;">
-      <defs><radialGradient id="gtb" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-      <g class="lq-logo-ring"><circle cx="50" cy="50" r="28" fill="none" stroke="url(#gtb)" stroke-width="1.5" opacity=".8"/><circle cx="50" cy="22" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="50" cy="78" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="39" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="39" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="61" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="61" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/></g>
-      <g class="lq-logo-star"><polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#gtb)" fill-opacity=".2" stroke="url(#gtb)" stroke-width="1.2"/></g>
-      <circle cx="50" cy="50" r="5" fill="url(#gtb)" opacity=".95"/>
-    </svg>
-    <span class="top-bar-logo">LQ</span>
-  </div>
-  <div class="top-spacer"></div>
-  <div class="coin-display"><span class="coin-icon"><span class="coin"></span></span><span id="tb-coins">0</span></div>
-  <div class="avatar-btn" id="avatar-btn" onclick="navTo('profile')"></div>
-</div>
-
-<!-- ══════════════════ NAV BAR ══════════════════ -->
-<div id="nav-bar" class="nav-bar" style="display:none;">
-  <div class="nav-item active" id="nav-learn" onclick="navTo('learn')"><span class="ni" style="font-size:1.1rem;font-weight:900;color:inherit;">A</span><span id="lbl-nav-learn">Apprendre</span></div>
-  <div class="nav-item" id="nav-portfolio" onclick="navTo('portfolio')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">$</span><span id="lbl-nav-portfolio">Portfolio</span></div>
-  <div class="nav-item" id="nav-rank" onclick="navTo('rank')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">🏆</span><span>Rang</span></div>
-  <div class="nav-item" id="nav-shop" onclick="navTo('shop')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">★</span><span id="lbl-nav-shop">Boutique</span></div>
-  <div class="nav-item" id="nav-profile" onclick="navTo('profile')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">◉</span><span id="lbl-nav-profile">Profil</span></div>
-</div>
-
-<!-- ══════════════════ LEARN SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-learn">
-  <div style="text-align:center;margin:4px 0 12px;">
-    <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:2px;">
-      <svg class="lq-logo-svg" width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="animation-duration:5s;filter:drop-shadow(0 0 10px rgba(245,158,11,.5));">
-        <defs><radialGradient id="gls" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-        <g class="lq-logo-ring"><circle cx="50" cy="50" r="28" fill="none" stroke="url(#gls)" stroke-width="1.5" opacity=".8"/><circle cx="50" cy="22" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="50" cy="78" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="39" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="39" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="61" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="61" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/></g>
-        <g class="lq-logo-star"><polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#gls)" fill-opacity=".2" stroke="url(#gls)" stroke-width="1.2"/></g>
-        <circle cx="50" cy="50" r="5" fill="url(#gls)" opacity=".95"/>
-      </svg>
-      <div class="logo" style="font-size:1.9rem;">LinguaQuest</div>
-    </div>
-    <div class="tagline" style="margin-bottom:0;" id="lbl-learn-tagline">Choisis ta langue</div>
-  </div>
-  <div class="steps-row">
-    <div class="step-dot active" id="dot1">1</div>
-    <div class="step-line" id="line1"></div>
-    <div class="step-dot pending" id="dot2">2</div>
-    <div class="step-line" id="line2"></div>
-    <div class="step-dot pending" id="dot3">→</div>
-  </div>
-  <div class="lang-section">
-    <div class="lang-section-title" id="lbl-i-speak">🧑 Je parle</div>
-    <div class="lang-grid" id="native-grid"></div>
-  </div>
-  <div style="text-align:center;font-size:1.4rem;color:var(--accent);margin:4px 0;animation:arrowPulse 1.5s ease infinite alternate;" id="lang-arrow" style="opacity:.28">↓</div>
-  <style>@keyframes arrowPulse{from{opacity:.3;transform:scale(1);}to{opacity:1;transform:scale(1.1);}}</style>
-  <div class="lang-section" id="target-section" style="opacity:.38;transition:opacity .3s;">
-    <div class="lang-section-title" id="lbl-i-learn">🎯 Je veux apprendre</div>
-    <div class="lang-grid" id="target-grid"></div>
-  </div>
-  <div class="selected-pair" id="pair-summary" style="display:none;">
-    <div class="pair-tag" id="pair-native"></div>
-    <div style="font-size:1.2rem;color:var(--accent2)">→</div>
-    <div class="pair-tag" id="pair-target"></div>
-    <div style="flex:1"></div>
-    <button class="pair-swap" onclick="swapLangs()">⇄</button>
-  </div>
-  <button class="btn btn-primary btn-lg" onclick="goToLevels()" id="btn-start" disabled style="margin-top:12px;justify-content:center;" id="btn-start">Commencer →</button>
-  <!-- SRS Review widget -->
-  <div id="srs-widget" style="width:100%;max-width:500px;margin-top:14px;"></div>
-  <!-- Themed Event banner -->
-  <div id="event-banner" style="width:100%;max-width:500px;margin-top:8px;"></div>
-</div>
-
-<!-- ══════════════════ LEVELS ══════════════════ -->
-<div class="screen screen-padded" id="screen-levels">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span><span id="bc-pair">Lang</span>
-  </div>
-  <div class="xp-mini">
-    <span style="font-size:.72rem;color:var(--accent4);font-weight:800;">⭐ XP</span>
-    <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
-    <span id="xp-count" style="font-size:.76rem;color:var(--accent4);font-weight:800;"></span>
-  </div>
-  <div class="section-title" id="levels-title">Niveaux</div>
-  <div class="section-sub" id="lbl-levels-sub">Chaque niveau réutilise le vocabulaire précédent</div>
-  <div class="levels-grid" id="levels-grid"></div>
-</div>
-
-<!-- ══════════════════ CHAPTERS ══════════════════ -->
-<div class="screen screen-padded" id="screen-chapters">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span>
-    <span class="crumb" onclick="goTo('levels')" id="bc-pair2"></span><span class="sep">›</span>
-    <span id="bc-level2"></span>
-  </div>
-  <div class="section-title" id="chapters-title">Chapitres</div>
-  <!-- Topic tabs -->
-  <div class="topic-tabs" id="topic-tabs"></div>
-  <div class="chapters-list" id="chapters-list"></div>
-  <!-- DIY button -->
-  <button class="diy-add-btn" onclick="openDIY()">＋ Créer ma propre leçon</button>
-</div>
-
-<!-- ══════════════════ DIY LESSON MODAL ══════════════════ -->
-<div class="modal-overlay" id="diy-modal" style="display:none;" onclick="if(event.target===this)closeDIY()">
-  <div class="modal-box" style="max-width:480px;width:94%;">
-    <div style="font-weight:900;font-size:1.1rem;margin-bottom:14px;">✏️ Créer une leçon</div>
-    <input id="diy-title" class="diy-input" placeholder="Titre de la leçon…" style="margin-bottom:10px;">
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">Paires de mots — un par ligne : <strong>mot natif = traduction</strong></div>
-    <textarea id="diy-words" class="diy-textarea" placeholder="chien = dog&#10;chat = cat&#10;maison = house"></textarea>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="btn btn-secondary" onclick="closeDIY()" style="flex:1;">Annuler</button>
-      <button class="btn btn-primary" onclick="saveDIY()" style="flex:2;">Enregistrer →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ GAME SELECT ══════════════════ -->
-<div class="screen screen-padded" id="screen-game-select">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span>
-    <span class="crumb" onclick="goTo('levels')" id="bc-p3"></span><span class="sep">›</span>
-    <span class="crumb" onclick="goTo('chapters')" id="bc-l3"></span><span class="sep">›</span>
-    <span id="bc-c3"></span>
-  </div>
-  <div class="section-title" id="gsel-title">Mode de jeu</div>
-  <div class="section-sub" id="gsel-sub"></div>
-  <div style="display:flex;justify-content:flex-end;width:100%;max-width:700px;margin-bottom:7px;">
-    <span class="mix-badge" id="lbl-mix-badge">🎲 Mode Mixte recommandé</span>
-  </div>
-  <div class="game-types">
-    <div class="game-type-card featured" onclick="startGame('mixed')">
-      <div class="game-icon">🎲</div><div class="game-type-name" id="lbl-gtype-mixed">Mode Mixte</div>
-      <div class="game-type-desc" id="lbl-gdesc-mixed">Tout mélangé — la meilleure façon d'apprendre</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-mixed">+30 pièces max</span></div>
-    </div>
-    <div class="game-type-card" onclick="startGame('quiz')">
-      <div class="game-icon">⚡</div><div class="game-type-name" id="lbl-gtype-quiz">Quiz Rapide</div>
-      <div class="game-type-desc" id="lbl-gdesc-quiz">4 choix · Chrono · Style Kahoot</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-quiz">+15 pièces max</span></div>
-    </div>
-    <div class="game-type-card" onclick="startGame('fill')">
-      <div class="game-icon">✏️</div><div class="game-type-name" id="lbl-gtype-fill">Compléter</div>
-      <div class="game-type-desc" id="lbl-gdesc-fill">Tape le mot · Accents tolérés ✨</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-fill">+20 pièces max</span></div>
-    </div>
-    <div class="game-type-card" onclick="startGame('match')">
-      <div class="game-icon">🔗</div><div class="game-type-name" id="lbl-gtype-match">Associer</div>
-      <div class="game-type-desc" id="lbl-gdesc-match">Relie les mots et traductions</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-match">+10 pièces max</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ GAME ENGINE ══════════════════ -->
-<div class="screen screen-padded" id="screen-game">
-  <div class="game-header">
-    <div class="timer-badge" id="g-timer">⏱ 15</div>
-    <div class="progress-bar-wrap"><div class="progress-bar" id="g-progress"></div></div>
-    <div class="score-badge">⭐ <span id="g-score">0</span></div>
-  </div>
-  <div id="g-type-pill" class="type-pill quiz"></div>
-  <div class="question-card">
-    <div class="q-dir" id="g-dir"></div>
-    <div class="q-num" id="g-num"></div>
-    <div class="q-text-wrap"><div class="q-text" id="g-text"></div></div>
-    <div class="q-hint" id="g-hint"></div>
-  </div>
-  <div id="zone-quiz" style="width:100%;max-width:700px;"><div class="answers-grid" id="answers-grid"></div></div>
-  <div id="zone-fill" style="display:none;width:100%;max-width:700px;">
-    <input class="fill-input" type="text" id="fill-input" placeholder="Écris ta réponse…" id="fill-input" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkCurrentQ()">
-    <div class="fuzzy-note" id="fuzzy-note" style="display:none;"></div>
-  </div>
-  <div id="zone-match" style="display:none;width:100%;max-width:700px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px;">
-      <div class="match-col-label" id="mcl-l"></div>
-      <div class="match-col-label" id="mcl-r"></div>
-    </div>
-    <div class="match-container">
-      <div class="match-col" id="match-left"></div>
-      <div class="match-col" id="match-right"></div>
-    </div>
-    <div style="color:var(--muted);font-size:.74rem;text-align:center;margin-top:3px;"><span id="lbl-pairs-check">✅</span> <span id="match-prog-txt">0/0</span> <span id="lbl-pairs">paires</span></div>
-  </div>
-  <div id="zone-sort" style="display:none;width:100%;max-width:700px;">
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;" id="lbl-your-sent">Ta phrase :</div>
-    <div class="sentence-slots" id="sentence-slots"><span class="slot-placeholder" id="lbl-slot-placeholder">Clique sur les mots…</span></div>
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;" id="lbl-words-avail">Mots disponibles :</div>
-    <div class="word-bank" id="word-bank"></div>
-  </div>
-  <div class="feedback-banner" id="g-fb">
-    <span id="g-fb-icon" style="font-size:1.2rem;"></span>
-    <div><div id="g-fb-title"></div><div id="g-fb-detail" style="font-weight:600;font-size:.76rem;opacity:.8;margin-top:1px;"></div></div>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-    <button class="btn btn-primary" onclick="checkCurrentQ()" id="btn-check" style="display:none;" data-i18n="btn_check">Vérifier ✓</button>
-    <button class="btn btn-secondary" onclick="resetSort()" id="btn-reset" style="display:none;">⟳</button>
-    <button class="btn btn-primary" onclick="nextQ()" id="btn-next" style="display:none;" data-i18n="btn_next">Suivant →</button>
-    <button class="btn btn-secondary" onclick="skipMatch()" id="btn-skip" style="display:none;" data-i18n="btn_continue">Continuer →</button>
-  </div>
-</div>
-
-<!-- ══════════════════ RESULTS ══════════════════ -->
-<div class="screen screen-padded" id="screen-results">
-  <div style="text-align:center;width:100%;max-width:520px;padding:20px 0;">
-    <div class="results-stars" id="r-stars">★★★</div>
-    <div style="font-size:1.2rem;font-weight:800;margin-bottom:4px;" id="r-title"></div>
-    <div class="results-score" id="r-score" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></div>
-    <div style="color:var(--muted);margin-bottom:14px;" id="r-sub"></div>
-    <!-- Coin reward -->
-    <div class="coin-reward-banner" id="coin-reward-banner">
-      <div style="font-size:1.8rem;"><span class="coin"></span></div>
-      <div style="flex:1;text-align:left;">
-        <div style="font-weight:800;color:var(--gold);" id="lbl-coins-won">Pièces gagnées !</div>
-        <div style="font-size:.78rem;color:var(--muted);" id="lbl-coins-hint">Utilise-les pour investir dans le Portfolio</div>
+      <div class="feat-card">
+        <div class="feat-icon">⚔️</div>
+        <div class="feat-title">Duels entre joueurs</div>
+        <div class="feat-desc">Défie un ami avec un code unique. Jouez les mêmes questions et comparez vos scores en temps réel.</div>
       </div>
-      <div class="coin-reward-amount" id="coin-reward-amount">+0</div>
-    </div>
-    <div class="results-stats">
-      <div class="stat-box"><div class="stat-val" id="r-correct" style="color:var(--green)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);" id="lbl-r-correct">Correct</div></div>
-      <div class="stat-box"><div class="stat-val" id="r-wrong" style="color:var(--red)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);" id="lbl-r-wrong">Erreurs</div></div>
-      <div class="stat-box"><div class="stat-val" id="r-xp" style="color:var(--accent4)">+0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">XP</div></div>
-    </div>
-    <div id="r-breakdown" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;"></div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="playAgain()" id="btn-replay">Rejouer 🔄</button>
-      <button class="btn btn-secondary" onclick="goTo('chapters')" id="btn-r-chapters">Chapitres</button>
-      <button class="btn btn-gold" onclick="navTo('portfolio')" id="btn-r-invest">$ Investir</button>
-    </div>
-
-    <!-- Ad slot — résultats -->
-</div>
-  </div>
-</div>
-
-<!-- ══════════════════ FINANCE LESSON SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-lesson">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('portfolio')">Portfolio</span><span class="sep">›</span>
-    <span id="lesson-bc">Finance Academy</span>
-  </div>
-  <div class="lesson-progress-bar"><div class="lesson-progress-fill" id="lesson-prog-fill" style="width:0%"></div></div>
-  <div id="lesson-intro-zone" class="lesson-intro-card" style="display:none;"></div>
-  <div class="lesson-question-card" id="lesson-q-card" style="display:none;">
-    <div style="font-size:.7rem;color:var(--muted);font-weight:800;margin-bottom:10px;" id="lesson-q-num"></div>
-    <div style="font-size:1rem;font-weight:800;margin-bottom:14px;line-height:1.5;" id="lesson-q-text"></div>
-    <div id="lesson-choices"></div>
-    <div class="lesson-explain-bar" id="lesson-explain"></div>
-  </div>
-  <div class="lesson-complete-card" id="lesson-complete" style="display:none;">
-    <div class="lesson-complete-stars">🏆</div>
-    <div style="font-size:1.2rem;font-weight:900;margin-bottom:6px;" id="lesson-done-title">Leçon terminée !</div>
-    <div style="color:var(--muted);font-size:.84rem;margin-bottom:16px;" id="lesson-done-sub"></div>
-    <div style="font-size:1.4rem;font-weight:900;color:var(--gold);margin-bottom:16px;" id="lesson-done-reward"></div>
-    <button class="btn btn-primary" id="lesson-done-back" onclick="navTo('portfolio')">← Retour au Portfolio</button>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:8px;" id="lesson-btn-row">
-    <button class="btn btn-primary" id="lesson-btn-next" onclick="lessonNext()" style="display:none;">Suivant →</button>
-    <button class="btn btn-secondary" id="lesson-btn-start" onclick="lessonStartQuestions()">Commencer →</button>
-  </div>
-</div>
-
-<!-- ══════════════════ PORTFOLIO SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-portfolio">
-
-  <!-- ── PORTFOLIO ── -->
-  <div class="wealth-hero">
-    <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;" id="lbl-wealth-hero">◈ Patrimoine total</div>
-    <div class="wealth-total" id="wealth-total">0 <span class="coin"></span></div>
-    <div class="wealth-sub" id="wealth-sub"></div>
-    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
-      <div style="text-align:center;">
-        <div style="font-weight:900;font-size:1.1rem;color:var(--gold)" id="pf-coins">0</div>
-        <div style="font-size:.68rem;color:var(--muted);" id="lbl-liquid-coins">Pièces liquides</div>
+      <div class="feat-card">
+        <div class="feat-icon">🏆</div>
+        <div class="feat-title">26 trophées</div>
+        <div class="feat-desc">Des streaks aux maîtrises de vocabulaire en passant par les victoires en duel — des dizaines d'objectifs à atteindre.</div>
       </div>
-      <div style="width:1px;background:rgba(255,255,255,.1);"></div>
-      <div style="text-align:center;">
-        <div style="font-weight:900;font-size:1.1rem;color:var(--green)" id="pf-div-total">0 <span class="coin"></span>/j</div>
-        <div style="font-size:.68rem;color:var(--muted);" id="lbl-div-day">Dividendes / jour</div>
+      <div class="feat-card">
+        <div class="feat-icon">🎪</div>
+        <div class="feat-title">Événements spéciaux</div>
+        <div class="feat-desc">Chaque semaine, un événement thématique — Ninja Academy, Space Station Omega, Détective Agency — avec XP doublé et trophées exclusifs.</div>
       </div>
-      <div style="width:1px;background:rgba(255,255,255,.1);"></div>
-      <div style="text-align:center;">
-        <div style="font-weight:900;font-size:1.1rem;color:var(--accent3)" id="pf-invested">0</div>
-        <div style="font-size:.68rem;color:var(--muted);" id="lbl-invested">Investi</div>
+      <div class="feat-card">
+        <div class="feat-icon">🔊</div>
+        <div class="feat-title">Prononciation audio</div>
+        <div class="feat-desc">Chaque mot est prononcé dans la bonne langue — tchèque, allemand, espagnol — pour t'aider à reproduire les sons correctement.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌓</div>
+        <div class="feat-title">3 thèmes visuels</div>
+        <div class="feat-desc">Mode sombre cosmique, mode clair et thème Claude pour personnaliser ton expérience selon tes préférences.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🏛️</div>
+        <div class="feat-title">Finance Academy</div>
+        <div class="feat-desc">Des leçons interactives sur la bourse, les actions, la diversification et les dividendes — pour comprendre l'économie réelle.</div>
       </div>
     </div>
+  </section>
+
+<div class="ad-section">
+    <div class="ad-lbl">Publicité</div>
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-7915647470407065"
+         data-ad-slot="auto"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 
-  <!-- Dividend collect banner -->
-  <div class="dividend-banner" id="div-banner" style="display:none;">
-    <div class="div-icon" style="font-size:1.6rem;color:#10b981;font-weight:900;">↑</div>
-    <div class="div-info">
-      <div class="div-title" id="lbl-div-avail">Dividendes disponibles !</div>
-      <div class="div-sub" id="div-banner-sub">Tes actifs ont généré des revenus</div>
-    </div>
-    <div class="div-amount" id="div-amount">+0 <span class="coin"></span></div>
-    <button class="collect-btn" id="collect-btn" onclick="collectDividends()" data-i18n="btn_collect">Collecter</button>
-  </div>
+  <div class="divider"></div>
 
-  <!-- Explanation -->
-  <div class="explain-card">
-    <div class="explain-title" id="lbl-div-explain-title">📖 Comment fonctionnent les dividendes ?</div>
-    <div class="explain-body" id="lbl-div-explain-body">
-      Dans la vraie vie, certains <strong>actifs</strong> (or, immobilier, actions) génèrent des revenus <strong>réguliers</strong> sans que tu doives les vendre. C'est ça un <span class="highlight">dividende</span>.<br><br>
-      Ici, chaque actif que tu achètes avec tes <span class="coin"></span> pièces te rapporte automatiquement un pourcentage chaque jour. Comme dans la réalité, <strong>plus tu investis tôt, plus tu reçois</strong>. Les actifs <strong>n'ont pas de valeur négative</strong> — ils peuvent stagner ou croître, jamais disparaître.
-    </div>
-  </div>
-
-  <!-- Target Widget -->
-  <div class="target-widget" id="target-widget">
-    <div class="target-title" id="lbl-target-title">🎯 Simulateur d'objectif</div>
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;" id="lbl-target-sub">Fixe un objectif en pièces et vois combien de temps il faudra pour l'atteindre avec tes dividendes actuels.</div>
-    <div class="target-slider-row">
-      <span style="font-size:.76rem;color:var(--muted);" id="lbl-target-obj">Objectif :</span>
-      <input type="range" class="target-slider" id="target-slider" min="100" max="10000" step="50" value="1000" oninput="updateTarget()">
-      <span class="target-val" id="target-val">1 000 <span class="coin"></span></span>
-    </div>
-    <div class="target-results">
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-missing">Il manque</div>
-        <div class="target-result-val" id="tr-missing" style="color:var(--accent2);">-</div>
+  <!-- ── LANGUAGES ── -->
+  <section id="langues">
+    <div class="section-label">Langues</div>
+    <h2 class="section-title">5 langues, des centaines de mots</h2>
+    <p class="section-sub">Apprends dans la direction de ton choix — chaque combinaison est supportée.</p>
+    <div class="langs-grid">
+      <div class="lang-card">
+        <div class="lang-flag">🇫🇷</div>
+        <div class="lang-name">Français</div>
+        <div class="lang-native">Français</div>
       </div>
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-daily">Dividendes / jour</div>
-        <div class="target-result-val" id="tr-daily" style="color:var(--green);">-</div>
+      <div class="lang-card">
+        <div class="lang-flag">🇬🇧</div>
+        <div class="lang-name">Anglais</div>
+        <div class="lang-native">English</div>
       </div>
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-time">Temps estimé</div>
-        <div class="target-result-val" id="tr-time" style="color:var(--accent3);">-</div>
+      <div class="lang-card">
+        <div class="lang-flag">🇪🇸</div>
+        <div class="lang-name">Espagnol</div>
+        <div class="lang-native">Español</div>
       </div>
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-progress">Progression actuelle</div>
-        <div class="target-result-val" id="tr-pct" style="color:var(--gold);">-</div>
+      <div class="lang-card">
+        <div class="lang-flag">🇩🇪</div>
+        <div class="lang-name">Allemand</div>
+        <div class="lang-native">Deutsch</div>
+      </div>
+      <div class="lang-card">
+        <div class="lang-flag">🇨🇿</div>
+        <div class="lang-name">Tchèque</div>
+        <div class="lang-native">Čeština</div>
       </div>
     </div>
-    <div class="target-timeline">
-      <div class="tl-bar"><div class="tl-fill" id="tl-fill" style="width:0%"></div></div>
-      <div class="tl-cursor" id="tl-cursor" style="left:0%"></div>
-      <div class="tl-now" id="tl-now" style="left:0%">Maintenant</div>
-      <div class="tl-target" id="lbl-tl-target">Objectif</div>
-    </div>
-  </div>
+  </section>
 
-  <!-- Assets -->
-  <div class="section-title" style="text-align:left;margin-bottom:8px;" id="lbl-assets-title">🏠 Actifs disponibles</div>
-  <!-- INVESTOR LEVEL -->
-  <div class="inv-level-bar" id="inv-level-bar"></div>
-<div class="academy-section" id="academy-section">
-    <button class="academy-toggle-btn" id="academy-toggle" onclick="toggleAcademy()">
-      🎓 <span id="lbl-academy-title">Finance Academy</span>
-      <span class="academy-toggle-arrow" id="academy-arrow">▼</span>
-    </button>
-    <div class="lesson-grid" id="lesson-grid" style="display:none;"></div>
-  </div>
+  <div class="divider"></div>
 
-  <!-- Ad slot — portfolio -->
-  <div class="section-title" style="text-align:left;margin:18px 0 8px;" id="lbl-assets-title">🏠 Actifs disponibles</div>
-  <div class="assets-grid" id="assets-grid"></div>
-
-</div>
-
-<!-- ══════════════════ SHOP SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-shop">
-  <div class="section-title" id="lbl-shop-title">🛍 Boutique</div>
-  <div class="section-sub" id="lbl-shop-sub">Dépense tes pièces pour des bonus et cosmétiques</div>
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-    <div class="coin-display"><span><span class="coin"></span></span><span id="shop-coins">0</span></div>
-    <span style="font-size:.8rem;color:var(--muted);" id="lbl-shop-coins-lbl">pièces disponibles</span>
-  </div>
-  <!-- Shop category tabs -->
-  <div class="topic-tabs" id="shop-tabs" style="margin-bottom:10px;"></div>
-  <div class="shop-grid" id="shop-grid"></div>
-</div>
-
-<!-- ══════════════════ PROFILE SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-profile">
-  <div class="profile-hero" id="profile-hero">
-    <div class="profile-avatar" id="prof-avatar"></div>
-    <div>
-      <div class="profile-name" id="prof-name"></div>
-      <div class="profile-email" id="prof-email"></div>
-      <div class="profile-joined" id="prof-joined"></div>
-    </div>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val" id="ps-xp" style="color:var(--accent4)">0</div><div class="stat-lbl" id="lbl-ps-xp">XP Total</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-coins" style="color:var(--gold)">0</div><div class="stat-lbl" id="lbl-ps-coins">Pièces</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-sessions" style="color:var(--accent3)">0</div><div class="stat-lbl" id="lbl-ps-sessions">Sessions</div></div>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val" id="ps-streak" style="color:var(--accent2)">0</div><div class="stat-lbl" id="lbl-ps-streak">🔥 Jours</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-chapters" style="color:var(--green)">0</div><div class="stat-lbl" id="lbl-ps-chapters">Chapitres</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-wealth" style="color:var(--gold)">0</div><div class="stat-lbl" id="lbl-ps-wealth">💎 Patrimoine</div></div>
-  </div>
-  <div style="width:100%;max-width:700px;margin-top:14px;">
-    <!-- Trophies section -->
-    <div style="background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-weight:800;font-size:.88rem;">🏆 Trophées</div>
-        <button class="btn btn-sm btn-secondary" onclick="navTo('trophies')" style="padding:4px 10px;font-size:.72rem;">Voir tout →</button>
+  <!-- ── HOW IT WORKS ── -->
+  <section id="comment">
+    <div class="section-label">Comment ça marche</div>
+    <h2 class="section-title">Simple. Efficace. Addictif.</h2>
+    <p class="section-sub">En quelques minutes tu es en train d'apprendre.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Crée ton compte gratuitement</div>
+          <div class="step-desc">Inscris-toi avec un email en 30 secondes. Tes progrès sont sauvegardés dans le cloud et accessibles depuis n'importe quel appareil.</div>
+        </div>
       </div>
-      <div id="trophy-progress"></div>
-      <div id="trophies-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
-    </div>
-
-    <!-- Apparence / Thèmes -->
-    <div style="background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:10px;">
-      <div style="font-weight:800;font-size:.88rem;margin-bottom:10px;" id="lbl-appearance">🎨 Apparence</div>
-      <div class="theme-btns">
-        <button class="theme-btn" id="theme-btn-dark"    onclick="setTheme('dark')" data-i18n="theme_dark">🌙 Sombre</button>
-        <button class="theme-btn" id="theme-btn-light"   onclick="setTheme('light')" data-i18n="theme_light">☀️ Clair</button>
-        <button class="theme-btn" id="theme-btn-claude"  onclick="setTheme('claude')" data-i18n="theme_claude">🤖 Claude</button>
-        <button class="theme-btn" id="theme-btn-random" onclick="setTheme('random')" data-i18n="theme_random">🎲 Aléatoire</button>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Choisis ta langue et ton niveau</div>
+          <div class="step-desc">Sélectionne ta langue maternelle et la langue que tu veux apprendre. Cinq niveaux progressifs te permettent d'avancer à ton rythme.</div>
+        </div>
       </div>
-      <!-- UI Language -->
-      <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;margin-top:12px;" id="lbl-lang-ui">🌐 Langue de l'interface</div>
-      <div class="lang-ui-btns" id="ui-lang-btns"></div>
-    </div>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="openLangModal()" id="btn-change-lang">🌍 Changer de langue</button>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;" onclick="doLogout()" id="btn-logout">🚪 Se déconnecter</button>
-  </div>
-</div>
-
-<!-- ══════════════════ QR MODAL ══════════════════ -->
-<div class="modal-overlay" id="qr-modal" style="display:none;" onclick="closeQR(event)">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeQR()">✕</button>
-    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-qr-title">📱 Partager ce chapitre</div>
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px;" id="qr-sub"></div>
-    <div id="qr-container"></div>
-    <div style="font-size:.66rem;color:var(--muted);word-break:break-all;margin:12px 0;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:7px;" id="qr-url"></div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-primary btn-sm" onclick="copyUrl()" id="btn-qr-copy">📋 Copier</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeQR()" id="btn-qr-close">Fermer</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- ══════════════════ LANG CHANGE MODAL ══════════════════ -->
-<div class="modal-overlay" id="lang-modal" style="display:none;" onclick="closeLangModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px;">
-    <button class="modal-close" onclick="closeLangModal()">&#x2715;</button>
-    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-langmodal-title">Changer de langue</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;" id="lbl-lm-speak">Je parle :</div>
-    <div class="lang-picker-grid" id="lp-native"></div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;margin-top:8px;" id="lbl-lm-learn">J'apprends :</div>
-    <div class="lang-picker-grid" id="lp-target"></div>
-    <div id="lp-pair" style="text-align:center;font-size:.85rem;font-weight:800;color:var(--accent3);margin:10px 0;min-height:22px;"></div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-primary btn-sm" onclick="applyLangChange()" id="btn-lm-apply">Appliquer</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeLangModal()" id="btn-lm-cancel">Annuler</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ ASSET INFO MODAL ══════════════════ -->
-<div class="modal-overlay" id="asset-modal" style="display:none;" onclick="closeAssetModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:460px;text-align:left;">
-    <button class="modal-close" onclick="closeAssetModal()">&#x2715;</button>
-    <div id="amod-icon" style="font-size:2rem;margin-bottom:6px;"></div>
-    <div id="amod-name" style="font-size:1.2rem;font-weight:900;margin-bottom:2px;"></div>
-    <div id="amod-type" style="font-size:.76rem;color:var(--muted);margin-bottom:14px;"></div>
-    <!-- Live price -->
-    <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;" id="lbl-amod-market">Prix marché réel</div>
-      <div id="amod-price" style="font-size:1.4rem;font-weight:900;color:var(--accent3);">Chargement…</div>
-      <div id="amod-change" style="font-size:.8rem;margin-top:2px;"></div>
-      <div id="amod-ticker" style="font-size:.68rem;color:var(--muted);margin-top:4px;"></div>
-    </div>
-    <!-- Your position -->
-    <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;" id="lbl-amod-position">Ta position</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-units">Unités possédées</div><div id="amod-owned" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-value">Valeur actuelle</div><div id="amod-val" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-daily">Dividendes / jour</div><div id="amod-daily" style="font-weight:900;font-size:1.1rem;color:var(--green);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-pv">Plus-value</div><div id="amod-pv" style="font-weight:900;font-size:1.1rem;"></div></div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Joue et gagne des pièces</div>
+          <div class="step-desc">Chaque bonne réponse te rapporte des pièces et de l'XP. Plus tu es précis et rapide, plus tu gagnes. Le système SRS programme tes révisions automatiquement.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Investis et fais fructifier ton portefeuille</div>
+          <div class="step-desc">Utilise tes pièces pour acheter de l'or, des actions, de l'immobilier ou des cryptos. Regarde ton portefeuille virtuel croître pendant que tu apprends.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">Débloque des trophées et grimpe dans le classement</div>
+          <div class="step-desc">26 trophées, des événements hebdomadaires et un classement mondial te donnent toujours de nouvelles raisons de revenir.</div>
+        </div>
       </div>
     </div>
-    <!-- Explanation -->
-    <div style="font-size:.8rem;color:var(--muted);line-height:1.6;" id="amod-explain"></div>
-    <div style="display:flex;gap:8px;margin-top:14px;">
-      <button class="btn btn-primary btn-sm" id="amod-buy-btn" onclick="" data-i18n="btn_buy">Acheter</button>
-      <button class="btn btn-secondary btn-sm" id="amod-sell-btn" onclick="" data-i18n="btn_sell">Vendre</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeAssetModal()" id="btn-amod-close">Fermer</button>
-    </div>
-  </div>
-</div>
+  </section>
 
-<!-- ══════════════════ RANK SCREEN (Leaderboard + Duels) ══════════════════ -->
-<div class="screen screen-padded" id="screen-rank">
-  <div style="text-align:center;margin-bottom:14px;">
-    <div style="font-size:1.4rem;font-weight:900;">🏆 Classement & Duels</div>
-  </div>
-  <!-- Sub-tabs -->
-  <div class="rank-tabs">
-    <button class="rank-tab active" id="rank-tab-lb" onclick="switchRankTab('lb')">🌍 Classement</button>
-    <button class="rank-tab" id="rank-tab-duels" onclick="switchRankTab('duels')">⚔️ Duels</button>
-  </div>
 
-<div id="rank-lb-zone">
-    <div class="lb-tabs">
-      <button class="lb-tab active" id="lb-tab-xp" onclick="setLbTab('xp')">⭐ XP</button>
-      <button class="lb-tab" id="lb-tab-coins" onclick="setLbTab('coins')">🪙 Pièces</button>
-      <button class="lb-tab" id="lb-tab-streak" onclick="setLbTab('streak')">🔥 Streak</button>
-    </div>
-    <div id="lb-my-rank" style="font-size:.75rem;color:var(--muted);text-align:center;margin:6px 0 10px;"></div>
-    <div id="lb-list"></div>
-  </div>
+  <div class="divider"></div>
 
-  <!-- DUELS TAB -->
-  <div id="rank-duels-zone" style="display:none;">
+  <!-- ── GUIDE ÉDITORIAL ── -->
+  <section id="guide" style="max-width:860px;">
+    <div class="section-label">Guide</div>
+    <h2 class="section-title">Pourquoi apprendre une langue étrangère en 2026 ?</h2>
+    <p class="section-sub">Tout ce que la science dit sur l'apprentissage des langues — et comment en tirer le meilleur parti.</p>
 
-    <!-- Action buttons -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
-      <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
-    </div>
+    <div class="article-grid">
+      <div class="article-card">
+        <h3 class="article-h3">🧠 Les bienfaits cognitifs prouvés</h3>
+        <p class="article-p">Parler deux langues ou plus retarde l'apparition de la démence de 4 à 5 ans en moyenne selon plusieurs études neurologiques. Le cerveau bilingue est constamment entraîné à basculer entre deux systèmes linguistiques, ce qui renforce les connexions neuronales dans le cortex préfrontal — la zone responsable de l'attention, de la résolution de problèmes et de la mémoire de travail.</p>
+        <p class="article-p">Des recherches publiées dans le <em>Journal of Experimental Psychology</em> montrent que les apprenants bilingues obtiennent de meilleurs résultats dans les tâches multitâches et font preuve d'une plus grande flexibilité cognitive. En résumé : apprendre une langue, c'est faire de la musculation pour le cerveau.</p>
+      </div>
 
-    <!-- Join by code -->
-    <div id="duel-join-zone" style="display:none;margin-bottom:14px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
-          style="flex:1;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;"
-          oninput="this.value=this.value.toUpperCase()">
-        <button class="btn btn-primary" onclick="joinDuel()">→</button>
+      <div class="article-card">
+        <h3 class="article-h3">💼 Un avantage professionnel décisif</h3>
+        <p class="article-p">Dans un marché du travail mondialisé, parler une seconde langue augmente en moyenne le salaire de 5 à 20 % selon les secteurs et les pays. L'anglais reste la lingua franca des affaires, mais l'espagnol (580 millions de locuteurs natifs), l'allemand (économie la plus puissante d'Europe) et le tchèque (marché d'Europe centrale en plein essor) ouvrent des portes très spécifiques.</p>
+        <p class="article-p">Les recruteurs citent régulièrement la maîtrise d'une langue étrangère comme un signal fort de discipline, de persévérance et d'ouverture culturelle — des qualités universellement recherchées.</p>
+      </div>
+
+      <div class="article-card">
+        <h3 class="article-h3">⏱️ Combien de temps faut-il pour apprendre ?</h3>
+        <p class="article-p">L'Institut des Services Étrangers américain (FSI) estime que les langues romanes (espagnol, français) nécessitent environ 600-750 heures d'étude pour atteindre un niveau professionnel. L'allemand, plus grammaticalement complexe, demande 750 heures. Le tchèque, avec ses sept cas grammaticaux, se situe dans la même fourchette pour un locuteur français.</p>
+        <p class="article-p">Mais voici la bonne nouvelle : la recherche en acquisition des langues montre que <strong>15 à 30 minutes de pratique quotidienne constante</strong> surpassent largement des sessions sporadiques de plusieurs heures. C'est précisément pour cette raison que LinguaQuest est conçu pour des sessions courtes et répétées — la régularité prime sur la durée.</p>
+      </div>
+
+      <div class="article-card">
+        <h3 class="article-h3">🔬 La répétition espacée : la science derrière l'app</h3>
+        <p class="article-p">LinguaQuest utilise l'algorithme SM-2 (SuperMemo 2), le même système utilisé par des millions d'étudiants en médecine, en droit et en langues à travers le monde. Le principe est simple : chaque mot appris est revu à un intervalle de temps croissant, juste avant que ton cerveau ne soit sur le point de l'oublier.</p>
+        <p class="article-p">Résultat : à mémoire de travail égale, la répétition espacée permet de retenir <strong>deux fois plus de vocabulaire</strong> en deux fois moins de temps qu'un apprentissage traditionnel. Contrairement aux flashcards simples, SM-2 adapte le rythme individuellement pour chaque mot selon tes performances réelles.</p>
       </div>
     </div>
+  </section>
 
-    <!-- Lobby / current duel info -->
-    <div id="duel-lobby-content"></div>
+  <div class="divider"></div>
 
-    <!-- Open duels waiting for challengers -->
-    <div id="open-duels-list"></div>
+  <!-- ── MÉTHODES COMPARÉES ── -->
+  <section id="methodes" style="max-width:860px;">
+    <div class="section-label">Comparaison</div>
+    <h2 class="section-title">LinguaQuest vs autres méthodes</h2>
+    <p class="section-sub">Toutes les méthodes ne se valent pas. Voici ce qui distingue les approches gamifiées basées sur la science.</p>
 
-    <!-- My past duels -->
-    <div id="my-duels-list"></div>
-  </div>
-</div>
-
-<!-- ══════════════════ CREATE DUEL MODAL ══════════════════ -->
-<div class="modal-overlay" id="duel-create-modal" style="display:none;" onclick="if(event.target===this)closeCreateDuel()">
-  <div class="modal-box" style="max-width:460px;width:94%;" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeCreateDuel()">✕</button>
-    <div style="font-weight:900;font-size:1.1rem;margin-bottom:16px;">⚔️ Créer un duel</div>
-
-    <!-- Exercise type -->
-    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:8px;">TYPE D'EXERCICE</div>
-    <div class="duel-type-grid" id="duel-type-grid">
-      <button class="duel-type-btn active" data-type="mixed"   onclick="selectDuelType(this,'mixed')">🎲 Mixte</button>
-      <button class="duel-type-btn"        data-type="quiz"    onclick="selectDuelType(this,'quiz')">⚡ Quiz</button>
-      <button class="duel-type-btn"        data-type="fill"    onclick="selectDuelType(this,'fill')">✏️ Fill</button>
-      <button class="duel-type-btn"        data-type="match"   onclick="selectDuelType(this,'match')">🔗 Match</button>
-    </div>
-
-    <!-- Level / chapter selection -->
-    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin:14px 0 8px;">NIVEAU</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="duel-level-grid">
-      <button class="duel-type-btn active" data-lv="any" onclick="selectDuelLevel(this,'any')">🔀 Aléatoire</button>
-      <button class="duel-type-btn" data-lv="A1" onclick="selectDuelLevel(this,'A1')">A1</button>
-      <button class="duel-type-btn" data-lv="A2" onclick="selectDuelLevel(this,'A2')">A2</button>
-      <button class="duel-type-btn" data-lv="B1" onclick="selectDuelLevel(this,'B1')">B1</button>
-      <button class="duel-type-btn" data-lv="B2" onclick="selectDuelLevel(this,'B2')">B2</button>
-    </div>
-
-    <!-- Bet -->
-    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin:14px 0 8px;">MISE (optionnel)</div>
-    <div style="background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <span class="coin" style="font-size:1rem;"></span>
-        <input type="number" id="duel-bet-input" min="0" max="9999" value="0" placeholder="0"
-          style="flex:1;background:transparent;border:none;color:var(--gold);font-size:1.4rem;font-weight:900;font-family:'Nunito',sans-serif;outline:none;width:80px;">
-        <span style="font-size:.78rem;color:var(--muted);">pièces</span>
+    <div class="compare-table">
+      <div class="compare-header">
+        <div class="compare-col-head"></div>
+        <div class="compare-col-head highlight-col">LinguaQuest</div>
+        <div class="compare-col-head">Manuel scolaire</div>
+        <div class="compare-col-head">Cours particuliers</div>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="bet-quick-btn" onclick="setBet(0)">Gratuit</button>
-        <button class="bet-quick-btn" onclick="setBet(50)">50</button>
-        <button class="bet-quick-btn" onclick="setBet(100)">100</button>
-        <button class="bet-quick-btn" onclick="setBet(200)">200</button>
-        <button class="bet-quick-btn" onclick="setBet(500)">500</button>
+      <div class="compare-row">
+        <div class="compare-label">Répétition espacée</div>
+        <div class="compare-val highlight-col">✅ Algorithme SM-2</div>
+        <div class="compare-val">❌ Aucune</div>
+        <div class="compare-val">⚠️ Dépend du prof</div>
       </div>
-      <div style="font-size:.72rem;color:var(--muted);margin-top:8px;">Le gagnant empoche la mise des deux joueurs. Si l'adversaire refuse la mise, il peut rejoindre sans parier.</div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin-top:16px;">
-      <button class="btn btn-secondary" onclick="closeCreateDuel()" style="flex:1;">Annuler</button>
-      <button class="btn btn-primary" onclick="confirmCreateDuel()" style="flex:2;">Créer le duel →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ TROPHIES SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-trophies">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-    <button class="btn btn-secondary btn-sm" onclick="navTo('profile')" style="padding:6px 12px;">← Retour</button>
-    <div style="font-size:1.2rem;font-weight:900;">🏆 Trophées</div>
-  </div>
-  <div id="trophy-progress" style="margin-bottom:14px;"></div>
-  <div id="trophies-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%;max-width:700px;"></div>
-</div>
-
-<!-- ══════════════════ DUEL RESULT MODAL ══════════════════ -->
-<div id="duel-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;"></div>
-
-<!-- ══════════════════ TROPHY POPUPS (injected by JS) ══════════════════ -->
-</div><!-- #app -->
-
-<script src="data.js"></script>
-<script src="config.js"></script>
-<script src="auth.js"></script>
-<script src="ui.js"></script>
-
-<script src="speech.js"></script>
-<script src="game.js"></script>
-<script src="portfolio.js"></script>
-<script src="srs.js"></script>
-<script src="trophies.js"></script>
-<script src="leaderboard.js"></script>
-<script src="duels.js"></script>
-<script src="news.js"></script>
-<script src="boot.js"></script>
-
-<!-- ══════════════════ FORGOT PASSWORD MODAL ══════════════════ -->
-<div class="modal-overlay" id="forgot-modal" style="display:none;" onclick="closeForgot(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px;">
-    <button class="modal-close" onclick="closeForgot()">✕</button>
-
-    <!-- STEP 1: enter email -->
-    <div id="forgot-step-1">
-      <div style="font-size:1.5rem;text-align:center;margin-bottom:6px;">🔑</div>
-      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-forgot-title">Mot de passe oublié</div>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;" id="lbl-forgot-sub">Entre ton email pour récupérer ton compte.</div>
-      <label class="auth-label">Email</label>
-      <input class="auth-input" type="email" id="forgot-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')forgotStep1()">
-      <div class="auth-error" id="forgot-err-1"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;" onclick="forgotStep1()" id="btn-forgot-1">Vérifier mon compte →</button>
-    </div>
-
-    <!-- STEP 2: found account, set new password -->
-    <div id="forgot-step-2" style="display:none;">
-      <div style="font-size:1.5rem;text-align:center;margin-bottom:6px;">✅</div>
-      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-forgot-found-title">Compte trouvé !</div>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;">Compte : <strong id="forgot-found-name" style="color:var(--accent3);"></strong></div>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">Choisis un nouveau mot de passe.</div>
-      <label class="auth-label" id="lbl-forgot-new-pass">Nouveau mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="forgot-new-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')forgotStep2()">
-        <button class="pass-eye" type="button" onclick="togglePass('forgot-new-pass',this)" tabindex="-1">👁</button>
+      <div class="compare-row">
+        <div class="compare-label">Disponibilité</div>
+        <div class="compare-val highlight-col">✅ 24h/24, mobile</div>
+        <div class="compare-val">✅ N'importe où</div>
+        <div class="compare-val">❌ Horaires fixes</div>
       </div>
-      <label class="auth-label" style="margin-top:10px;" id="lbl-forgot-confirm-pass">Confirme le mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="forgot-confirm-pass" placeholder="Répète le mot de passe" onkeydown="if(event.key==='Enter')forgotStep2()">
-        <button class="pass-eye" type="button" onclick="togglePass('forgot-confirm-pass',this)" tabindex="-1">👁</button>
+      <div class="compare-row">
+        <div class="compare-label">Coût mensuel</div>
+        <div class="compare-val highlight-col">✅ Gratuit</div>
+        <div class="compare-val">⚠️ 20–60 €</div>
+        <div class="compare-val">❌ 40–120 €</div>
       </div>
-      <div class="auth-error" id="forgot-err-2"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;" onclick="forgotStep2()" id="btn-forgot-2">Réinitialiser →</button>
+      <div class="compare-row">
+        <div class="compare-label">Motivation long terme</div>
+        <div class="compare-val highlight-col">✅ Gamification + récompenses</div>
+        <div class="compare-val">❌ Faible</div>
+        <div class="compare-val">⚠️ Variable</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Prononciation audio</div>
+        <div class="compare-val highlight-col">✅ TTS natif</div>
+        <div class="compare-val">❌ Aucune</div>
+        <div class="compare-val">✅ Oui</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Finance Academy</div>
+        <div class="compare-val highlight-col">✅ Inclus</div>
+        <div class="compare-val">❌ Non</div>
+        <div class="compare-val">❌ Non</div>
+      </div>
     </div>
+  </section>
 
-    <!-- STEP 3: success -->
-    <div id="forgot-step-3" style="display:none;text-align:center;padding:10px 0;">
-      <div style="font-size:3rem;margin-bottom:10px;">🎉</div>
-      <div style="font-size:1.1rem;font-weight:800;margin-bottom:6px;" id="lbl-forgot-success-title">Mot de passe mis à jour !</div>
-      <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px;" id="lbl-forgot-success-sub">Tu peux maintenant te connecter avec ton nouveau mot de passe.</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="closeForgot();switchTab('login')" id="btn-forgot-login">Se connecter →</button>
+  <div class="divider"></div>
+
+  <!-- ── FAQ ── -->
+  <section id="faq" style="max-width:780px;">
+    <div class="section-label">Questions fréquentes</div>
+    <h2 class="section-title">Tout ce que tu veux savoir</h2>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          LinguaQuest est-il vraiment gratuit ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Oui, entièrement. Créer un compte, accéder à tous les niveaux, jouer, investir en bourse virtuelle, débloquer des trophées — tout est gratuit sans limite de temps. L'application est financée par des publicités non-intrusives sur la page d'accueil.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Quelles langues puis-je apprendre ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          LinguaQuest supporte cinq langues : le français 🇫🇷, l'anglais 🇬🇧, l'espagnol 🇪🇸, l'allemand 🇩🇪 et le tchèque 🇨🇿. Tu peux apprendre dans n'importe quelle direction — par exemple apprendre l'allemand depuis l'espagnol, ou le tchèque depuis le français. Toutes les combinaisons sont disponibles. D'autres langues sont prévues.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Combien de temps dois-je pratiquer par jour ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          La recherche scientifique est claire : 15 à 20 minutes par jour suffisent, à condition d'être régulier. Le système de répétition espacée de LinguaQuest est optimisé pour ces sessions courtes. Le simulateur de bourse t'encourage également à revenir chaque jour pour collecter tes dividendes — ce qui crée une habitude naturelle.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Je débute complètement — est-ce adapté ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Absolument. Le niveau A1 (débutant complet) commence par les salutations, les chiffres et les couleurs. Chaque chapitre introduit 8 mots clés et 3 phrases modèles. Tu peux progresser à ton rythme — le système ne te force jamais à aller trop vite. Les niveaux A1 à C2 sont disponibles pour accompagner ta progression jusqu'à la maîtrise.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Qu'est-ce que le simulateur de bourse virtuelle ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          En jouant aux quiz, tu gagnes des pièces. Ces pièces peuvent être investies dans 8 actifs virtuels : or, immobilier, S&P 500, Bitcoin, ETF monde, obligations, pétrole et Nasdaq 100. Les prix de ces actifs sont basés sur les cours réels des marchés. C'est une façon concrète d'apprendre les bases de la finance — les dividendes, la diversification, la volatilité — tout en jouant.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Comment fonctionnent les duels ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Un duel te génère un code unique de 6 caractères. Tu l'envoies à un ami, il rejoint le duel et répond aux mêmes questions. Vos scores sont ensuite comparés. Les duels sont asynchrones — pas besoin d'être connectés en même temps. C'est idéal pour défier un collègue, un élève ou un ami à distance.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Mes données sont-elles en sécurité ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Oui. LinguaQuest n'utilise que ton email et ton pseudo pour créer ton compte. Les données de progression sont stockées de manière sécurisée sur Supabase (infrastructure PostgreSQL chiffrée). Nous ne vendons jamais tes données et ne te contactons pas à des fins commerciales. Consulte notre <a href="privacy.html" style="color:var(--accent3);">politique de confidentialité</a> complète pour plus de détails.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Puis-je créer mes propres leçons ? <span class="faq-arrow">▼</span>
+        </button>
+        <div class="faq-a">
+          Oui ! La fonctionnalité "Mes Leçons" te permet de créer des leçons personnalisées avec tes propres paires de mots. C'est parfait pour les enseignants qui veulent préparer leurs élèves sur un vocabulaire spécifique, ou pour quiconque veut mémoriser un corpus précis (vocabulaire professionnel, expressions idiomatiques, termes techniques, etc.).
+        </div>
+      </div>
+
     </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <div class="cta-section">
+    <h2 class="cta-title">Prêt à commencer<br>ton aventure linguistique ?</h2>
+    <p class="cta-sub">Gratuit. Aucune carte bancaire. Aucun téléchargement.</p>
+    <a href="app.html" class="btn-primary" style="font-size:1.1rem;padding:16px 40px;">
+      🚀 Jouer maintenant — c'est gratuit
+    </a>
   </div>
-</div>
 
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="f-logo">🌍 LinguaQuest</div>
+    <div class="f-links">
+      <a href="landing.html">Accueil</a>
+      <a href="app.html">Jouer</a>
+      <a href="privacy.html">Politique de confidentialité</a>
+      <a href="privacy.html#mentions">Mentions légales</a>
+    </div>
+    <div class="f-copy">© 2026 LinguaQuest · Tous droits réservés</div>
+  </footer>
+
+</div><!-- .page -->
+
+<script>
+
+  // FAQ accordion
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const ans = item.querySelector('.faq-a');
+    const isOpen = ans.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-a.open').forEach(a => { a.classList.remove('open'); a.previousElementSibling.classList.remove('open'); });
+    if (!isOpen) { ans.classList.add('open'); btn.classList.add('open'); }
+  }
+
+  // Generate stars
+  const sc = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const z = Math.random() * 2.2 + 0.4;
+    s.style.cssText = `width:${z}px;height:${z}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.05+Math.random()*.4};`;
+    sc.appendChild(s);
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
+
+  // Scroll reveal
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feat-card, .step, .lang-card, .stat-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    obs.observe(el);
+  });
+</script>
 </body>
 </html>
