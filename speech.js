@@ -82,10 +82,15 @@ function speakWord(text, lang, opts = {}) {
   utt.volume = volume;
   utt.onend  = markDone;
 
-  // Try to assign best voice for all languages (including cs/de/es on desktop)
+  // Only assign a voice if it actually matches the target language
+  // (prevents a French voice being assigned when no Czech voice is found)
   const _trySpeak = () => {
+    const targetCode = (SPEECH_LANG_CODES[lang] || lang).split('-')[0].toLowerCase();
     const v = _pickVoice(lang);
-    if (v) utt.voice = v;
+    if (v && v.lang.toLowerCase().startsWith(targetCode)) {
+      utt.voice = v;
+    }
+    // utt.lang is always set — browser will pick system voice for that language
     _currentUtt = utt;
     window.speechSynthesis.speak(utt);
   };
