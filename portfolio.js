@@ -356,7 +356,7 @@ function renderPortfolio(){
     div.innerHTML=`
       ${!unlocked?`<div class="asset-locked-overlay">
         <div class="asset-locked-icon">🔒</div>
-        <div class="asset-locked-msg">Niveau Investisseur ${a.unlockLevel} requis</div>
+        <div class="asset-locked-msg">${t('level_investor_req').replace('{n}',a.unlockLevel)}</div>
       </div>`:''}
       <div class="asset-card-header">
         <div class="asset-card-icon">${a.icon}</div>
@@ -377,7 +377,7 @@ function renderPortfolio(){
       </div>
       <div class="asset-card-actions">
         <button class="asset-buy-btn" onclick="buyAsset('${a.id}')" ${!canBuy?'disabled':''}>
-          ${owned===0?'Acheter':'+1 unité'} <span class="asset-btn-cost">${scaledCost} <span class="coin"></span></span>
+          ${owned===0?t('level_buy_btn'):t('level_add_unit')} <span class="asset-btn-cost">${scaledCost} <span class="coin"></span></span>
         </button>
         ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre</button>`:''}
         <button class="asset-info-btn-sm" onclick="openAssetInfo('${a.id}')">📊</button>
@@ -559,11 +559,11 @@ function openAssetInfo(id){
 
   // Wire buy/sell
   const scaledCost=Math.round(a.cost*(1+owned*0.1));
-  $('amod-buy-btn').innerHTML=`Acheter (${scaledCost})`;
+  $('amod-buy-btn').innerHTML=`${t('level_buy_btn')} (${scaledCost})`;
   $('amod-buy-btn').onclick=()=>{buyAsset(id);openAssetInfo(id);};
   $('amod-buy-btn').disabled=U.coins<scaledCost||(a.unlockLevel>getInvestorLevel().level);
   const sellPrice=owned>0?Math.round(a.cost*(1+(owned-1)*0.1)*0.8):0;
-  $('amod-sell-btn').innerHTML=owned>0?`Vendre (${sellPrice})`:'Vendre';
+  $('amod-sell-btn').innerHTML=owned>0?`${t('level_sell_btn')} (${sellPrice})`:t('level_sell_btn');
   $('amod-sell-btn').onclick=()=>{if(owned>0){sellAsset(id);closeAssetModal();}};
   $('amod-sell-btn').disabled=owned<=0;
 
