@@ -211,16 +211,24 @@ function startEventQuiz() {
 }
 
 function renderEventBanner() {
-  const el = document.getElementById('event-banner');
-  if (!el) return;
   const ev = getCurrentEvent();
-  el.innerHTML = `
+  const html = `
     <div class="event-card" onclick="startEventQuiz()" style="--ev-accent:${ev.accent};--ev-bg:${ev.color};">
-      <div class="event-badge">ÉVÉNEMENT</div>
-      <div class="event-name">${ev.name}</div>
-      <div class="event-desc">${ev.desc}</div>
-      <div class="event-bonus">${t('event_bonus',{n:ev.bonusXP})}</div>
-      <div class="event-btn">Jouer →</div>
+      <button class="event-close" onclick="event.stopPropagation();document.getElementById('event-float').style.display='none'">✕</button>
+      <div class="event-tab">EVENT</div>
+      <div class="event-body">
+        <div class="event-badge">ÉVÉNEMENT</div>
+        <div class="event-name">${ev.name}</div>
+        <div class="event-desc">${ev.desc}</div>
+        <div class="event-bonus">XP ×${ev.bonusXP} · Trophée exclusif</div>
+        <div class="event-btn">Jouer →</div>
+      </div>
     </div>
   `;
+  // Hide old inline slot
+  const el = document.getElementById('event-banner');
+  if (el) el.innerHTML = '';
+  // Floating side widget — visible on all screens
+  const fl = document.getElementById('event-float');
+  if (fl) { fl.innerHTML = html; fl.style.display = 'block'; }
 }
