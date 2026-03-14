@@ -610,16 +610,13 @@
 
 <!-- ══════════════════ RANK SCREEN (Leaderboard + Duels) ══════════════════ -->
 <div class="screen screen-padded" id="screen-rank">
-  <div style="text-align:center;margin-bottom:14px;">
-    <div style="font-size:1.4rem;font-weight:900;">🏆 Classement & Duels</div>
-  </div>
-  <!-- Sub-tabs -->
   <div class="rank-tabs">
     <button class="rank-tab active" id="rank-tab-lb" onclick="switchRankTab('lb')">🌍 Classement</button>
     <button class="rank-tab" id="rank-tab-duels" onclick="switchRankTab('duels')">⚔️ Duels</button>
   </div>
 
-<div id="rank-lb-zone">
+  <!-- LEADERBOARD -->
+  <div id="rank-lb-zone">
     <div class="lb-tabs">
       <button class="lb-tab active" id="lb-tab-xp" onclick="setLbTab('xp')">⭐ XP</button>
       <button class="lb-tab" id="lb-tab-coins" onclick="setLbTab('coins')">🪙 Pièces</button>
@@ -629,67 +626,89 @@
     <div id="lb-list"></div>
   </div>
 
-  <!-- DUELS TAB -->
+  <!-- DUELS + PRACTICE TAB -->
   <div id="rank-duels-zone" style="display:none;">
-
-    <!-- Action buttons -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
-      <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
+    <!-- Sub-tabs: Duels / Practice -->
+    <div class="duel-subtabs">
+      <button class="duel-subtab active" id="duel-subtab-duel" onclick="_renderDuelSubTab('duel')">⚔️ Duels</button>
+      <button class="duel-subtab" id="duel-subtab-practice" onclick="_renderDuelSubTab('practice')">🎮 Pratique</button>
     </div>
 
-    <!-- Join by code -->
-    <div id="duel-join-zone" style="display:none;margin-bottom:14px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
-          style="flex:1;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;"
-          oninput="this.value=this.value.toUpperCase()">
-        <button class="btn btn-primary" onclick="joinDuel()">→</button>
+    <!-- DUELS SUB-TAB -->
+    <div id="duel-sub-duels">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
+        <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
       </div>
+      <div id="duel-join-zone" style="display:none;margin-bottom:12px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
+            style="flex:1;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;"
+            oninput="this.value=this.value.toUpperCase()">
+          <button class="btn btn-primary" onclick="joinDuel()">→</button>
+        </div>
+      </div>
+      <div id="duel-lobby-content"></div>
+      <div id="open-duels-list"></div>
     </div>
 
-    <!-- Lobby / current duel info -->
-    <div id="duel-lobby-content"></div>
+    <!-- PRACTICE SUB-TAB -->
+    <div id="duel-sub-practice" style="display:none;">
+      <div class="section-title" style="margin-bottom:10px;">🎮 Mode de pratique</div>
+      <div class="duel-mode-grid" id="practice-modes-grid"></div>
 
-    <!-- Open duels waiting for challengers -->
-    <div id="open-duels-list"></div>
+      <!-- Level selector -->
+      <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Niveau</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;" id="practice-level-grid">
+        <button class="duel-type-btn active" onclick="selectPracticeLevel(this,'any')">🔀 Tout</button>
+        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A1')">A1</button>
+        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A2')">A2</button>
+        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B1')">B1</button>
+        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B2')">B2</button>
+        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'C1')">C1</button>
+      </div>
 
-    <!-- My past duels -->
-    <div id="my-duels-list"></div>
+      <button class="btn btn-primary" onclick="startPractice()" style="width:100%;margin-top:16px;font-size:1rem;">▶ Commencer la pratique →</button>
+    </div>
   </div>
 </div>
 
 <!-- ══════════════════ CREATE DUEL MODAL ══════════════════ -->
 <div class="modal-overlay" id="duel-create-modal" style="display:none;" onclick="if(event.target===this)closeCreateDuel()">
-  <div class="modal-box" style="max-width:460px;width:94%;" onclick="event.stopPropagation()">
+  <div class="modal-box" style="max-width:500px;width:96%;max-height:92vh;overflow-y:auto;" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeCreateDuel()">✕</button>
     <div style="font-weight:900;font-size:1.1rem;margin-bottom:16px;">⚔️ Créer un duel</div>
 
+    <!-- Mode cards -->
+    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Mode de jeu</div>
+    <div class="duel-mode-grid" id="duel-mode-grid"></div>
+
     <!-- Exercise type -->
-    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:8px;">TYPE D'EXERCICE</div>
+    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Type d'exercice</div>
     <div class="duel-type-grid" id="duel-type-grid">
-      <button class="duel-type-btn active" data-type="mixed"   onclick="selectDuelType(this,'mixed')">🎲 Mixte</button>
-      <button class="duel-type-btn"        data-type="quiz"    onclick="selectDuelType(this,'quiz')">⚡ Quiz</button>
-      <button class="duel-type-btn"        data-type="fill"    onclick="selectDuelType(this,'fill')">✏️ Fill</button>
-      <button class="duel-type-btn"        data-type="match"   onclick="selectDuelType(this,'match')">🔗 Match</button>
+      <button class="duel-type-btn active" onclick="selectDuelType(this,'mixed')">🎲 Mixte</button>
+      <button class="duel-type-btn" onclick="selectDuelType(this,'quiz')">⚡ Quiz</button>
+      <button class="duel-type-btn" onclick="selectDuelType(this,'fill')">✏️ Fill</button>
+      <button class="duel-type-btn" onclick="selectDuelType(this,'match')">🔗 Match</button>
     </div>
 
-    <!-- Level / chapter selection -->
-    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin:14px 0 8px;">NIVEAU</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="duel-level-grid">
-      <button class="duel-type-btn active" data-lv="any" onclick="selectDuelLevel(this,'any')">🔀 Aléatoire</button>
-      <button class="duel-type-btn" data-lv="A1" onclick="selectDuelLevel(this,'A1')">A1</button>
-      <button class="duel-type-btn" data-lv="A2" onclick="selectDuelLevel(this,'A2')">A2</button>
-      <button class="duel-type-btn" data-lv="B1" onclick="selectDuelLevel(this,'B1')">B1</button>
-      <button class="duel-type-btn" data-lv="B2" onclick="selectDuelLevel(this,'B2')">B2</button>
+    <!-- Level -->
+    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Niveau</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;" id="duel-level-grid">
+      <button class="duel-type-btn active" onclick="selectDuelLevel(this,'any')">🔀 Aléatoire</button>
+      <button class="duel-type-btn" onclick="selectDuelLevel(this,'A1')">A1</button>
+      <button class="duel-type-btn" onclick="selectDuelLevel(this,'A2')">A2</button>
+      <button class="duel-type-btn" onclick="selectDuelLevel(this,'B1')">B1</button>
+      <button class="duel-type-btn" onclick="selectDuelLevel(this,'B2')">B2</button>
+      <button class="duel-type-btn" onclick="selectDuelLevel(this,'C1')">C1</button>
     </div>
 
     <!-- Bet -->
-    <div style="font-size:.78rem;font-weight:800;color:var(--muted);margin:14px 0 8px;">MISE (optionnel)</div>
+    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Mise (optionnel)</div>
     <div style="background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <span class="coin" style="font-size:1rem;"></span>
-        <input type="number" id="duel-bet-input" min="0" max="9999" value="0" placeholder="0"
+        <input type="number" id="duel-bet-input" min="0" max="9999" value="0"
           style="flex:1;background:transparent;border:none;color:var(--gold);font-size:1.4rem;font-weight:900;font-family:'Nunito',sans-serif;outline:none;width:80px;">
         <span style="font-size:.78rem;color:var(--muted);">pièces</span>
       </div>
@@ -700,12 +719,29 @@
         <button class="bet-quick-btn" onclick="setBet(200)">200</button>
         <button class="bet-quick-btn" onclick="setBet(500)">500</button>
       </div>
-      <div style="font-size:.72rem;color:var(--muted);margin-top:8px;">Le gagnant empoche la mise des deux joueurs. Si l'adversaire refuse la mise, il peut rejoindre sans parier.</div>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.5;">Le gagnant remporte les deux mises. L'adversaire peut choisir de jouer sans mise.</div>
     </div>
 
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn btn-secondary" onclick="closeCreateDuel()" style="flex:1;">Annuler</button>
       <button class="btn btn-primary" onclick="confirmCreateDuel()" style="flex:2;">Créer le duel →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ CUSTOM PRACTICE MODAL ══════════════════ -->
+<div class="modal-overlay" id="custom-practice-modal" style="display:none;" onclick="if(event.target===this)closeCustomPracticeModal()">
+  <div class="modal-box" style="max-width:460px;width:96%;max-height:88vh;overflow-y:auto;" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeCustomPracticeModal()">✕</button>
+    <div style="font-weight:900;font-size:1.05rem;margin-bottom:14px;">✏️ Pratique personnalisée</div>
+    <div id="saved-practices-list" style="margin-bottom:16px;"></div>
+    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Créer une nouvelle session</div>
+    <input id="cp-title" class="diy-input" placeholder="Nom de la session…" style="margin-bottom:10px;">
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px;">Paires — une par ligne : <strong>mot natif = traduction</strong></div>
+    <textarea id="cp-words" class="diy-textarea" placeholder="chien = dog&#10;chat = cat&#10;maison = house"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn btn-secondary" onclick="closeCustomPracticeModal()" style="flex:1;">Fermer</button>
+      <button class="btn btn-primary" onclick="saveCustomPractice()" style="flex:2;">Sauvegarder →</button>
     </div>
   </div>
 </div>
