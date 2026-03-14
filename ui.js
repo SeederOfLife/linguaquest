@@ -489,11 +489,6 @@ function switchRankTab(tab) {
   if (!isLb) renderDuelsScreen();
 }
 
-function showJoinDuel() {
-  const z = $('duel-join-zone');
-  if (z) z.style.display = z.style.display === 'none' ? '' : 'none';
-}
-
 // ══════════════════════════════════════════════
 // TROPHIES PREVIEW (profile screen — top 5 earned)
 // ══════════════════════════════════════════════
