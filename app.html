@@ -613,6 +613,7 @@
   <div class="rank-tabs">
     <button class="rank-tab active" id="rank-tab-lb" onclick="switchRankTab('lb')">🌍 Classement</button>
     <button class="rank-tab" id="rank-tab-duels" onclick="switchRankTab('duels')">⚔️ Duels</button>
+    <button class="rank-tab" id="rank-tab-friends" onclick="switchRankTab('friends')">👥 Amis</button>
   </div>
 
   <!-- LEADERBOARD -->
@@ -670,6 +671,28 @@
 
       <button class="btn btn-primary" onclick="startPractice()" style="width:100%;margin-top:16px;font-size:1rem;">▶ Commencer la pratique →</button>
     </div>
+  </div>
+
+  <!-- FRIENDS TAB -->
+  <div id="rank-friends-zone" style="display:none;">
+    <!-- Search -->
+    <div class="friends-search-wrap">
+      <input id="friends-search-input" class="friends-search-input"
+        placeholder="Chercher un ami par email…"
+        oninput="friendsSearchDebounce()">
+      <button class="btn btn-primary btn-sm" onclick="friendsSearch()">Chercher</button>
+    </div>
+    <div id="friends-search-result"></div>
+
+    <!-- Pending requests -->
+    <div id="friends-pending-wrap" style="display:none;">
+      <div class="friends-section-title">📬 Demandes reçues</div>
+      <div id="friends-pending-list"></div>
+    </div>
+
+    <!-- Friends list -->
+    <div class="friends-section-title">👥 Mes amis</div>
+    <div id="friends-list"><div style="color:var(--muted);text-align:center;padding:24px;font-size:.85rem;">Charge…</div></div>
   </div>
 </div>
 
@@ -774,6 +797,7 @@
 <script src="trophies.js"></script>
 <script src="leaderboard.js"></script>
 <script src="duels.js"></script>
+<script src="friends.js"></script>
 <script src="news.js"></script>
 <script src="boot.js"></script>
 
