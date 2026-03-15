@@ -232,7 +232,7 @@ function showResults(){
     $('xp-bar').style.width=((U.xp%500)/7)+'%'; sT('xp-count',U.xp+' XP');
     setTimeout(()=>{ if(typeof checkTrophies==='function') checkTrophies(); },600);
     if(S.isDuel&&typeof submitDuelScore==='function') submitDuelScore(S.score,S.cor);
-    S.isEventQuiz=false; S.isSRSReview=false; S.isDuel=false;
+    S.isEventQuiz=false; S.isSRSReview=false; S.isDuel=false; S.isPractice=false;
   }
   const msgs=[t('game_result_0'),t('game_result_1'),t('game_result_2'),t('game_result_3')];
   sT('r-stars',['☆☆☆','★☆☆','★★☆','★★★'][stars]);
