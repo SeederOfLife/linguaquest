@@ -23,6 +23,8 @@ let _pendingCache  = null;
 // ── RENDER MAIN SCREEN ────────────────────────────────────────
 async function renderFriendsScreen() {
   await Promise.all([_loadFriends(), _loadPending()]);
+  if (typeof loadUnreadCounts === 'function') loadUnreadCounts();
+  if (typeof initRoomsRefresh === 'function') initRoomsRefresh();
 }
 
 // ── SEARCH ────────────────────────────────────────────────────
@@ -41,11 +43,15 @@ async function friendsSearch() {
 
   try {
     // Search by partial email match
-    const { data, error } = await _SB
-      .from('users')
-      .select('data')
-      .ilike('email', `%${query}%`)
-      .limit(5);
+    // Search by email OR pseudo
+    const { data: byEmail } = await _SB.from('users').select('data').ilike('email', `%${query}%`).limit(3);
+    const { data: byPseudo } = await _SB.from('users').select('data').ilike('pseudo', `%${query}%`).limit(3);
+    const seen = new Set();
+    const allData = [...(byEmail||[]), ...(byPseudo||[])].filter(r => {
+      if (!r.data || seen.has(r.data.email)) return false;
+      seen.add(r.data.email); return true;
+    });
+    const data = allData; const error = null;
 
     if (error || !data || !data.length) {
       el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:10px;">Aucun utilisateur trouvé</div>';
@@ -281,7 +287,11 @@ async function _loadFriends() {
 }
 
 function _friendCard(u, friendshipId) {
+  const unread = typeof getUnread === 'function' ? getUnread(u.email) : 0;
+  const unreadBadge = unread > 0 ? ` <span style="background:var(--accent2);color:#fff;border-radius:8px;padding:0 5px;font-size:.6rem;">${unread}</span>` : '';
+  const onlineStatus = typeof onlineLabel === 'function' ? onlineLabel(u.lastSeen) : '';
   const initial   = (u.name || '?').charAt(0).toUpperCase();
+  const dotHtml   = typeof onlineDot === 'function' ? onlineDot(u.lastSeen) : '';
   const streak    = u.streak  || 0;
   const xp        = u.xp     || 0;
   const coins     = Math.floor(u.coins || 0);
@@ -293,12 +303,12 @@ function _friendCard(u, friendshipId) {
   return `
     <div class="friend-card friend-card-full">
       <div class="friend-avatar-wrap">
-        <div class="friend-avatar friend-avatar-lg">${initial}</div>
+        ${dotHtml}<div class="friend-avatar friend-avatar-lg">${initial}</div>
         ${streak >= 3 ? `<div class="friend-streak-badge">🔥${streak}</div>` : ''}
       </div>
       <div class="friend-info" style="flex:1;">
         <div class="friend-name">${u.name || u.email}</div>
-        <div class="friend-meta">${u.email}</div>
+        <div class="friend-meta">${u.email} ${onlineStatus}</div>
         <div class="friend-stats">
           <span class="friend-stat">⭐ ${xp.toLocaleString()} XP</span>
           <span class="friend-stat">🪙 ${coins.toLocaleString()}</span>
@@ -309,8 +319,9 @@ function _friendCard(u, friendshipId) {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-        <button class="btn btn-primary btn-sm" onclick="inviteFriendToDuel('${u.email}')">⚔️ Duel</button>
-        <button class="btn btn-secondary btn-sm" onclick="removeFriend('${friendshipId}')" style="font-size:.7rem;padding:4px 8px;">Retirer</button>
+        <button class="btn btn-primary btn-sm" onclick="openChat('${u.email}','${(u.name||'Ami').replace(/'/g,'')}')" >💬 Message</button>
+        <button class="btn btn-secondary btn-sm" onclick="inviteFriendToDuel('${u.email}')">⚔️ Duel</button>
+        <button class="btn btn-secondary btn-sm" onclick="removeFriend('${friendshipId}')" style="font-size:.7rem;padding:4px 8px;opacity:.6;">Retirer</button>
       </div>
     </div>`;
 }

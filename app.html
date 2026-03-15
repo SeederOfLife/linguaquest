@@ -498,6 +498,7 @@
     <div class="profile-avatar" id="prof-avatar"></div>
     <div>
       <div class="profile-name" id="prof-name"></div>
+      <div id="prof-pseudo" style="font-size:.78rem;color:var(--accent3);font-weight:700;margin-top:2px;cursor:pointer;" onclick="openPseudoModal()"></div>
       <div class="profile-email" id="prof-email"></div>
       <div class="profile-joined" id="prof-joined"></div>
     </div>
@@ -675,24 +676,51 @@
 
   <!-- FRIENDS TAB -->
   <div id="rank-friends-zone" style="display:none;">
-    <!-- Search -->
-    <div class="friends-search-wrap">
-      <input id="friends-search-input" class="friends-search-input"
-        placeholder="Chercher un ami par email…"
-        oninput="friendsSearchDebounce()">
-      <button class="btn btn-primary btn-sm" onclick="friendsSearch()">Chercher</button>
-    </div>
-    <div id="friends-search-result"></div>
-
-    <!-- Pending requests -->
-    <div id="friends-pending-wrap" style="display:none;">
-      <div class="friends-section-title">📬 Demandes reçues</div>
-      <div id="friends-pending-list"></div>
+    <!-- Sub-tabs -->
+    <div class="duel-subtabs" style="margin-bottom:14px;">
+      <button class="duel-subtab active" id="social-tab-friends" onclick="switchSocialTab('friends')">👥 Amis</button>
+      <button class="duel-subtab" id="social-tab-rooms" onclick="switchSocialTab('rooms')">🏠 Salons</button>
     </div>
 
-    <!-- Friends list -->
-    <div class="friends-section-title">👥 Mes amis</div>
-    <div id="friends-list"><div style="color:var(--muted);text-align:center;padding:24px;font-size:.85rem;">Charge…</div></div>
+    <!-- FRIENDS SUB -->
+    <div id="social-sub-friends">
+      <div class="friends-search-wrap">
+        <input id="friends-search-input" class="friends-search-input" placeholder="Chercher par email ou @pseudo…" oninput="friendsSearchDebounce()">
+        <button class="btn btn-primary btn-sm" onclick="friendsSearch()">Chercher</button>
+      </div>
+      <div id="friends-search-result"></div>
+      <div id="friends-pending-wrap" style="display:none;">
+        <div class="friends-section-title">📬 Demandes reçues</div>
+        <div id="friends-pending-list"></div>
+      </div>
+      <div class="friends-section-title">👥 Mes amis</div>
+      <div id="friends-list"><div style="color:var(--muted);text-align:center;padding:24px;font-size:.85rem;">Charge…</div></div>
+    </div>
+
+    <!-- ROOMS SUB -->
+    <div id="social-sub-rooms" style="display:none;">
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Créer un salon</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="room-topic-select">
+          <button class="duel-type-btn active" data-topic="general" onclick="selectRoomTopic(this)">💬 Libre</button>
+          <button class="duel-type-btn" data-topic="vocab" onclick="selectRoomTopic(this)">📚 Vocab</button>
+          <button class="duel-type-btn" data-topic="grammar" onclick="selectRoomTopic(this)">✏️ Gram.</button>
+          <button class="duel-type-btn" data-topic="beginner" onclick="selectRoomTopic(this)">🌱 Déb.</button>
+          <button class="duel-type-btn" data-topic="advanced" onclick="selectRoomTopic(this)">🚀 Av.</button>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="createPracticeRoom()">🏠 Ouvrir un salon →</button>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Rejoindre un salon</div>
+        <div style="display:flex;gap:8px;">
+          <input id="room-code-input" class="friends-search-input" placeholder="Code du salon (5 lettres)" maxlength="5" oninput="this.value=this.value.toUpperCase()" style="flex:1;">
+          <button class="btn btn-primary" onclick="joinPracticeRoom()">→</button>
+        </div
+      </div>
+      <div id="my-room-zone" style="display:none;margin-bottom:10px;"></div>
+      <div class="friends-section-title">Salons ouverts</div>
+      <div id="rooms-list"></div>
+    </div>
   </div>
 </div>
 
@@ -785,6 +813,39 @@
 <!-- ══════════════════ TROPHY POPUPS (injected by JS) ══════════════════ -->
 </div><!-- #app -->
 
+<!-- ══════════════════ CHAT MODAL ══════════════════ -->
+<div class="modal-overlay" id="chat-modal" style="display:none;" onclick="if(event.target===this)closeChat()">
+  <div class="modal-box chat-modal-box" onclick="event.stopPropagation()">
+    <div class="chat-header">
+      <div id="chat-friend-name" style="font-weight:900;font-size:1rem;">💬 Message</div>
+      <button onclick="closeChat()" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input-row">
+      <input id="chat-input" class="chat-input-field" placeholder="Écris un message…" onkeydown="chatKeyDown(event)" maxlength="500">
+      <button class="btn btn-primary btn-sm" onclick="sendMessage()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PSEUDO MODAL ══════════════════ -->
+<div class="modal-overlay" id="pseudo-modal" style="display:none;" onclick="if(event.target===this)closePseudoModal()">
+  <div class="modal-box" style="max-width:380px;width:94%;" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closePseudoModal()">✕</button>
+    <div style="font-weight:900;font-size:1.05rem;margin-bottom:6px;">@ Choisir un pseudo</div>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">Unique, rechercheable par tes amis. Lettres, chiffres et _ uniquement.</div>
+    <div style="position:relative;margin-bottom:8px;">
+      <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--accent3);font-weight:800;font-size:.95rem;">@</span>
+      <input id="pseudo-input" class="friends-search-input" style="padding-left:28px;" placeholder="monpseudo" maxlength="20" oninput="pseudoCheckDebounce()">
+    </div>
+    <div id="pseudo-check-msg" style="font-size:.78rem;min-height:18px;margin-bottom:14px;font-weight:700;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="closePseudoModal()" style="flex:1;">Annuler</button>
+      <button class="btn btn-primary" onclick="savePseudo()" style="flex:2;">Enregistrer →</button>
+    </div>
+  </div>
+</div>
+
 <script src="data.js"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
@@ -798,6 +859,8 @@
 <script src="leaderboard.js"></script>
 <script src="duels.js"></script>
 <script src="friends.js"></script>
+<script src="social.js"></script>
+<script src="social.js"></script>
 <script src="news.js"></script>
 <script src="boot.js"></script>
 

@@ -146,7 +146,7 @@ function afterLogin(){
   calcDividends();
   updateTopBar();
   navTo('learn');
-  // Mark app as ready AFTER init — level-up modal only fires after this
+  if (typeof initSocial === 'function') initSocial();
   setTimeout(()=>{ _appReady = true; }, 800);
 }
 

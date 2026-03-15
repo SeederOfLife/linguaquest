@@ -863,3 +863,61 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .friend-stat{font-size:.72rem;font-weight:700;color:var(--muted);}
 .friend-xp-bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
 .friend-xp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s;}
+
+/* ── Social: Online dot ──────────────────────────────────────── */
+.online-dot{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid var(--card);z-index:2;}
+.online-dot.online{background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.6);}
+.online-dot.offline{background:#6b7280;}
+
+/* ── Leaderboard invite button ───────────────────────────────── */
+.lb-invite-btn{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:5px 9px;font-size:.8rem;cursor:pointer;color:var(--accent);transition:all .2s;flex-shrink:0;}
+.lb-invite-btn:hover{background:rgba(124,58,237,.3);}
+.msg-badge{background:var(--accent2);color:#fff;border-radius:10px;padding:1px 6px;font-size:.62rem;font-weight:900;margin-left:4px;vertical-align:middle;}
+
+/* ── Chat modal ──────────────────────────────────────────────── */
+.chat-modal-box{max-width:460px;width:96%;height:80vh;max-height:580px;display:flex;flex-direction:column;padding:0;overflow:hidden;border-radius:20px;}
+.chat-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;scrollbar-width:thin;}
+.chat-bubble-wrap{display:flex;flex-direction:column;max-width:78%;}
+.chat-bubble-wrap.mine{align-self:flex-end;align-items:flex-end;}
+.chat-bubble-wrap.theirs{align-self:flex-start;align-items:flex-start;}
+.chat-bubble{padding:9px 13px;border-radius:16px;font-size:.88rem;line-height:1.45;word-break:break-word;}
+.chat-bubble.mine{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-bottom-right-radius:4px;}
+.chat-bubble.theirs{background:var(--card2);color:var(--text);border-bottom-left-radius:4px;}
+.chat-time{font-size:.62rem;color:var(--muted);margin-top:2px;padding:0 4px;}
+.chat-input-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+.chat-input-field{flex:1;background:var(--card2);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 13px;font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--text);outline:none;}
+.chat-input-field:focus{border-color:var(--accent);}
+
+/* ── Practice rooms ──────────────────────────────────────────── */
+.room-card{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:13px 14px;margin-bottom:8px;transition:border-color .2s;}
+.room-card:hover{border-color:rgba(6,182,212,.3);}
+.room-topic-icon{font-size:1.5rem;flex-shrink:0;width:36px;text-align:center;}
+.room-info{flex:1;min-width:0;}
+.room-host{font-weight:800;font-size:.88rem;}
+.room-meta{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.room-members-row{display:flex;align-items:center;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.room-member-dot{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:900;color:#fff;}
+
+/* ── Chat modal ─────────────────────────────────────────────── */
+.chat-modal-box{display:flex;flex-direction:column;max-width:420px;width:95%;height:70vh;max-height:560px;padding:0;overflow:hidden;}
+.chat-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;scrollbar-width:thin;}
+.chat-input-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+.chat-input-field{flex:1;background:var(--card2);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 13px;font-family:'Nunito',sans-serif;font-size:.88rem;color:var(--text);outline:none;}
+.chat-input-field:focus{border-color:var(--accent);}
+.msg-bubble-wrap{display:flex;flex-direction:column;max-width:80%;}
+.msg-bubble-wrap.mine{align-self:flex-end;align-items:flex-end;}
+.msg-bubble-wrap.theirs{align-self:flex-start;align-items:flex-start;}
+.msg-bubble{padding:9px 13px;border-radius:16px;font-size:.85rem;line-height:1.4;word-break:break-word;}
+.msg-mine{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-bottom-right-radius:4px;}
+.msg-theirs{background:var(--card2);color:var(--text);border-bottom-left-radius:4px;}
+.msg-time{font-size:.62rem;color:var(--muted);margin-top:2px;padding:0 4px;}
+
+/* ── Practice rooms ─────────────────────────────────────────── */
+.room-card{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;margin-bottom:8px;gap:12px;}
+.room-card-host{font-weight:900;font-size:.9rem;margin-bottom:3px;}
+.room-card-meta{font-size:.74rem;color:var(--muted);margin-bottom:6px;}
+.room-players{display:flex;gap:4px;flex-wrap:wrap;}
+.room-player-chip{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.75rem;}
+.room-code-badge{font-family:monospace;font-weight:900;font-size:.95rem;letter-spacing:3px;color:var(--accent);background:rgba(124,58,237,.12);border-radius:8px;padding:4px 10px;text-align:center;}
