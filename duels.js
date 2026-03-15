@@ -207,12 +207,14 @@ async function confirmCreateDuel() {
   const {ids,qs}=_buildDuelQuestions(type,level,modeConf.qCount);
   const code=_randCode();
   try {
+    // Store mode inside questions metadata (avoids needing extra DB column)
+    const questionsWithMeta = { mode, items: qs };
     const {error}=await _SB.from('duels').insert({
       code, creator_email:U.email, creator_name:U.name,
       lang_native:S.nL, lang_target:S.tL, game_type:type,
-      level_filter:level, word_ids:ids, questions:qs,
+      level_filter:level, word_ids:ids, questions:questionsWithMeta,
       bet_amount:bet, creator_score:0, creator_correct:0,
-      status:'open', duel_mode:mode,
+      status:'open',
     });
     if (error) throw error;
     if (bet>0) { U.coins-=bet; U.reservedBet=(U.reservedBet||0)+bet; saveU(); updateTopBar(); }
@@ -284,7 +286,10 @@ async function _acceptAndPlay(data, code, acceptBet) {
     S.nL=data.lang_native; S.tL=data.lang_target;
     const betPaid=acceptBet?data.bet_amount:0;
     if (betPaid>0) { U.coins-=betPaid; U.reservedBet=(U.reservedBet||0)+betPaid; saveU(); updateTopBar(); }
-    _currentDuel={code,qs:data.questions,role:'challenger',bet:betPaid,creatorBet:data.bet_amount,data,mode:data.duel_mode||'classic'};
+    const rawQs = data.questions;
+    const resolvedMode = (rawQs && rawQs.mode) ? rawQs.mode : (data.duel_mode||'classic');
+    const resolvedQs  = (rawQs && rawQs.items) ? rawQs.items : (Array.isArray(rawQs) ? rawQs : []);
+    _currentDuel={code,qs:resolvedQs,role:'challenger',bet:betPaid,creatorBet:data.bet_amount,data,mode:resolvedMode};
     startDuelGame();
   } catch(e) { toast(t('duel_conn_error')); }
 }
@@ -427,7 +432,8 @@ async function loadOpenDuels() {
 }
 
 function _duelCard(d, isMine) {
-  const modeConf=DUEL_MODES.find(m=>m.id===d.duel_mode)||DUEL_MODES[0];
+  const duelMode = d.duel_mode || (d.questions && d.questions.mode) || 'classic';
+  const modeConf=DUEL_MODES.find(m=>m.id===duelMode)||DUEL_MODES[0];
   const langLabel=d.lang_native&&d.lang_target?`${LANGS[d.lang_native]?.flag||d.lang_native} → ${LANGS[d.lang_target]?.flag||d.lang_target}`:'';
   const age=_timeAgo(d.created_at);
   return `
