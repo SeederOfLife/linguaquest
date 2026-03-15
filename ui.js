@@ -70,14 +70,14 @@ function renderShop(){
     div.className='shop-item'+(alreadyHas?' owned':'');
     div.innerHTML=`
       ${alreadyHas?'<div class="owned-badge">✓ Possédé</div>':''}
-      <div style="margin-bottom:5px;"><span class="shop-cat-badge" style="background:${catColor}22;color:${catColor};">${{consumable:'Boost',cosmetic:'Style',premium:'Bonus',duel:'Duel'}[item.type]||item.type}</span></div>
+      <div style="margin-bottom:5px;"><span class="shop-cat-badge" style="background:${catColor}22;color:${catColor};">${{consumable:t('shop_cat_boost')||'Boost',cosmetic:t('shop_cat_style')||'Style',premium:'Bonus',duel:'Duel'}[item.type]||item.type}</span></div>
       <div class="shop-icon">${item.icon}</div>
       <div class="shop-name">${item.name}</div>
       <div class="shop-desc">${item.desc}</div>
       ${uses!==null?`<div style="font-size:.72rem;color:var(--accent3);margin-bottom:4px;">✓ ${uses} en stock</div>`:''}
       <div class="shop-price">${item.price>0?`<span class="coin"></span> ${item.price}`:'🎁 Gratuit'}</div>
       <button class="btn btn-sm ${alreadyHas?'btn-secondary':'btn-primary'}" style="margin-top:10px;width:100%;justify-content:center;" onclick="buyShop('${item.id}')" ${alreadyHas||(!canBuy&&item.price>0)?'disabled':''}>
-        ${alreadyHas?'Possédé ✓':item.price===0?'Réclamer':'Acheter'}
+        ${alreadyHas?t('shop_owned')||'Possédé ✓':item.price===0?t('shop_claim')||'Réclamer':t('level_buy_btn')}
       </button>
     `;
     grid.appendChild(div);
@@ -116,7 +116,7 @@ function renderProfile(){
   if(!U) return;
   $('prof-name').textContent=U.name;
   $('prof-email').textContent=U.email;
-  $('prof-joined').textContent='Membre depuis '+new Date(U.joined).toLocaleDateString('fr');
+  $('prof-joined').textContent=t('joined')+new Date(U.joined).toLocaleDateString('fr');
   $('prof-avatar').textContent=U.name.charAt(0).toUpperCase();
   if(U.owned.includes('avatar_diamond')) $('prof-avatar').style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
   else if(U.owned.includes('avatar_gold')) $('prof-avatar').style.background='linear-gradient(135deg,#d97706,#fbbf24)';
