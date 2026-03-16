@@ -86,13 +86,30 @@ function selectSkin(id) {
 // ── LOBBY ─────────────────────────────────────────────────────
 async function openCompostLobby() {
   if (!S.nL || !S.tL) { toast('Choisis une langue d\'abord'); navTo('learn'); return; }
-  goTo('compost-lobby');
-  renderSkinPicker();
   if (U?.compostSkin) _mySkin = WORM_SKINS.find(s => s.id === U.compostSkin) || WORM_SKINS[0];
+  goTo('compost-lobby');
+  setTimeout(() => renderSkinPicker(), 50);
+}
+
+function startCompostSolo() {
+  // Solo mode — AI-controlled opponent (simple bot)
+  _compostRoom = {
+    code: 'SOLO',
+    host: U?.email || 'player',
+    hostName: U?.name || 'Joueur',
+    hostSkin: _mySkin.id,
+    guest: 'bot',
+    guestName: '🤖 Bot',
+    guestSkin: 'fire',
+    status: 'started',
+    nL: S.nL, tL: S.tL,
+    role: 'host', solo: true,
+  };
+  _launchCompost();
 }
 
 async function createCompostRoom() {
-  if (!U || U.isGuest) { toast('❌ Connecte-toi'); return; }
+  if (!U || U.isGuest) { toast('❌ Connecte-toi pour jouer en multi'); startCompostSolo(); return; }
   const code = _randCompostCode();
   _compostRoom = {
     code, host: U.email, hostName: U.name,
@@ -102,16 +119,19 @@ async function createCompostRoom() {
     nL: S.nL, tL: S.tL,
   };
 
-  // Subscribe to lobby channel
-  _compostLobbyChannel = _SB.channel(`compost-lobby-${code}`)
-    .on('broadcast', { event: 'join' }, ({ payload }) => {
-      _compostRoom.guest = payload.email;
-      _compostRoom.guestName = payload.name;
-      _compostRoom.guestSkin = payload.skin;
-      _updateLobbyUI();
-      toast(`🪱 ${payload.name} a rejoint !`);
-    })
-    .subscribe();
+  try {
+    _compostLobbyChannel = _SB.channel(`compost-lobby-${code}`)
+      .on('broadcast', { event: 'join' }, ({ payload }) => {
+        _compostRoom.guest = payload.email;
+        _compostRoom.guestName = payload.name;
+        _compostRoom.guestSkin = payload.skin;
+        _updateLobbyUI();
+        toast(`🪱 ${payload.name} a rejoint !`);
+      })
+      .subscribe();
+  } catch(e) {
+    console.warn('Lobby channel failed, solo fallback', e);
+  }
 
   _renderLobbyWaiting(code);
 }
@@ -206,12 +226,17 @@ async function joinCompostRoom() {
 
 // ── GAME LAUNCH ───────────────────────────────────────────────
 function startCompostGame() {
-  if (!_compostRoom?.guest) { toast('En attente d\'un adversaire…'); return; }
-  // Signal guest to start
-  _compostLobbyChannel?.send({
-    type: 'broadcast', event: 'start',
-    payload: { ..._compostRoom, role: 'host' },
-  });
+  if (!_compostRoom?.guest) {
+    // No opponent — start solo vs bot
+    startCompostSolo();
+    return;
+  }
+  try {
+    _compostLobbyChannel?.send({
+      type: 'broadcast', event: 'start',
+      payload: { ..._compostRoom, role: 'host' },
+    });
+  } catch(e) {}
   _compostRoom.role = 'host';
   _launchCompost();
 }
@@ -300,27 +325,86 @@ function _initCompostGame() {
 
   spawnBubbles();
 
-  // Realtime sync
-  const gameChannel = _SB.channel(`compost-game-${_compostRoom?.code || 'local'}`)
-    .on('broadcast', { event: 'move' }, ({ payload }) => {
-      if (payload.email !== U.email) {
-        opWorm.body = payload.body;
-        opWorm.dir = payload.dir;
-        opWorm.alive = payload.alive;
-        opWorm.score = payload.score;
-        opScore = payload.score;
-        sT('compost-op-score', opWorm.score);
-      }
-    })
-    .on('broadcast', { event: 'eat' }, ({ payload }) => {
-      if (payload.email !== U.email && payload.qi === qi) {
-        qi++;
-        spawnBubbles();
-      }
-    })
-    .subscribe();
+  // Bot AI for solo mode
+  const isSolo = _compostRoom?.solo === true || _compostRoom?.guest === 'bot';
+  let botMoveTimer = 0;
 
-  _compostChannel = gameChannel;
+  function botUpdate(ts) {
+    if (!isSolo || gameOver) return;
+    if (ts - botMoveTimer < 600) return; // bot moves every 600ms
+    botMoveTimer = ts;
+    if (!opWorm.alive) return;
+
+    // Bot tries to move toward the correct bubble
+    const q = getCurrentQuestion();
+    if (!q) return;
+    const target = bubbles.find(b => b.correct);
+    if (!target) return;
+
+    const head = opWorm.body[0];
+    const dx = target.pos.x - head.x;
+    const dy = target.pos.y - head.y;
+
+    // Pick direction toward target, avoid reversing
+    let newDir = opWorm.dir;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const d = { x: dx > 0 ? 1 : -1, y: 0 };
+      if (!(d.x === -opWorm.dir.x)) newDir = d;
+    } else {
+      const d = { x: 0, y: dy > 0 ? 1 : -1 };
+      if (!(d.y === -opWorm.dir.y)) newDir = d;
+    }
+    opWorm.dir = newDir;
+
+    // Move bot worm
+    const newHead = {
+      x: (opWorm.body[0].x + opWorm.dir.x + COLS) % COLS,
+      y: (opWorm.body[0].y + opWorm.dir.y + ROWS) % ROWS,
+    };
+    if (!opWorm.body.some(s => s.x === newHead.x && s.y === newHead.y)) {
+      opWorm.body.unshift(newHead);
+      opWorm.body.pop();
+
+      // Bot eats bubble
+      const eaten = bubbles.find(b => b.pos.x === newHead.x && b.pos.y === newHead.y);
+      if (eaten) {
+        if (eaten.correct) {
+          opWorm.score += 10; opScore = opWorm.score;
+          sT('compost-op-score', opScore);
+          qi++; if (qi < shuffled.length) spawnBubbles();
+          else { gameOver = true; _endCompost(myScore, opScore, ctx); }
+        } else {
+          opWorm.score = Math.max(0, opWorm.score - 5); opScore = opWorm.score;
+          sT('compost-op-score', opScore);
+        }
+      }
+    }
+  }
+
+  // Realtime sync (multiplayer only)
+  let gameChannel = null;
+  if (!isSolo) {
+    try {
+      gameChannel = _SB.channel(`compost-game-${_compostRoom?.code || 'local'}`)
+        .on('broadcast', { event: 'move' }, ({ payload }) => {
+          if (payload.email !== U?.email) {
+            opWorm.body = payload.body;
+            opWorm.dir = payload.dir;
+            opWorm.alive = payload.alive;
+            opWorm.score = payload.score;
+            opScore = payload.score;
+            sT('compost-op-score', opWorm.score);
+          }
+        })
+        .on('broadcast', { event: 'eat' }, ({ payload }) => {
+          if (payload.email !== U?.email && payload.qi === qi) {
+            qi++; spawnBubbles();
+          }
+        })
+        .subscribe();
+      _compostChannel = gameChannel;
+    } catch(e) { console.warn('Game channel failed, solo mode', e); }
+  }
 
   // Input
   const keyMap = { ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0},
@@ -351,6 +435,7 @@ function _initCompostGame() {
 
   function update(ts) {
     if (gameOver) return;
+    botUpdate(ts);
     if (ts - lastMove < SPEED) { requestAnimationFrame(update); return; }
     lastMove = ts;
 
@@ -379,7 +464,7 @@ function _initCompostGame() {
             myScore = myWorm.score;
             sT('compost-my-score', myScore);
             qi++;
-            gameChannel.send({ type:'broadcast', event:'eat', payload:{ email:U.email, qi: qi-1 }});
+            if (!isSolo && gameChannel) { try { gameChannel.send({ type:'broadcast', event:'eat', payload:{ email:U?.email, qi: qi-1 }}); } catch(e) {} }
             if (qi < shuffled.length) spawnBubbles();
             else { gameOver = true; _endCompost(myScore, opScore, ctx); return; }
           } else {
@@ -390,11 +475,15 @@ function _initCompostGame() {
           }
         }
 
-        // Broadcast position
-        gameChannel.send({ type:'broadcast', event:'move', payload:{
-          email: U.email, body: myWorm.body, dir: myWorm.dir,
-          alive: myWorm.alive, score: myWorm.score,
-        }});
+        // Broadcast position (multiplayer only)
+        if (!isSolo && gameChannel) {
+          try {
+            gameChannel.send({ type:'broadcast', event:'move', payload:{
+              email: U?.email, body: myWorm.body, dir: myWorm.dir,
+              alive: myWorm.alive, score: myWorm.score,
+            }});
+          } catch(e) {}
+        }
       }
     }
 

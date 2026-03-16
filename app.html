@@ -829,9 +829,12 @@
   <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Choisis ton ver</div>
   <div class="skin-grid" id="compost-skin-grid"></div>
 
-  <!-- Create or Join -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 14px;">
-    <button class="btn btn-primary" onclick="createCompostRoom()">🏠 Créer un salon</button>
+  <!-- Solo or Multi -->
+  <button class="btn btn-primary" onclick="startCompostSolo()" style="width:100%;margin:16px 0 10px;font-size:1rem;background:linear-gradient(135deg,#16a34a,#15803d);border:none;">
+    ▶ Jouer solo (vs Bot)
+  </button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <button class="btn btn-secondary" onclick="createCompostRoom()">🏠 Créer un salon multi</button>
     <button class="btn btn-secondary" onclick="$('compost-join-wrap').style.display=''">🔗 Rejoindre</button>
   </div>
   <div id="compost-join-wrap" style="display:none;margin-bottom:12px;">
