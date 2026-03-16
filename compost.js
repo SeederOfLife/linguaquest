@@ -84,11 +84,13 @@ function selectSkin(id) {
 }
 
 // ── LOBBY ─────────────────────────────────────────────────────
-async function openCompostLobby() {
-  if (!S.nL || !S.tL) { toast('Choisis une langue d\'abord'); navTo('learn'); return; }
+function openCompostLobby() {
+  // Pick language if not set — use defaults
+  if (!S.nL) S.nL = 'fr';
+  if (!S.tL) S.tL = 'en';
   if (U?.compostSkin) _mySkin = WORM_SKINS.find(s => s.id === U.compostSkin) || WORM_SKINS[0];
   goTo('compost-lobby');
-  setTimeout(() => renderSkinPicker(), 50);
+  renderSkinPicker();
 }
 
 function startCompostSolo() {
