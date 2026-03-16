@@ -7,7 +7,7 @@ function goTo(sc){
   window.scrollTo(0,0);clearInterval(S.timer);
 }
 function navTo(tab){
-  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker',lesson:'lesson',rank:'rank',trophies:'trophies'};
+  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker',lesson:'lesson',rank:'rank',trophies:'trophies','compost-lobby':'compost-lobby','compost-game':'compost-game'};
   ['learn','portfolio','shop','profile','rank'].forEach(t=>{
     const n=$('nav-'+t); if(n) n.classList.toggle('active',t===tab);
   });
@@ -117,6 +117,11 @@ function renderProfile(){
   $('prof-name').textContent=U.name;
   $('prof-email').textContent=U.email;
   $('prof-joined').textContent=t('joined')+new Date(U.joined).toLocaleDateString('fr');
+  const pseudoEl=$('prof-pseudo');
+  if(pseudoEl){
+    if(U.pseudo){ pseudoEl.textContent='@'+U.pseudo; pseudoEl.style.opacity='1'; }
+    else{ pseudoEl.textContent='+ Choisir un pseudo'; pseudoEl.style.opacity='.5'; }
+  }
   $('prof-avatar').textContent=U.name.charAt(0).toUpperCase();
   if(U.owned.includes('avatar_diamond')) $('prof-avatar').style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
   else if(U.owned.includes('avatar_gold')) $('prof-avatar').style.background='linear-gradient(135deg,#d97706,#fbbf24)';
@@ -165,7 +170,13 @@ function swapLangs(){const t=S.nL;S.nL=S.tL;S.tL=t;clrSel('native-grid');clrSel(
 function syncPair(){const ok=S.nL&&S.tL&&S.nL!==S.tL;$('pair-summary').style.display=ok?'flex':'none';if(ok){const N=LANGS[S.nL],T=LANGS[S.tL];$('pair-native').innerHTML=`<span style="font-size:1.2rem">${N.flag}</span> ${N.name}`;$('pair-target').innerHTML=`<span style="font-size:1.2rem">${T.flag}</span> ${T.name}`;}$('btn-start').disabled=!ok;}
 function syncDots(){const s1=!!S.nL,s2=!!(S.nL&&S.tL&&S.nL!==S.tL);$('dot1').className='step-dot '+(s1?'done':'active');$('dot2').className='step-dot '+(s2?'done':s1?'active':'pending');$('dot3').className='step-dot '+(s2?'active':'pending');$('line1').className='step-line'+(s1?' done':'');$('line2').className='step-line'+(s2?' done':'');}
 
-function goToLevels(){if(!S.nL||!S.tL)return;const N=LANGS[S.nL],T=LANGS[S.tL],pair=`${N.flag} → ${T.flag} ${T.name}`;sT('bc-pair',pair);sT('bc-pair2',pair);sT('levels-title',`${T.flag} ${T.name} — Niveaux`);renderLevels();goTo('levels');}
+function goToLevels(){if(!S.nL||!S.tL)return;
+  // Save language selection to user profile
+  if(U && !U.isGuest){
+    U.lastNL=S.nL; U.lastTL=S.tL;
+    saveU();
+  }
+  const N=LANGS[S.nL],T=LANGS[S.tL],pair=`${N.flag} → ${T.flag} ${T.name}`;sT('bc-pair',pair);sT('bc-pair2',pair);sT('levels-title',`${T.flag} ${T.name} — Niveaux`);renderLevels();goTo('levels');}
 function renderLevels(){
   const g=$('levels-grid');g.innerHTML='';
   if(!U.unlockedLevels) U.unlockedLevels=['A1'];
@@ -480,6 +491,22 @@ function updateTarget(){
 // ══════════════════════════════════════════════
 // RANK / LEADERBOARD TABS
 // ══════════════════════════════════════════════
+
+// ── Social tab switching ──────────────────────────────────────
+function switchSocialTab(tab) {
+  const isFriends = tab === 'friends';
+  $('social-sub-friends').style.display = isFriends ? '' : 'none';
+  $('social-sub-rooms').style.display   = isFriends ? 'none' : '';
+  $('social-tab-friends').classList.toggle('active', isFriends);
+  $('social-tab-rooms').classList.toggle('active', !isFriends);
+  if (!isFriends && typeof loadPracticeRooms === 'function') loadPracticeRooms();
+}
+
+function selectRoomTopic(btn) {
+  document.querySelectorAll('#room-topic-select .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
 function switchRankTab(tab) {
   const isLb      = tab === 'lb';
   const isDuels   = tab === 'duels';

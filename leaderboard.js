@@ -17,13 +17,15 @@ async function fetchLeaderboard(force) {
       .map(r => r.data)
       .filter(u => u && u.name && !u.isGuest)
       .map(u => ({
-        name:   u.name,
-        xp:     u.xp     || 0,
-        coins:  u.coins  || 0,
-        streak: u.streak || 0,
+        name:     u.name,
+        pseudo:   u.pseudo || '',
+        xp:       u.xp     || 0,
+        coins:    u.coins  || 0,
+        streak:   u.streak || 0,
         trophies: (u.trophies||[]).length,
-        level:  u.investorLevel || 1,
-        email:  u.email,
+        level:    u.investorLevel || 1,
+        email:    u.email,
+        lastSeen: u.lastSeen || 0,
       }));
     _lbCache = players;
     _lbCacheTime = now;
@@ -51,14 +53,18 @@ async function renderLeaderboard() {
   el.innerHTML = sorted.slice(0, 50).map((p, i) => {
     const isMe = p.email === U?.email;
     const medal = medals[i] || `${i+1}`;
+    const pseudoTag = p.pseudo ? `<span style="font-size:.65rem;color:var(--accent3);font-weight:700;margin-left:4px;">@${p.pseudo}</span>` : '';
+    const onlineDotHtml = typeof onlineDot === 'function' ? onlineDot(p.lastSeen) : '';
+    const inviteBtn = !isMe ? `<button class="lb-invite-btn" onclick="event.stopPropagation();sendFriendRequest('${p.email}')" title="Ajouter en ami">➕</button>` : '';
     return `<div class="lb-row ${isMe ? 'lb-me' : ''}">
       <div class="lb-rank">${medal}</div>
-      <div class="lb-avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div style="position:relative;flex-shrink:0;">${onlineDotHtml}<div class="lb-avatar">${p.name.charAt(0).toUpperCase()}</div></div>
       <div class="lb-info">
-        <div class="lb-name">${isMe ? '👤 ' + p.name : p.name} ${p.trophies > 0 ? `<span style="font-size:.65rem;color:var(--gold)">🏆${p.trophies}</span>` : ''}</div>
+        <div class="lb-name">${isMe ? '👤 ' + p.name : p.name}${pseudoTag} ${p.trophies > 0 ? `<span style="font-size:.65rem;color:var(--gold)">🏆${p.trophies}</span>` : ''}</div>
         <div class="lb-sub">Niv.${p.level} · Streak ${p.streak}🔥</div>
       </div>
       <div class="lb-score">${p[_lbTab].toLocaleString()} ${_lbTab === 'xp' ? 'XP' : _lbTab === 'coins' ? '🪙' : '🔥'}</div>
+      ${inviteBtn}
     </div>`;
   }).join('');
 

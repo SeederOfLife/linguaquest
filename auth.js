@@ -145,6 +145,20 @@ function afterLogin(){
   showChrome();
   calcDividends();
   updateTopBar();
+  // Restore last used language pair
+  if(U.lastNL && U.lastTL && U.lastNL !== U.lastTL){
+    S.nL = U.lastNL; S.tL = U.lastTL;
+    setTimeout(()=>{
+      const ng=document.querySelector(`#native-grid [data-code="${S.nL}"]`);
+      const tg=document.querySelector(`#target-grid [data-code="${S.tL}"]`);
+      if(ng) ng.classList.add('selected');
+      if(tg) tg.classList.add('selected');
+      if(typeof syncPair==='function') syncPair();
+      if(typeof syncDots==='function') syncDots();
+      const ts=$('target-section');
+      if(ts) ts.style.opacity='1';
+    }, 300);
+  }
   navTo('learn');
   if (typeof initSocial === 'function') initSocial();
   setTimeout(()=>{ _appReady = true; }, 800);

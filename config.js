@@ -260,6 +260,7 @@ function defaultUser(name, email){
     lastDivTime: Date.now(),
     pendingDiv: 0, totalInvested: 0,
     owned: [], avatar: '', lessonsCompleted: {}, investorLevel: 1, unlockedLevels: ['A1'],
+    pseudo: '', lastSeen: Date.now(),
   };
 }
 
