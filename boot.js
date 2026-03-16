@@ -39,12 +39,11 @@ applyUILang();
     const users=loadUsers();
     if(users[saved]){U=users[saved];afterLogin();return;}
   }
-  // No session — show theme picker on first visit, else auth
-  if(!localStorage.getItem('lq_theme')){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    const tp=document.getElementById('screen-theme-picker');
-    if(tp) tp.classList.add('active');
-  }
+  // No session — redirect to landing (index.html) for login
+  // Small delay to let Supabase finish trying
+  setTimeout(()=>{
+    if(!U) window.location.href='index.html';
+  }, 1500);
 })();
 // Dividend tick every 60s while app is open
 setInterval(()=>{if(U){calcDividends();const db=$('div-banner');if(U.pendingDiv>=1&&db) db.style.display='flex';}},60000);

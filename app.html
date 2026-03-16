@@ -645,6 +645,7 @@
     <div id="duel-sub-duels">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
         <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
+        <button class="btn btn-secondary" onclick="openCompostLobby()" style="background:linear-gradient(135deg,#16a34a,#15803d);border:none;color:#fff;">🪱 Compost</button>
         <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
       </div>
       <div id="duel-join-zone" style="display:none;margin-bottom:12px;">
@@ -816,6 +817,57 @@
 <div id="duel-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;"></div>
 
 <!-- ══════════════════ TROPHY POPUPS (injected by JS) ══════════════════ -->
+
+<!-- ══════════════════ COMPOST LOBBY ══════════════════ -->
+<div class="screen screen-padded" id="screen-compost-lobby">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <button class="btn btn-secondary btn-sm" onclick="navTo('learn')">← Retour</button>
+    <div style="font-size:1.3rem;font-weight:900;">🪱 Compost</div>
+  </div>
+
+  <!-- Skin picker -->
+  <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Choisis ton ver</div>
+  <div class="skin-grid" id="compost-skin-grid"></div>
+
+  <!-- Create or Join -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 14px;">
+    <button class="btn btn-primary" onclick="createCompostRoom()">🏠 Créer un salon</button>
+    <button class="btn btn-secondary" onclick="$('compost-join-wrap').style.display=''">🔗 Rejoindre</button>
+  </div>
+  <div id="compost-join-wrap" style="display:none;margin-bottom:12px;">
+    <div style="display:flex;gap:8px;">
+      <input id="compost-join-input" class="friends-search-input" placeholder="Code du salon (COMP1234)" style="flex:1;text-transform:uppercase;" maxlength="8" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn btn-primary" onclick="joinCompostRoom()">→</button>
+    </div>
+  </div>
+
+  <!-- Lobby content (players, code, start) -->
+  <div id="compost-lobby-content"></div>
+</div>
+
+<!-- ══════════════════ COMPOST GAME ══════════════════ -->
+<div class="screen" id="screen-compost-game" style="padding:0;background:#0a0a14;display:none;flex-direction:column;align-items:center;justify-content:flex-start;">
+  <!-- Score bar -->
+  <div style="width:100%;max-width:480px;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(0,0,0,.6);">
+    <div style="font-size:.85rem;font-weight:900;">👤 Toi : <span id="compost-my-score" style="color:var(--green);">0</span></div>
+    <button class="btn btn-secondary btn-sm" onclick="closeCompostGame()" style="font-size:.7rem;padding:4px 10px;">✕ Quitter</button>
+    <div style="font-size:.85rem;font-weight:900;">Adversaire : <span id="compost-op-score" style="color:var(--accent2);">0</span></div>
+  </div>
+  <!-- Canvas -->
+  <div style="width:100%;overflow:auto;display:flex;justify-content:center;">
+    <canvas id="compost-canvas" style="display:block;max-width:100%;image-rendering:pixelated;"></canvas>
+  </div>
+  <!-- D-pad controls (mobile) -->
+  <div class="dpad-wrap">
+    <div class="dpad-row"><button id="btn-up" class="dpad-btn">▲</button></div>
+    <div class="dpad-row">
+      <button id="btn-left" class="dpad-btn">◀</button>
+      <div style="width:44px;"></div>
+      <button id="btn-right" class="dpad-btn">▶</button>
+    </div>
+    <div class="dpad-row"><button id="btn-down" class="dpad-btn">▼</button></div>
+  </div>
+</div>
 </div><!-- #app -->
 
 <!-- ══════════════════ CHAT MODAL ══════════════════ -->
@@ -865,7 +917,9 @@
 <script src="duels.js"></script>
 <script src="friends.js"></script>
 <script src="social.js"></script>
+<script src="compost.js"></script>
 <script src="social.js"></script>
+<script src="compost.js"></script>
 <script src="news.js"></script>
 <script src="boot.js"></script>
 
