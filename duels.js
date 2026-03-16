@@ -222,7 +222,11 @@ async function confirmCreateDuel() {
     closeCreateDuel();
     renderDuelLobby(code,'creator',undefined,bet,type,level,mode);
     switchRankTab('duels');
-  } catch(e) { toast(t('duel_error')); console.error(e); }
+  } catch(e) {
+    const msg = e?.message || e?.details || JSON.stringify(e) || 'unknown';
+    console.error('DUEL CREATE ERROR:', msg, e);
+    toast('❌ Erreur: ' + msg.substring(0,60));
+  }
 }
 
 // ── JOIN ─────────────────────────────────────────────────────
