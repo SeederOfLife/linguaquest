@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Compost 🪱</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #0a0a14;
+  color: #f1f5f9;
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* ── SCREENS ── */
+.screen { display:none; width:100%; flex-direction:column; align-items:center; padding:16px; }
+.screen.active { display:flex; }
+
+/* ── SKIN PICKER ── */
+h2 { font-size:1.4rem; font-weight:900; margin-bottom:14px; text-align:center; }
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 16px;
+}
+.skin-card {
+  background: #141428;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 10px 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all .18s;
+}
+.skin-card.selected { border-color: var(--c, #7c3aed); background: rgba(124,58,237,.12); }
+.skin-card canvas { display:block; margin:0 auto 4px; }
+.skin-name { font-size:.65rem; font-weight:800; }
+
+.btn {
+  padding: 13px 24px;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all .18s;
+  width: 100%;
+  max-width: 320px;
+  margin: 6px 0;
+}
+.btn-green  { background: linear-gradient(135deg, #16a34a, #15803d); color: #fff; }
+.btn-purple { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; }
+.btn-gray   { background: #1c1c34; color: #94a3b8; border: 1px solid rgba(255,255,255,.1); }
+.btn:active { transform: scale(.97); }
+
+/* ── GAME UI ── */
+#game-screen { padding: 0; background: #0a0a14; }
+#hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: rgba(0,0,0,.5);
+  font-size: .88rem;
+  font-weight: 800;
+  max-width: 480px;
+}
+#canvas-wrap { width: 100%; max-width: 480px; display:flex; justify-content:center; }
+#gameCanvas { display: block; max-width: 100%; image-rendering: pixelated; }
+
+/* Question bar */
+#question-bar {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(124,58,237,.2);
+  border-top: 1px solid rgba(124,58,237,.4);
+  border-bottom: 1px solid rgba(124,58,237,.4);
+  padding: 8px 14px;
+  text-align: center;
+  font-weight: 800;
+  font-size: .95rem;
+}
+
+/* D-pad */
+#dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px;
+  margin-top: 4px;
+}
+.dpad-row { display:flex; gap:4px; }
+.dpad-btn {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.dpad-btn:active { background: rgba(255,255,255,.3); }
+@media(min-width:600px) { #dpad { display:none; } }
+
+/* Result overlay */
+#result-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  z-index: 99;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+#result-overlay.show { display:flex; }
+#result-box {
+  background: #141428;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 22px;
+  padding: 32px 28px;
+  text-align: center;
+  max-width: 340px;
+  width: 90%;
+}
+.result-emoji { font-size: 3.5rem; margin-bottom: 10px; }
+.result-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 8px; }
+.result-scores {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin: 14px 0;
+}
+.score-box {
+  background: #1c1c34;
+  border-radius: 14px;
+  padding: 12px 18px;
+  min-width: 90px;
+}
+.score-box.win { background: rgba(16,185,129,.15); border: 1px solid rgba(16,185,129,.3); }
+.score-lbl { font-size: .7rem; color: #94a3b8; margin-bottom: 4px; }
+.score-num { font-size: 1.8rem; font-weight: 900; }
+</style>
+</head>
+<body>
+
+<!-- ── SKIN PICKER ── -->
+<div class="screen active" id="screen-skin">
+  <h2>🪱 Compost</h2>
+  <p style="color:#94a3b8;font-size:.82rem;margin-bottom:14px;text-align:center;">Choisis ton ver et joue !</p>
+  <div class="skin-grid" id="skin-grid"></div>
+  <button class="btn btn-green" onclick="startSolo()">▶ Jouer solo (vs Bot)</button>
+  <button class="btn btn-gray" style="margin-top:4px;" onclick="window.parent.postMessage('close','*')">← Retour</button>
+</div>
+
+<!-- ── GAME ── -->
+<div class="screen" id="game-screen">
+  <div id="question-bar">❓ Chargement…</div>
+  <div id="hud">
+    <span>👤 <span id="my-score">0</span> pts</span>
+    <span id="q-counter">1/10</span>
+    <span>🤖 <span id="bot-score">0</span> pts</span>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+  <div id="dpad">
+    <div class="dpad-row"><button class="dpad-btn" id="btn-up">▲</button></div>
+    <div class="dpad-row">
+      <button class="dpad-btn" id="btn-left">◀</button>
+      <div style="width:52px"></div>
+      <button class="dpad-btn" id="btn-right">▶</button>
+    </div>
+    <div class="dpad-row"><button class="dpad-btn" id="btn-down">▼</button></div>
+  </div>
+</div>
+
+<!-- Result -->
+<div id="result-overlay">
+  <div id="result-box">
+    <div class="result-emoji" id="res-emoji">🏆</div>
+    <div class="result-title" id="res-title">Victoire !</div>
+    <div class="result-scores">
+      <div class="score-box" id="res-me">
+        <div class="score-lbl">👤 Toi</div>
+        <div class="score-num" id="res-my-pts">0</div>
+      </div>
+      <div class="score-box" id="res-bot">
+        <div class="score-lbl">🤖 Bot</div>
+        <div class="score-num" id="res-bot-pts">0</div>
+      </div>
+    </div>
+    <div id="res-coins" style="color:#fbbf24;font-weight:800;margin-bottom:14px;"></div>
+    <button class="btn btn-purple" onclick="restartGame()">🔄 Rejouer</button>
+    <button class="btn btn-gray" style="margin-top:6px;" onclick="window.parent.postMessage('close','*')">← Retour</button>
+  </div>
+</div>
+
+<script>
+// ── GET PARAMS FROM PARENT ────────────────────────────────────
+const params = new URLSearchParams(location.search);
+const nL = params.get('nL') || 'fr';
+const tL = params.get('tL') || 'en';
+const skinId = params.get('skin') || 'sprout';
+
+// ── WORD DATA (injected from parent or fallback) ──────────────
+let WD = {};
+window.addEventListener('message', e => {
+  if (e.data?.type === 'wordData') WD = e.data.words;
+});
+// Request word data from parent
+window.parent.postMessage({ type: 'getWordData' }, '*');
+
+// ── SKINS ─────────────────────────────────────────────────────
+const SKINS = [
+  { id:'sprout',    name:'🌱 Sprout',    h:'#22c55e', b:'#16a34a', e:'#fff', t:'#86efac' },
+  { id:'fire',      name:'🔥 Fire',      h:'#f97316', b:'#dc2626', e:'#fff', t:'#fbbf24' },
+  { id:'crystal',   name:'💎 Crystal',   h:'#22d3ee', b:'#0891b2', e:'#fff', t:'#a5f3fc' },
+  { id:'shadow',    name:'🌙 Shadow',    h:'#7c3aed', b:'#4c1d95', e:'#e879f9', t:'#c4b5fd' },
+  { id:'compost',   name:'🪱 Compost',   h:'#a16207', b:'#78350f', e:'#fef08a', t:'#d97706' },
+  { id:'lightning', name:'⚡ Lightning', h:'#eab308', b:'#ca8a04', e:'#fff', t:'#fef9c3' },
+  { id:'ocean',     name:'🌊 Ocean',     h:'#0ea5e9', b:'#0369a1', e:'#fff', t:'#bae6fd' },
+  { id:'cherry',    name:'🌸 Cherry',    h:'#ec4899', b:'#be185d', e:'#fff', t:'#fbcfe8' },
+];
+
+let mySkin = SKINS.find(s => s.id === skinId) || SKINS[0];
+
+// Render skin picker
+function renderSkins() {
+  const grid = document.getElementById('skin-grid');
+  grid.innerHTML = SKINS.map(s => `
+    <div class="skin-card ${mySkin.id===s.id?'selected':''}" style="--c:${s.h}" onclick="pickSkin('${s.id}')">
+      <canvas width="56" height="24" id="sp-${s.id}"></canvas>
+      <div class="skin-name">${s.name}</div>
+    </div>`).join('');
+  setTimeout(() => {
+    SKINS.forEach(s => {
+      const cv = document.getElementById(`sp-${s.id}`);
+      if (!cv) return;
+      const ctx = cv.getContext('2d');
+      [46,33,20].forEach((x,i) => {
+        ctx.fillStyle = i===0 ? s.h : s.b;
+        ctx.beginPath(); ctx.arc(x,12,7,0,Math.PI*2); ctx.fill();
+      });
+      ctx.fillStyle = s.e;
+      ctx.beginPath(); ctx.arc(49,9,2.5,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(49,15,2.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#000';
+      ctx.beginPath(); ctx.arc(50,9,1.2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(50,15,1.2,0,Math.PI*2); ctx.fill();
+    });
+  }, 30);
+}
+function pickSkin(id) {
+  mySkin = SKINS.find(s=>s.id===id)||SKINS[0];
+  renderSkins();
+  window.parent.postMessage({ type:'saveSkin', skin:id }, '*');
+}
+renderSkins();
+
+// ── GAME ENGINE ───────────────────────────────────────────────
+const CELL=20, COLS=22, ROWS=16;
+const W=CELL*COLS, H=CELL*ROWS;
+
+let game = null;
+
+const WORD_EMOJIS = {
+  dog:'🐕',cat:'🐈',bird:'🐦',horse:'🐴',fish:'🐟',sun:'☀️',rain:'🌧️',
+  snow:'❄️',cloud:'☁️',water:'💧',bread:'🍞',coffee:'☕',wine:'🍷',
+  fruit:'🍎',cheese:'🧀',plane:'✈️',train:'🚂',hotel:'🏨',
+  doctor:'👨‍⚕️',hospital:'🏥',head:'🙂',hand:'🤚',eye:'👁️',
+  nose:'👃',mouth:'👄',dog:'🐕',cat:'🐈',
+};
+
+function getWords() {
+  // Use WD if available, otherwise built-in fallback
+  const fallback = {
+    hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},
+    goodbye:{fr:'Au revoir',en:'Goodbye',es:'Adiós',de:'Auf Wiedersehen',cs:'Na shledanou'},
+    thanks:{fr:'Merci',en:'Thank you',es:'Gracias',de:'Danke',cs:'Děkuji'},
+    yes:{fr:'Oui',en:'Yes',es:'Sí',de:'Ja',cs:'Ano'},
+    no:{fr:'Non',en:'No',es:'No',de:'Nein',cs:'Ne'},
+    dog:{fr:'Chien',en:'Dog',es:'Perro',de:'Hund',cs:'Pes'},
+    cat:{fr:'Chat',en:'Cat',es:'Gato',de:'Katze',cs:'Kočka'},
+    sun:{fr:'Soleil',en:'Sun',es:'Sol',de:'Sonne',cs:'Slunce'},
+    water:{fr:'Eau',en:'Water',es:'Agua',de:'Wasser',cs:'Voda'},
+    bread:{fr:'Pain',en:'Bread',es:'Pan',de:'Brot',cs:'Chléb'},
+    coffee:{fr:'Café',en:'Coffee',es:'Café',de:'Kaffee',cs:'Káva'},
+    red:{fr:'Rouge',en:'Red',es:'Rojo',de:'Rot',cs:'Červená'},
+    blue:{fr:'Bleu',en:'Blue',es:'Azul',de:'Blau',cs:'Modrá'},
+    green:{fr:'Vert',en:'Green',es:'Verde',de:'Grün',cs:'Zelená'},
+    one:{fr:'Un',en:'One',es:'Uno',de:'Eins',cs:'Jeden'},
+    two:{fr:'Deux',en:'Two',es:'Dos',de:'Zwei',cs:'Dva'},
+    house:{fr:'Maison',en:'House',es:'Casa',de:'Haus',cs:'Dům'},
+    book:{fr:'Livre',en:'Book',es:'Libro',de:'Buch',cs:'Kniha'},
+    friend:{fr:'Ami',en:'Friend',es:'Amigo',de:'Freund',cs:'Přítel'},
+    love:{fr:'Amour',en:'Love',es:'Amor',de:'Liebe',cs:'Láska'},
+  };
+  const src = Object.keys(WD).length > 5 ? WD : fallback;
+  return Object.entries(src)
+    .filter(([id,w]) => w[nL] && w[tL])
+    .map(([id,w]) => ({ id, native:w[nL], target:w[tL] }));
+}
+
+function startSolo() {
+  document.getElementById('screen-skin').classList.remove('active');
+  document.getElementById('game-screen').classList.add('active');
+
+  const canvas = document.getElementById('gameCanvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const botSkin = SKINS.find(s => s.id !== mySkin.id) || SKINS[1];
+  const words = getWords().sort(()=>Math.random()-.5).slice(0,12);
+  if (!words.length) { alert('Pas de mots disponibles'); return; }
+
+  let qi = 0;
+  let myScore = 0, botScore = 0;
+  let over = false;
+  let bubbles = [];
+
+  // Worms
+  let me = {
+    body:[{x:4,y:8},{x:3,y:8},{x:2,y:8}],
+    dir:{x:1,y:0}, next:null, grow:0,
+    skin:mySkin, score:0, alive:true
+  };
+  let bot = {
+    body:[{x:17,y:8},{x:18,y:8},{x:19,y:8}],
+    dir:{x:-1,y:0}, next:null, grow:0,
+    skin:botSkin, score:0, alive:true
+  };
+
+  function spawn() {
+    if (qi >= words.length) return;
+    const q = words[qi];
+    const allTargets = words.map(w=>w.target).filter(t=>t!==q.target);
+    const wrongs = allTargets.sort(()=>Math.random()-.5).slice(0,4);
+    const all = [q.target,...wrongs].sort(()=>Math.random()-.5);
+    bubbles = [];
+    const used = [];
+    all.forEach(word => {
+      let p, tries=0;
+      do { p={x:2+Math.floor(Math.random()*(COLS-4)), y:3+Math.floor(Math.random()*(ROWS-5))}; tries++; }
+      while(tries<40 && used.some(u=>Math.abs(u.x-p.x)<3&&Math.abs(u.y-p.y)<2));
+      used.push(p);
+      bubbles.push({word, pos:p, correct:word===q.target});
+    });
+    // Update UI
+    const q_ = words[qi];
+    document.getElementById('question-bar').textContent = `${WORD_EMOJIS[q_.id]||''} ${q_.native} = ?`;
+    document.getElementById('q-counter').textContent = `${qi+1}/${words.length}`;
+  }
+  spawn();
+
+  function moveWorm(w, isBot) {
+    if (!w.alive) return;
+    if (!isBot && w.next) { w.dir=w.next; w.next=null; }
+    if (isBot) {
+      // Bot AI: steer toward correct bubble
+      const target = bubbles.find(b=>b.correct);
+      if (target) {
+        const h = w.body[0];
+        const dx=target.pos.x-h.x, dy=target.pos.y-h.y;
+        let nd = w.dir;
+        if (Math.abs(dx)>=Math.abs(dy)) {
+          const try1={x:dx>0?1:-1,y:0};
+          if (!(try1.x===-w.dir.x)) nd=try1;
+          else nd={x:0,y:dy>0?1:-1};
+        } else {
+          const try1={x:0,y:dy>0?1:-1};
+          if (!(try1.y===-w.dir.y)) nd=try1;
+          else nd={x:dx>0?1:-1,y:0};
+        }
+        // Add some randomness so bot isn't perfect
+        if (Math.random()<0.15) nd = [
+          {x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}
+        ].filter(d=>!(d.x===-w.dir.x&&d.y===-w.dir.y))[Math.floor(Math.random()*3)];
+        w.dir = nd;
+      }
+    }
+    const h = w.body[0];
+    const nh = { x:(h.x+w.dir.x+COLS)%COLS, y:(h.y+w.dir.y+ROWS)%ROWS };
+    // Self collision
+    if (w.body.some(s=>s.x===nh.x&&s.y===nh.y)) { w.alive=false; return; }
+    w.body.unshift(nh);
+    if (w.grow>0) { w.grow--; } else w.body.pop();
+    // Eat bubble
+    const eaten = bubbles.findIndex(b=>b.pos.x===nh.x&&b.pos.y===nh.y);
+    if (eaten>=0) {
+      const b = bubbles[eaten];
+      if (b.correct) {
+        w.score+=10; w.grow+=2;
+        if (!isBot) { myScore=w.score; document.getElementById('my-score').textContent=myScore; }
+        else { botScore=w.score; document.getElementById('bot-score').textContent=botScore; }
+        qi++;
+        if (qi>=words.length) { over=true; return; }
+        spawn();
+      } else {
+        w.score=Math.max(0,w.score-5);
+        if (!isBot) { myScore=w.score; document.getElementById('my-score').textContent=myScore; }
+        else { botScore=w.score; document.getElementById('bot-score').textContent=botScore; }
+        if (w.body.length>3) { w.body.pop(); w.body.pop(); }
+      }
+    }
+  }
+
+  function drawSeg(ctx, seg, i, w) {
+    const x=seg.x*CELL, y=seg.y*CELL;
+    ctx.fillStyle = i===0 ? w.skin.h : w.skin.b;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x+2,y+2,CELL-4,CELL-4,6);
+    else ctx.rect(x+2,y+2,CELL-4,CELL-4);
+    ctx.fill();
+    if (i===0) {
+      ctx.fillStyle=w.skin.e;
+      ctx.beginPath(); ctx.arc(x+CELL-6,y+6,2.5,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x+CELL-6,y+CELL-6,2.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#000';
+      ctx.beginPath(); ctx.arc(x+CELL-5,y+6,1.2,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x+CELL-5,y+CELL-6,1.2,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawBubble(ctx, b) {
+    const x=b.pos.x*CELL, y=b.pos.y*CELL;
+    const tw = Math.min(b.word.length*7+16, 90);
+    const bx = Math.max(2, x-(tw/2-CELL/2));
+    ctx.fillStyle = b.correct ? 'rgba(16,185,129,.2)' : 'rgba(20,20,40,.9)';
+    ctx.strokeStyle = b.correct ? '#10b981' : 'rgba(124,58,237,.5)';
+    ctx.lineWidth = b.correct ? 2 : 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(bx, y-1, tw, CELL+2, 8);
+    else ctx.rect(bx, y-1, tw, CELL+2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = b.correct ? '#6ee7b7' : '#c4b5fd';
+    ctx.font = 'bold 11px system-ui,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.word, bx+tw/2, y+13);
+    ctx.textAlign = 'left';
+  }
+
+  function draw() {
+    ctx.fillStyle='#0a0a14'; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,.03)'; ctx.lineWidth=1;
+    for(let i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,H);ctx.stroke();}
+    for(let j=0;j<=ROWS;j++){ctx.beginPath();ctx.moveTo(0,j*CELL);ctx.lineTo(W,j*CELL);ctx.stroke();}
+    bubbles.forEach(b=>drawBubble(ctx,b));
+    me.body.forEach((s,i)=>drawSeg(ctx,s,i,me));
+    bot.body.forEach((s,i)=>drawSeg(ctx,s,i,bot));
+  }
+
+  // Input
+  const KEYS = {ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},
+    w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
+  document.addEventListener('keydown', e=>{
+    const d=KEYS[e.key]; if(!d) return;
+    if(!(d.x===-me.dir.x&&d.y===-me.dir.y)) me.next=d;
+    e.preventDefault();
+  });
+  ['up','down','left','right'].forEach(dir=>{
+    const el=document.getElementById('btn-'+dir);
+    if(!el) return;
+    const d={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}}[dir];
+    const go=()=>{if(!(d.x===-me.dir.x&&d.y===-me.dir.y)) me.next=d;};
+    el.addEventListener('touchstart',go,{passive:true});
+    el.addEventListener('mousedown',go);
+  });
+
+  // Game loop
+  let last=0, botLast=0;
+  const SPEED=140, BOT_SPEED=320;
+  function loop(ts) {
+    if (over) { showResult(); return; }
+    if (!me.alive && !bot.alive) { over=true; showResult(); return; }
+    if (ts-last>=SPEED)  { moveWorm(me,false);  last=ts; }
+    if (ts-botLast>=BOT_SPEED) { moveWorm(bot,true); botLast=ts; }
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  game = { myScore:()=>myScore, botScore:()=>botScore };
+}
+
+function showResult() {
+  const ms = game?.myScore()||0;
+  const bs = game?.botScore()||0;
+  const won = ms >= bs;
+  document.getElementById('res-emoji').textContent = won ? '🏆' : '🪱';
+  document.getElementById('res-title').textContent = won ? 'Victoire !' : 'Bien joué !';
+  document.getElementById('res-my-pts').textContent = ms;
+  document.getElementById('res-bot-pts').textContent = bs;
+  document.getElementById('res-me').className = 'score-box' + (won?' win':'');
+  document.getElementById('res-bot').className = 'score-box' + (!won?' win':'');
+  document.getElementById('res-coins').textContent = won ? '+150 🪙 bonus !' : '';
+  document.getElementById('result-overlay').classList.add('show');
+  // Tell parent about result
+  window.parent.postMessage({ type:'gameResult', won, myScore:ms, botScore:bs }, '*');
+}
+
+function restartGame() {
+  document.getElementById('result-overlay').classList.remove('show');
+  document.getElementById('game-screen').classList.remove('active');
+  document.getElementById('screen-skin').classList.add('active');
+  game = null;
+}
+</script>
+</body>
+</html>
