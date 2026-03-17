@@ -245,6 +245,60 @@ const EMOJIS = {
   thanks:'🙏',goodbye:'👋',
 };
 
+// ── OPENMOJI IMAGE URLS ───────────────────────────────────────
+const BASE_EMOJI = 'https://cdn.jsdelivr.net/npm/openmoji@15.0.0/color/svg/';
+const EMOJI_URLS = {
+  dog:'1F436',cat:'1F408',bird:'1F426',horse:'1F434',fish:'1F41F',
+  rabbit:'1F407',lion:'1F981',cow:'1F404',
+  sun:'2600',rain:'1F327',snow:'2744',wind:'1F32C',cloud:'2601',
+  storm:'26C8',hot:'1F525',cold:'1F976',
+  bread:'1F35E',water:'1F4A7',coffee:'2615',wine:'1F377',
+  meat:'1F356',fruit:'1F34E',cheese:'1F9C0',
+  plane:'2708',train:'1F686',hotel:'1F3E8',passport:'1F4C4',
+  ticket:'1F3AB',suitcase:'1F9F3',airport:'1F6EB',
+  house:'1F3E0',kitchen:'1F373',bedroom:'1F6CF',
+  head:'1F9E0',hand:'1F44B',eye:'1F441',ear:'1F442',
+  nose:'1F443',mouth:'1F444',arm:'1F4AA',leg:'1F9B5',
+  shop:'1F6CD',market:'1F6D2',money:'1F4B0',
+  buy:'1F6D2',sell:'1F4B8',price:'1F4B2',
+  shirt:'1F455',dress:'1F457',shoes:'1F45F',hat:'1F3A9',
+  jacket:'1F9E5',sock:'1F9E6',scarf:'1F9E3',
+  doctor:'1F469',hospital:'1F3E5',medicine:'1F48A',
+  work:'1F4BC',office:'1F4C1',book:'1F4DA',
+  yes:'2705',no:'274C',hello:'1F44B',goodbye:'1F44B',
+  thanks:'1F64F',please:'1F64F',sorry:'1F972',
+  love:'2764',friend:'1F91D',party:'1F389',gift:'1F381',
+  red:'1F534',blue:'1F535',green:'1F7E2',yellow:'1F7E1',
+  black:'26AB',white:'26AA',orange:'1F7E0',pink:'1F7E3',
+  music:'1F3B5',star:'2B50',moon:'1F319',earth:'1F30D',
+  rocket:'1F680',tree:'1F333',flower:'1F33A',heart:'2764',
+  food:'1F374',news:'1F4F0',world:'1F30D',
+  one:'0031',two:'0032',three:'0033',four:'0034',five:'0035',
+  ten:'0031',twenty:'0032',hundred:'1F4AF',
+  father:'1F468',mother:'1F469',brother:'1F466',sister:'1F467',
+  grandfather:'1F474',grandmother:'1F475',child:'1F476',cousin:'1F46B',
+  reservation:'1F4C5',
+};
+function getEmojiUrl(id) {
+  const code = EMOJI_URLS[id];
+  return code ? BASE_EMOJI + code + '.svg' : null;
+}
+
+// Image cache — preload and store Image objects
+const _imgCache = {};
+function loadImg(id) {
+  if (_imgCache[id]) return _imgCache[id];
+  const url = getEmojiUrl(id);
+  if (!url) return null;
+  const img = new Image();
+  img.src = url;
+  _imgCache[id] = img;
+  return img;
+}
+// Preload all known emojis
+Object.keys(EMOJI_URLS).forEach(id => loadImg(id));
+
+
 function getWordList() {
   const src = Object.keys(WD).length > 5 ? WD : FALLBACK_WD;
   return Object.entries(src)
@@ -481,13 +535,18 @@ function drawQuestionEmoji() {
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Big emoji
-  ctx.shadowColor='rgba(124,58,237,.7)'; ctx.shadowBlur=16;
-  ctx.font = `${CELL*1.8}px serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(emoji, cx, CELL*1.4);
-  ctx.shadowBlur=0;
+  // Big image or emoji for question
+  const qImg = currentQ.id ? loadImg(currentQ.id) : null;
+  const qSize = CELL*2.8;
+  if (qImg && qImg.complete && qImg.naturalWidth>0) {
+    ctx.drawImage(qImg, cx-qSize/2, CELL*0.1, qSize, qSize);
+  } else {
+    ctx.shadowColor='rgba(124,58,237,.7)'; ctx.shadowBlur=16;
+    ctx.font = `${CELL*1.8}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(emoji, cx, CELL*1.4);
+    ctx.shadowBlur=0;
+  }
 
   // Word below emoji
   ctx.fillStyle = '#ffffff';
@@ -529,10 +588,13 @@ function spawnBubbles() {
       t++;
     } while(t<60&&used.some(u=>Math.abs(u.x-p.x)<4&&Math.abs(u.y-p.y)<4));
     used.push(p);
-    // Find emoji for this word
+    // Find word entry for image + emoji
     const wEntry = allWords.find(w=>w.target===word);
     const emoji  = (wEntry && wEntry.emoji) ? wEntry.emoji : '🌱';
-    bubbles.push({word, pos:p, correct:word===currentQ?.target, emoji});
+    const wordId = wEntry ? wEntry.id : '';
+    // Preload image
+    if (wordId) loadImg(wordId);
+    bubbles.push({word, pos:p, correct:word===currentQ?.target, emoji, wordId});
   });
 }
 
@@ -610,29 +672,38 @@ function draw() {
 }
 
 function drawBubble(b) {
-  // Each bubble is 2x2 cells for a bigger hitbox
+  // 2x2 cell bubble — center at pos+1
   const cx = b.pos.x*CELL + CELL;
   const cy = b.pos.y*CELL + CELL;
-  const r  = CELL*0.9;
+  const r  = CELL*0.95;
 
-  // Compost pile background — same for all, no color hint
-  ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 8;
-  ctx.fillStyle = '#2d1200';
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = '#5c2d00'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(cx, cy, r-1, 0, Math.PI*2); ctx.stroke();
-  ctx.shadowBlur = 0;
+  // Compost dirt background — no color hint, all identical
+  ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=6;
+  ctx.fillStyle='#2d1200';
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#6b3a0f'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,r-1,0,Math.PI*2); ctx.stroke();
+  ctx.shadowBlur=0;
 
-  // Big emoji on the pile
-  ctx.font = `${CELL*1.1}px serif`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(b.emoji || '🌱', cx, cy - 2);
+  // PNG image (OpenMoji) if loaded, fallback to emoji text
+  const img = b.wordId ? loadImg(b.wordId) : null;
+  const imgSize = CELL*1.5;
+  if (img && img.complete && img.naturalWidth>0) {
+    ctx.drawImage(img, cx-imgSize/2, cy-imgSize/2-2, imgSize, imgSize);
+  } else {
+    // Fallback emoji text
+    ctx.font = `${CELL*1.05}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(b.emoji||'🌱', cx, cy-2);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  }
 
-  // Word label below — small, muted, same for all
-  ctx.fillStyle = 'rgba(255,220,160,.75)';
-  ctx.font = `bold 9px Nunito,system-ui,sans-serif`;
-  ctx.fillText(b.word.length>9?b.word.slice(0,8)+'…':b.word, cx, cy + r + 9);
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  // Word label below — muted, same style for all
+  ctx.fillStyle='rgba(255,210,140,.8)';
+  ctx.font=`bold 9px Nunito,system-ui,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(b.word.length>9?b.word.slice(0,8)+'…':b.word, cx, cy+r+9);
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
 }
 
 function drawWorm(w) {
