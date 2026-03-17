@@ -143,10 +143,7 @@ body{background:#060612;color:#f1f5f9;font-family:'Nunito',sans-serif;overflow:h
   <canvas id="gameCanvas"></canvas>
   <div id="hud">
     <span class="hud-score">👤 <span id="my-pts">0</span> pts</span>
-    <div class="hud-q">
-      <span class="hud-word" id="hud-word">…</span>
-      <span class="hud-arrow"> → ?</span>
-    </div>
+    <span id="hud-word" style="display:none"></span>
     <button class="hud-close" onclick="quitGame()">✕</button>
   </div>
   <div id="lb-overlay">
@@ -468,26 +465,46 @@ function nextQuestion() {
   document.getElementById('hud-word').textContent=currentQ.native;
 }
 
-// Draw the current question emoji big on canvas (called in draw())
+// Draw emoji + word on canvas
 function drawQuestionEmoji() {
   if(!currentQ) return;
   const emoji = currentQ.emoji || '📝';
-  const cx = W/2, cy = CELL*2.8;
-  // Shadow glow
-  ctx.shadowColor='rgba(124,58,237,.6)'; ctx.shadowBlur=20;
-  ctx.font = `${CELL*2}px serif`;
+  const cx = W/2;
+
+  // Background banner
+  ctx.fillStyle = 'rgba(10,10,30,.75)';
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(cx-90, 6, 180, CELL*3.2, 10);
+  else ctx.rect(cx-90, 6, 180, CELL*3.2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(124,58,237,.4)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Big emoji
+  ctx.shadowColor='rgba(124,58,237,.7)'; ctx.shadowBlur=16;
+  ctx.font = `${CELL*1.8}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(emoji, cx, cy);
+  ctx.fillText(emoji, cx, CELL*1.4);
   ctx.shadowBlur=0;
-  // Progress dots under emoji
+
+  // Word below emoji
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${CELL*.85}px Nunito,system-ui,sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(currentQ.native, cx, CELL*2.7);
+  ctx.shadowBlur=0;
+
+  // Progress dots
   const total=Math.min(totalQ,allWords.length);
-  const dotW=8, gap=4, totalW=(total*(dotW+gap))-gap;
+  const dotW=7, gap=4, totalW=(total*(dotW+gap))-gap;
   const startX=cx-totalW/2;
   for(let i=0;i<total;i++){
     ctx.fillStyle=i<answeredQ?'#7c3aed':'rgba(255,255,255,.15)';
     ctx.beginPath();
-    ctx.arc(startX+i*(dotW+gap)+dotW/2, cy+CELL*1.4, 3.5, 0, Math.PI*2);
+    ctx.arc(startX+i*(dotW+gap)+dotW/2, CELL*3.6, 3, 0, Math.PI*2);
     ctx.fill();
   }
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
@@ -502,11 +519,20 @@ function spawnBubbles() {
   const used=[];
   all.forEach(word=>{
     let p,t=0;
-    // Keep bubbles away from top (emoji zone) and bottom (joystick zone)
-    do{p={x:2+Math.floor(Math.random()*(COLS-4)),y:6+Math.floor(Math.random()*(ROWS-10))};t++;}
-    while(t<50&&used.some(u=>Math.abs(u.x-p.x)<3&&Math.abs(u.y-p.y)<2));
+    // Keep bubbles away from top (question zone) and bottom (joystick)
+    // Each bubble is 2x2 so leave extra margin
+    do{
+      p={
+        x:2+Math.floor(Math.random()*(COLS-6)),
+        y:6+Math.floor(Math.random()*(ROWS-12))
+      };
+      t++;
+    } while(t<60&&used.some(u=>Math.abs(u.x-p.x)<4&&Math.abs(u.y-p.y)<4));
     used.push(p);
-    bubbles.push({word,pos:p,correct:word===currentQ?.target});
+    // Find emoji for this word
+    const wEntry = allWords.find(w=>w.target===word);
+    const emoji  = (wEntry && wEntry.emoji) ? wEntry.emoji : '🌱';
+    bubbles.push({word, pos:p, correct:word===currentQ?.target, emoji});
   });
 }
 
@@ -519,8 +545,11 @@ function moveWorm(w) {
   if(w.body.slice(1).some(s=>s.x===nh.x&&s.y===nh.y)){w.alive=false;return;}
   w.body.unshift(nh);
   if(w.grow>0){w.grow--;}else w.body.pop();
-  // Eat bubble
-  const bi=bubbles.findIndex(b=>b.pos.x===nh.x&&b.pos.y===nh.y);
+  // Eat bubble — bigger hitbox (2x2 cells)
+  const bi=bubbles.findIndex(b=>
+    nh.x>=b.pos.x && nh.x<=b.pos.x+1 &&
+    nh.y>=b.pos.y && nh.y<=b.pos.y+1
+  );
   if(bi>=0){
     const b=bubbles[bi];
     bubbles.splice(bi,1);
@@ -581,26 +610,29 @@ function draw() {
 }
 
 function drawBubble(b) {
-  const x=b.pos.x*CELL, y=b.pos.y*CELL;
-  const tw=Math.max(b.word.length*7.5+14,40);
-  const bx=Math.max(1,x-(tw/2-CELL/2));
-  // Glow for correct
-  if(b.correct){
-    ctx.shadowColor='#10b981'; ctx.shadowBlur=12;
-  }
-  ctx.fillStyle=b.correct?'rgba(16,185,129,.18)':'rgba(20,20,50,.9)';
-  ctx.strokeStyle=b.correct?'#10b981':'rgba(100,80,180,.6)';
-  ctx.lineWidth=b.correct?1.5:1;
-  ctx.beginPath();
-  if(ctx.roundRect)ctx.roundRect(bx,y+1,tw,CELL-2,8);
-  else ctx.rect(bx,y+1,tw,CELL-2);
-  ctx.fill();ctx.stroke();
-  ctx.shadowBlur=0;
-  ctx.fillStyle=b.correct?'#6ee7b7':'#a5b4fc';
-  ctx.font='bold 11px Nunito,system-ui,sans-serif';
-  ctx.textAlign='center';
-  ctx.fillText(b.word,bx+tw/2,y+13);
-  ctx.textAlign='left';
+  // Each bubble is 2x2 cells for a bigger hitbox
+  const cx = b.pos.x*CELL + CELL;
+  const cy = b.pos.y*CELL + CELL;
+  const r  = CELL*0.9;
+
+  // Compost pile background — same for all, no color hint
+  ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 8;
+  ctx.fillStyle = '#2d1200';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#5c2d00'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, r-1, 0, Math.PI*2); ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Big emoji on the pile
+  ctx.font = `${CELL*1.1}px serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(b.emoji || '🌱', cx, cy - 2);
+
+  // Word label below — small, muted, same for all
+  ctx.fillStyle = 'rgba(255,220,160,.75)';
+  ctx.font = `bold 9px Nunito,system-ui,sans-serif`;
+  ctx.fillText(b.word.length>9?b.word.slice(0,8)+'…':b.word, cx, cy + r + 9);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 }
 
 function drawWorm(w) {
