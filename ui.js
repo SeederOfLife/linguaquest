@@ -508,18 +508,16 @@ function selectRoomTopic(btn) {
 }
 
 function switchRankTab(tab) {
-  const isLb      = tab === 'lb';
-  const isDuels   = tab === 'duels';
-  const isFriends = tab === 'friends';
-  $('rank-lb-zone').style.display      = isLb      ? '' : 'none';
-  $('rank-duels-zone').style.display   = isDuels   ? '' : 'none';
-  $('rank-friends-zone').style.display = isFriends ? '' : 'none';
-  $('rank-tab-lb').classList.toggle('active', isLb);
-  $('rank-tab-duels').classList.toggle('active', isDuels);
-  const ft = $('rank-tab-friends');
-  if (ft) ft.classList.toggle('active', isFriends);
-  if (isDuels)   renderDuelsScreen();
-  if (isFriends) renderFriendsScreen();
+  const zones = ['lb','duels','practice','friends','compost'];
+  zones.forEach(z => {
+    const el = $('rank-'+z+'-zone');
+    if (el) el.style.display = z===tab ? '' : 'none';
+    const btn = $('rank-tab-'+z);
+    if (btn) btn.classList.toggle('active', z===tab);
+  });
+  if (tab==='duels')    renderDuelsScreen();
+  if (tab==='friends')  renderFriendsScreen();
+  if (tab==='practice') { if(typeof renderPracticeModes==='function') renderPracticeModes(); }
 }
 
 // ══════════════════════════════════════════════

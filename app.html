@@ -146,7 +146,7 @@
 <div id="nav-bar" class="nav-bar" style="display:none;">
   <div class="nav-item active" id="nav-learn" onclick="navTo('learn')"><span class="ni" style="font-size:1.1rem;font-weight:900;color:inherit;">A</span><span id="lbl-nav-learn">Apprendre</span></div>
   <div class="nav-item" id="nav-portfolio" onclick="navTo('portfolio')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">$</span><span id="lbl-nav-portfolio">Portfolio</span></div>
-  <div class="nav-item" id="nav-rank" onclick="navTo('rank')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">🏆</span><span>Rang</span></div>
+  <div class="nav-item" id="nav-rank" onclick="navTo('rank')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">🎮</span><span>Games</span></div>
   <div class="nav-item" id="nav-shop" onclick="navTo('shop')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">★</span><span id="lbl-nav-shop">Boutique</span></div>
   <div class="nav-item" id="nav-profile" onclick="navTo('profile')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">◉</span><span id="lbl-nav-profile">Profil</span></div>
 </div>
@@ -617,9 +617,11 @@
 <!-- ══════════════════ RANK SCREEN (Leaderboard + Duels) ══════════════════ -->
 <div class="screen screen-padded" id="screen-rank">
   <div class="rank-tabs">
-    <button class="rank-tab active" id="rank-tab-lb" onclick="switchRankTab('lb')">🌍 Classement</button>
-    <button class="rank-tab" id="rank-tab-duels" onclick="switchRankTab('duels')">⚔️ Duels</button>
-    <button class="rank-tab" id="rank-tab-friends" onclick="switchRankTab('friends')">👥 Amis</button>
+    <button class="rank-tab active" id="rank-tab-lb"      onclick="switchRankTab('lb')">🏆 Rang</button>
+    <button class="rank-tab"        id="rank-tab-duels"   onclick="switchRankTab('duels')">⚔️ Duels</button>
+    <button class="rank-tab"        id="rank-tab-practice"onclick="switchRankTab('practice')">🎯 Pratique</button>
+    <button class="rank-tab"        id="rank-tab-friends" onclick="switchRankTab('friends')">👥 Amis</button>
+    <button class="rank-tab"        id="rank-tab-compost" onclick="switchRankTab('compost')">🪱 Compost</button>
   </div>
 
   <!-- LEADERBOARD -->
@@ -633,50 +635,47 @@
     <div id="lb-list"></div>
   </div>
 
-  <!-- DUELS + PRACTICE TAB -->
+  <!-- DUELS TAB -->
   <div id="rank-duels-zone" style="display:none;">
-    <!-- Sub-tabs: Duels / Practice -->
-    <div class="duel-subtabs">
-      <button class="duel-subtab active" id="duel-subtab-duel" onclick="_renderDuelSubTab('duel')">⚔️ Duels</button>
-      <button class="duel-subtab" id="duel-subtab-practice" onclick="_renderDuelSubTab('practice')">🎮 Pratique</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
+      <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
     </div>
-
-    <!-- DUELS SUB-TAB -->
-    <div id="duel-sub-duels">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
-        <button class="btn btn-secondary" onclick="openCompostGame()" style="background:linear-gradient(135deg,#16a34a,#15803d);border:none;color:#fff;">🪱 Compost</button>
-        <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
+    <div id="duel-join-zone" style="display:none;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
+          style="flex:1;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+        <button class="btn btn-primary" onclick="joinDuel()">→</button>
       </div>
-      <div id="duel-join-zone" style="display:none;margin-bottom:12px;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
-            style="flex:1;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;"
-            oninput="this.value=this.value.toUpperCase()">
-          <button class="btn btn-primary" onclick="joinDuel()">→</button>
-        </div>
-      </div>
-      <div id="duel-lobby-content"></div>
-      <div id="open-duels-list"></div>
     </div>
+    <div id="duel-lobby-content"></div>
+    <div id="open-duels-list"></div>
+  </div>
 
-    <!-- PRACTICE SUB-TAB -->
-    <div id="duel-sub-practice" style="display:none;">
-      <div class="section-title" style="margin-bottom:10px;">🎮 Mode de pratique</div>
-      <div class="duel-mode-grid" id="practice-modes-grid"></div>
+  <!-- PRACTICE TAB -->
+  <div id="rank-practice-zone" style="display:none;">
+    <div class="section-title" style="margin-bottom:10px;">🎯 Mode de pratique</div>
+    <div class="duel-mode-grid" id="practice-modes-grid"></div>
+    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Niveau</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;" id="practice-level-grid">
+      <button class="duel-type-btn active" onclick="selectPracticeLevel(this,'any')">🔀 Tout</button>
+      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A1')">A1</button>
+      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A2')">A2</button>
+      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B1')">B1</button>
+      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B2')">B2</button>
+      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'C1')">C1</button>
+    </div>
+    <button class="btn btn-primary" onclick="startPractice()" style="width:100%;margin-top:16px;font-size:1rem;">▶ Commencer la pratique →</button>
+  </div>
 
-      <!-- Level selector -->
-      <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Niveau</div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;" id="practice-level-grid">
-        <button class="duel-type-btn active" onclick="selectPracticeLevel(this,'any')">🔀 Tout</button>
-        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A1')">A1</button>
-        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A2')">A2</button>
-        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B1')">B1</button>
-        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B2')">B2</button>
-        <button class="duel-type-btn" onclick="selectPracticeLevel(this,'C1')">C1</button>
-      </div>
-
-      <button class="btn btn-primary" onclick="startPractice()" style="width:100%;margin-top:16px;font-size:1rem;">▶ Commencer la pratique →</button>
+  <!-- COMPOST TAB -->
+  <div id="rank-compost-zone" style="display:none;">
+    <div style="text-align:center;padding:10px 0 20px;">
+      <div style="font-size:3rem;margin-bottom:10px;">🪱</div>
+      <div style="font-weight:900;font-size:1.1rem;margin-bottom:6px;">Compost</div>
+      <div style="color:var(--muted);font-size:.82rem;margin-bottom:20px;">Snake.io — mange les bonnes traductions !</div>
+      <button class="btn btn-primary" onclick="openCompostGame()" style="background:linear-gradient(135deg,#16a34a,#15803d);border:none;width:100%;max-width:280px;font-size:1rem;">▶ Jouer</button>
     </div>
   </div>
 

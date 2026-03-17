@@ -44,7 +44,7 @@ function _buildDuelQuestions(gameType, levelFilter, count) {
 
 // ── DUELS SCREEN ─────────────────────────────────────────────
 function renderDuelsScreen() {
-  _renderDuelSubTab('duel');
+  switchRankTab('duels');
   loadOpenDuels();
   clearInterval(_openDuelsInterval);
   _openDuelsInterval = setInterval(loadOpenDuels, 30000);
