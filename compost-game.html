@@ -175,6 +175,29 @@ const SB_URL = 'https://luufdddauoucmjiixrax.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4';
 const _SB = supabase.createClient(SB_URL, SB_KEY);
 
+// ── SPEECH ────────────────────────────────────────────────────
+const SPEECH_CODES = {fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'};
+
+function speak(text, lang) {
+  if (!text || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang  = SPEECH_CODES[lang] || lang || 'en-GB';
+  utt.rate  = 0.85;
+  utt.pitch = 1.0;
+  // Try to find a matching voice
+  const voices = window.speechSynthesis.getVoices();
+  const code   = utt.lang.split('-')[0].toLowerCase();
+  const match  = voices.find(v => v.lang.toLowerCase().startsWith(code));
+  if (match) utt.voice = match;
+  window.speechSynthesis.speak(utt);
+}
+// Pre-load voices
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
 // ── PARAMS ────────────────────────────────────────────────────
 const P = new URLSearchParams(location.search);
 const nL     = P.get('nL')    || 'fr';
@@ -558,6 +581,8 @@ function nextQuestion() {
   if(!allWords.length)return;
   currentQ=allWords[answeredQ%allWords.length];
   document.getElementById('hud-word').textContent=currentQ.native;
+  // Speak the native word
+  speak(currentQ.native, nL);
 }
 
 // Draw emoji + word on canvas
@@ -647,6 +672,8 @@ function moveWorm(w) {
     bubbles.splice(bi,1);
     if(b.correct){
       w.score+=10; w.grow+=3;
+      // Speak the eaten word in target language
+      if(w.isMe) speak(b.word, tL);
       answeredQ++; nextQuestion(); spawnBubbles();
       if(w.isMe){
         document.getElementById('my-pts').textContent=w.score;
