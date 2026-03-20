@@ -72,12 +72,12 @@ body{background:#060612;color:#f1f5f9;font-family:'Nunito',sans-serif;overflow:h
 #joystick-wrap{position:absolute;bottom:24px;left:24px;z-index:10;width:110px;height:110px;touch-action:none;}
 #joystick-base{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);}
 #joystick-knob{position:absolute;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.15));border:2px solid rgba(255,255,255,.3);box-shadow:0 2px 12px rgba(0,0,0,.4);top:50%;left:50%;transform:translate(-50%,-50%);transition:none;cursor:grab;}
-@media(min-width:600px){#joystick-wrap{display:none;}}
+/* joystick always visible - hidden via JS on desktop if mouse detected */
 
 /* Result */
-#result{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;align-items:center;justify-content:center;}
+#result{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;display:none;align-items:center;justify-content:center;pointer-events:all;}
 #result.show{display:flex;}
-.result-box{background:#141428;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px 24px;text-align:center;max-width:340px;width:90%;}
+.result-box{background:#141428;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px 24px;text-align:center;max-width:340px;width:90%;pointer-events:all;position:relative;z-index:1000;}
 .res-emoji{font-size:3.5rem;margin-bottom:8px;}
 .res-title{font-size:1.8rem;font-weight:900;margin-bottom:4px;}
 .podium{display:flex;flex-direction:column;gap:6px;margin:14px 0;}
@@ -809,7 +809,7 @@ function drawWorm(w) {
 
 // ── INPUT ─────────────────────────────────────────────────────
 function bindInput() {
-  // Keyboard
+  // Keyboard (works on all devices)
   const KEYS={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},
     w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
   document.onkeydown=e=>{
@@ -818,6 +818,17 @@ function bindInput() {
     if(me&&!(d.x===-me.dir.x&&d.y===-me.dir.y))me.nextDir=d;
     e.preventDefault();
   };
+  // Show keyboard hint on desktop, joystick on touch
+  const jw=document.getElementById('joystick-wrap');
+  const isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+  if(jw) jw.style.display=isTouch?'block':'none';
+  // Desktop arrow hints
+  if(!isTouch){
+    const hint=document.createElement('div');
+    hint.style.cssText='position:absolute;bottom:16px;left:16px;z-index:10;font-size:.72rem;color:rgba(255,255,255,.4);font-weight:800;line-height:1.8;';
+    hint.innerHTML='⬆ W<br>⬇ S &nbsp;⬅ A &nbsp;➡ D';
+    document.getElementById('game').appendChild(hint);
+  }
 
   // Joystick
   const wrap  = document.getElementById('joystick-wrap');
@@ -925,8 +936,14 @@ function quitGame() {
 }
 
 function replayGame() {
+  gameOver = false;
   document.getElementById('result').classList.remove('show');
-  quitGame();
+  // Go back to lobby
+  document.getElementById('game').classList.remove('active');
+  document.getElementById('lobby').classList.add('active');
+  if(gameChannel){_SB.removeChannel(gameChannel);gameChannel=null;}
+  document.onkeydown=null;
+  cancelAnimationFrame(animId);
 }
 </script>
 </body>
