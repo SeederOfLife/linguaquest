@@ -222,6 +222,10 @@
   <!-- Topic tabs -->
   <div class="topic-tabs" id="topic-tabs"></div>
   <div class="chapters-list" id="chapters-list"></div>
+  <!-- Compost quick launch from chapter -->
+  <button class="btn btn-secondary" onclick="openCompostFromChapter()" style="width:100%;max-width:560px;margin:10px auto 4px;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,rgba(22,163,74,.2),rgba(21,128,61,.1));border:1px solid rgba(22,163,74,.3);color:#4ade80;">
+    🪱 Jouer Compost sur ce niveau
+  </button>
   <!-- DIY button -->
   <button class="diy-add-btn" onclick="openDIY()">＋ Créer ma propre leçon</button>
 </div>
@@ -254,6 +258,12 @@
     <span class="mix-badge" id="lbl-mix-badge">🎲 Mode Mixte recommandé</span>
   </div>
   <div class="game-types">
+    <div class="game-type-card" onclick="openCompostFromLesson()" style="background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(21,128,61,.08));border-color:rgba(22,163,74,.3);">
+      <div class="game-icon">🪱</div>
+      <div class="game-type-name">Compost</div>
+      <div class="game-type-desc">Snake.io — mange les traductions de ce chapitre !</div>
+      <div class="reward-tag"><span class="coin"></span> +50 pièces max</div>
+    </div>
     <div class="game-type-card featured" onclick="startGame('mixed')">
       <div class="game-icon">🎲</div><div class="game-type-name" id="lbl-gtype-mixed">Mode Mixte</div>
       <div class="game-type-desc" id="lbl-gdesc-mixed">Tout mélangé — la meilleure façon d'apprendre</div>
@@ -671,12 +681,36 @@
 
   <!-- COMPOST TAB -->
   <div id="rank-compost-zone" style="display:none;">
-    <div style="text-align:center;padding:10px 0 20px;">
-      <div style="font-size:3rem;margin-bottom:10px;">🪱</div>
-      <div style="font-weight:900;font-size:1.1rem;margin-bottom:6px;">Compost</div>
-      <div style="color:var(--muted);font-size:.82rem;margin-bottom:20px;">Snake.io — mange les bonnes traductions !</div>
-      <button class="btn btn-primary" onclick="openCompostGame()" style="background:linear-gradient(135deg,#16a34a,#15803d);border:none;width:100%;max-width:280px;font-size:1rem;">▶ Jouer</button>
+    <div style="text-align:center;padding:8px 0 10px;">
+      <div style="font-size:2.5rem;margin-bottom:6px;">🪱</div>
+      <div style="font-weight:900;font-size:1.1rem;margin-bottom:4px;">Compost</div>
+      <div style="color:var(--muted);font-size:.8rem;margin-bottom:14px;">Snake.io — mange les bonnes traductions !</div>
     </div>
+
+    <!-- Level selector -->
+    <div style="font-size:.73rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Niveau</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;" id="compost-level-btns">
+      <button class="duel-type-btn active" onclick="selectCompostLevel(this,'any')">🔀 Tout</button>
+      <button class="duel-type-btn" onclick="selectCompostLevel(this,'A1')">A1</button>
+      <button class="duel-type-btn" onclick="selectCompostLevel(this,'A2')">A2</button>
+      <button class="duel-type-btn" onclick="selectCompostLevel(this,'B1')">B1</button>
+      <button class="duel-type-btn" onclick="selectCompostLevel(this,'B2')">B2</button>
+      <button class="duel-type-btn" onclick="selectCompostLevel(this,'C1')">C1</button>
+      <button class="duel-type-btn" onclick="selectCompostLevel(this,'C2')">C2</button>
+    </div>
+
+    <!-- Topic selector -->
+    <div style="font-size:.73rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Thème</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;" id="compost-topic-btns">
+      <button class="duel-type-btn active" onclick="selectCompostTopic(this,'any')">🔀 Tout</button>
+      <button class="duel-type-btn" onclick="selectCompostTopic(this,'conv')">💬 Convers.</button>
+      <button class="duel-type-btn" onclick="selectCompostTopic(this,'vocab')">📚 Vocab</button>
+      <button class="duel-type-btn" onclick="selectCompostTopic(this,'gram')">✏️ Gram.</button>
+      <button class="duel-type-btn" onclick="selectCompostTopic(this,'culture')">🌍 Culture</button>
+      <button class="duel-type-btn" onclick="selectCompostTopic(this,'pro')">💼 Pro</button>
+    </div>
+
+    <button class="btn btn-primary" onclick="openCompostFromGames()" style="background:linear-gradient(135deg,#16a34a,#15803d);border:none;width:100%;font-size:1rem;">▶ Jouer</button>
   </div>
 
   <!-- FRIENDS TAB -->

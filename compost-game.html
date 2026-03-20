@@ -94,6 +94,7 @@ body{background:#060612;color:#f1f5f9;font-family:'Nunito',sans-serif;overflow:h
 <div class="screen active" id="lobby">
   <div class="lobby-title">🪱 Compost</div>
   <div class="lobby-sub">Snake.io — mange les bonnes traductions !</div>
+  <div id="lobby-context" style="font-size:.75rem;color:var(--muted);margin-bottom:8px;"></div>
 
   <!-- Skin picker -->
   <div class="skin-row" id="skin-row"></div>
@@ -176,10 +177,13 @@ const _SB = supabase.createClient(SB_URL, SB_KEY);
 
 // ── PARAMS ────────────────────────────────────────────────────
 const P = new URLSearchParams(location.search);
-const nL    = P.get('nL')   || 'fr';
-const tL    = P.get('tL')   || 'en';
-const pName = P.get('name') || 'Joueur';
-const pEmail= P.get('email')|| 'guest@local';
+const nL     = P.get('nL')    || 'fr';
+const tL     = P.get('tL')    || 'en';
+const pName  = P.get('name')  || 'Joueur';
+const pEmail = P.get('email') || 'guest@local';
+const pLevel = P.get('level') || 'any';   // A1 A2 B1 B2 C1 C2 any
+const pTopic = P.get('topic') || 'any';   // conv vocab gram culture pro diy any
+const pChap  = P.get('chap')  || '';      // specific chapter id
 
 // ── SKINS ─────────────────────────────────────────────────────
 const SKINS = [
@@ -194,6 +198,17 @@ const SKINS = [
 ];
 let mySkinId = P.get('skin') || 'sprout';
 let mySkin   = SKINS.find(s=>s.id===mySkinId)||SKINS[0];
+
+function initLobbyContext() {
+  const el = document.getElementById('lobby-context');
+  if (!el) return;
+  const parts = [];
+  if (pLevel && pLevel !== 'any') parts.push('Niveau ' + pLevel);
+  if (pTopic && pTopic !== 'any') parts.push('Thème : ' + pTopic);
+  if (pChap) parts.push('Chapitre : ' + pChap);
+  el.textContent = parts.length ? '📚 ' + parts.join(' · ') : '';
+}
+initLobbyContext();
 
 function renderSkins() {
   document.getElementById('skin-row').innerHTML = SKINS.map(s=>`
@@ -211,7 +226,10 @@ renderSkins();
 // ── WORD DATA ─────────────────────────────────────────────────
 let WD = {};
 window.addEventListener('message', e => {
-  if (e.data?.type==='wordData') { WD=e.data.words; }
+  if (e.data?.type === 'wordData') {
+    WD = e.data.words;
+    CHAPTERS = e.data.chapters || null;
+  }
 });
 window.parent.postMessage({type:'getWordData'},'*');
 
@@ -299,11 +317,34 @@ function loadImg(id) {
 Object.keys(EMOJI_URLS).forEach(id => loadImg(id));
 
 
+// CHAPTERS data from parent
+let CHAPTERS = null;
+
 function getWordList() {
   const src = Object.keys(WD).length > 5 ? WD : FALLBACK_WD;
+  let allowedIds = null;
+
+  // Filter by level/topic/chapter if set
+  if (CHAPTERS && (pLevel !== 'any' || pTopic !== 'any' || pChap)) {
+    const ids = new Set();
+    Object.entries(CHAPTERS).forEach(([lv, chs]) => {
+      if (pLevel !== 'any' && lv !== pLevel) return;
+      chs.forEach(ch => {
+        if (pChap && ch.id !== pChap) return;
+        if (pTopic !== 'any' && ch.topic !== pTopic) return;
+        (ch.wids || []).forEach(id => ids.add(id));
+      });
+    });
+    if (ids.size >= 5) allowedIds = ids;
+  }
+
   return Object.entries(src)
-    .filter(([id,w])=>w[nL]&&w[tL])
-    .map(([id,w])=>({id,native:w[nL],target:w[tL],emoji:EMOJIS[id]||'📝'}));
+    .filter(([id,w]) => {
+      if (!w[nL] || !w[tL]) return false;
+      if (allowedIds && !allowedIds.has(id)) return false;
+      return true;
+    })
+    .map(([id,w]) => ({id, native:w[nL], target:w[tL], emoji:EMOJIS[id]||'📝'}));
 }
 
 // ── MODE ──────────────────────────────────────────────────────

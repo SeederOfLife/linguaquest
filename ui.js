@@ -550,3 +550,25 @@ function renderTrophiesPreview() {
     `<div title="${t.name}: ${t.desc}" style="font-size:1.5rem;cursor:default;">${t.icon}</div>`
   ).join('') + (earned.length > 6 ? `<div style="font-size:.72rem;color:var(--muted);align-self:center;">+${earned.length-6} autres</div>` : '');
 }
+
+// ── COMPOST LEVEL/TOPIC SELECTORS ────────────────────────────
+let _compostLevel = 'any';
+let _compostTopic = 'any';
+
+function selectCompostLevel(btn, lv) {
+  _compostLevel = lv;
+  document.querySelectorAll('#compost-level-btns .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function selectCompostTopic(btn, topic) {
+  _compostTopic = topic;
+  document.querySelectorAll('#compost-topic-btns .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function openCompostFromGames() {
+  if (typeof openCompostGame === 'function') {
+    openCompostGame({ level: _compostLevel, topic: _compostTopic });
+  }
+}
