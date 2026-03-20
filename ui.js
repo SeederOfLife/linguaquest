@@ -14,7 +14,10 @@ function navTo(tab){
   if(tab==='portfolio'){ renderPortfolio(); }
   if(tab==='shop') renderShop();
   if(tab==='profile'){ renderProfile(); renderTrophiesPreview(); }
-  if(tab==='rank'){ renderLeaderboard(); renderDuelsScreen(); }
+  if(tab==='rank'){
+    // Show lb tab by default, ensure all zones correct
+    switchRankTab('lb');
+  }
   if(tab!=='rank' && typeof stopDuelRefresh==='function') stopDuelRefresh();
   if(tab==='trophies'){ renderTrophies(); }
   if(tab==='learn'){ renderSRSWidget(); }
@@ -515,6 +518,7 @@ function switchRankTab(tab) {
     const btn = $('rank-tab-'+z);
     if (btn) btn.classList.toggle('active', z===tab);
   });
+  if (tab==='lb')       renderLeaderboard();
   if (tab==='duels')    renderDuelsScreen();
   if (tab==='friends')  renderFriendsScreen();
   if (tab==='practice') { if(typeof renderPracticeModes==='function') renderPracticeModes(); }
