@@ -511,7 +511,7 @@ function selectRoomTopic(btn) {
 }
 
 function switchRankTab(tab) {
-  const zones = ['lb','duels','practice','friends','compost'];
+  const zones = ['lb','duels','practice','friends','flappy','car','compost'];
   zones.forEach(z => {
     const el = $('rank-'+z+'-zone');
     if (el) el.style.display = z===tab ? '' : 'none';
@@ -570,5 +570,62 @@ function selectCompostTopic(btn, topic) {
 function openCompostFromGames() {
   if (typeof openCompostGame === 'function') {
     openCompostGame({ level: _compostLevel, topic: _compostTopic });
+  }
+}
+
+// ── MINI-GAME LAUNCHER ────────────────────────────────────────
+function openGame(type) {
+  const nL    = S.nL   || 'fr';
+  const tL    = S.tL   || 'en';
+  const name  = encodeURIComponent((U&&U.name) || 'Joueur');
+  const email = encodeURIComponent((U&&U.email)|| 'guest@local');
+  const skin  = encodeURIComponent((U&&U['compostSkin'])||'sprout');
+  const fSkin = encodeURIComponent((U&&U['flappySkin'])||'bluebird');
+  const cSkin = encodeURIComponent((U&&U['carSkin'])||'red');
+
+  const overlay = document.getElementById('minigame-overlay');
+  const iframe  = document.getElementById('minigame-iframe');
+  if(!overlay||!iframe) return;
+
+  const src = type==='flappy'
+    ? `flappy-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&flappySkin=${fSkin}`
+    : `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}`;
+
+  iframe.src = src;
+  overlay.style.display = 'flex';
+
+  window._minigameListener = function(e) {
+    if(!e.data||typeof e.data!=='object') {
+      if(e.data==='close') closeMiniGame();
+      return;
+    }
+    if(e.data.type==='close') closeMiniGame();
+    if(e.data.type==='getWordData') {
+      iframe.contentWindow.postMessage({
+        type:'wordData',
+        words:typeof WD!=='undefined'?WD:{},
+        chapters:typeof CHAPTERS!=='undefined'?CHAPTERS:null,
+      },'*');
+    }
+    if(e.data.type==='saveFlappySkin'&&U&&!U.isGuest){U.flappySkin=e.data.skin;saveU();}
+    if(e.data.type==='saveCarSkin'&&U&&!U.isGuest){U.carSkin=e.data.skin;saveU();}
+    if(e.data.type==='gameResult'&&e.data.won&&U&&!U.isGuest){
+      const bonus=e.data.game==='car'?80:60;
+      U.coins=(U.coins||0)+bonus; saveU(); updateTopBar();
+      if(typeof checkTrophies==='function') checkTrophies();
+      toast('🎉 Victoire ! +'+bonus+' 🪙');
+    }
+  };
+  window.addEventListener('message', window._minigameListener);
+}
+
+function closeMiniGame() {
+  const overlay=document.getElementById('minigame-overlay');
+  const iframe=document.getElementById('minigame-iframe');
+  if(overlay) overlay.style.display='none';
+  if(iframe) iframe.src='';
+  if(window._minigameListener){
+    window.removeEventListener('message',window._minigameListener);
+    window._minigameListener=null;
   }
 }

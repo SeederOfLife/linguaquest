@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>FlappyLingo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0d0d1a;font-family:'Nunito',system-ui,sans-serif;color:#f1f5f9;
+  display:flex;flex-direction:column;align-items:center;height:100vh;overflow:hidden;}
+canvas{display:block;max-width:100%;}
+#ui{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;}
+#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;
+  align-items:center;padding:10px 16px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);}
+#score-display{font-weight:900;font-size:1rem;}
+#btn-close{pointer-events:all;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:#fff;border-radius:8px;padding:5px 12px;font-family:inherit;font-weight:800;cursor:pointer;font-size:.78rem;}
+
+/* Screens */
+.scr{display:none;position:absolute;inset:0;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;padding:24px;text-align:center;pointer-events:all;}
+.scr.on{display:flex;}
+.title{font-size:2rem;font-weight:900;margin-bottom:4px;}
+.subtitle{color:#94a3b8;font-size:.85rem;margin-bottom:12px;}
+.btn{padding:13px 28px;border:none;border-radius:14px;font-family:inherit;font-weight:900;
+  font-size:1rem;cursor:pointer;width:100%;max-width:280px;transition:transform .15s;}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;}
+.btn-green{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;}
+.btn-gray{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#f1f5f9;}
+.skin-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;}
+.skin-btn{background:rgba(255,255,255,.08);border:2px solid transparent;border-radius:12px;
+  padding:10px;cursor:pointer;transition:all .18s;width:64px;height:64px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.skin-btn.sel{border-color:var(--c,#7c3aed);background:rgba(124,58,237,.15);}
+.skin-btn .icon{font-size:1.6rem;}
+.skin-btn .name{font-size:.55rem;font-weight:800;color:#94a3b8;}
+
+/* Result */
+#result-scr .score-big{font-size:3rem;font-weight:900;color:#ffd600;margin:8px 0;}
+#result-scr .medal{font-size:3.5rem;}
+#result-scr .word-recap{max-height:160px;overflow-y:auto;width:100%;max-width:320px;
+  background:rgba(255,255,255,.05);border-radius:12px;padding:10px;margin:8px 0;}
+.recap-row{display:flex;justify-content:space-between;font-size:.78rem;padding:3px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);}
+.recap-correct{color:#22c55e;}
+.recap-wrong{color:#ef4444;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud" style="display:none;">
+    <div id="score-display">⭐ 0</div>
+    <div id="q-display" style="font-size:.88rem;font-weight:900;color:#c4b5fd;"></div>
+    <button id="btn-close" onclick="window.parent.postMessage('close','*')">✕</button>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="scr on" id="start-scr">
+    <div class="title">🐦 FlappyLingo</div>
+    <div class="subtitle">Vole vers la bonne traduction !</div>
+    <div style="font-size:.75rem;font-weight:800;color:var(--muted,#64748b);text-transform:uppercase;
+      letter-spacing:1px;margin-bottom:6px;">Choisis ton oiseau</div>
+    <div class="skin-grid" id="skin-grid"></div>
+    <button class="btn btn-green" onclick="startGame()">▶ Jouer</button>
+    <button class="btn btn-gray" style="margin-top:6px;" onclick="window.parent.postMessage('close','*')">← Retour</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="scr" id="result-scr">
+    <div class="medal" id="res-medal">🏆</div>
+    <div class="title" id="res-title">Super !</div>
+    <div class="score-big" id="res-score">0 pts</div>
+    <div class="word-recap" id="word-recap"></div>
+    <button class="btn btn-primary" onclick="restartGame()">🔄 Rejouer</button>
+    <button class="btn btn-gray" style="margin-top:6px;" onclick="window.parent.postMessage('close','*')">← Menu</button>
+  </div>
+</div>
+
+<script>
+const SKINS=[
+  {id:'bluebird',icon:'🐦',name:'Blue',body:'#3b82f6',wing:'#1d4ed8',beak:'#fbbf24'},
+  {id:'parrot',  icon:'🦜',name:'Parrot',body:'#22c55e',wing:'#16a34a',beak:'#f97316'},
+  {id:'owl',     icon:'🦉',name:'Hibou',body:'#8b5cf6',wing:'#6d28d9',beak:'#fbbf24'},
+  {id:'chick',   icon:'🐥',name:'Poussin',body:'#fbbf24',wing:'#f59e0b',beak:'#f97316'},
+  {id:'phoenix', icon:'🔥',name:'Phoenix',body:'#f97316',wing:'#dc2626',beak:'#fcd34d'},
+  {id:'penguin', icon:'🐧',name:'Pingouin',body:'#0f172a',wing:'#1e293b',beak:'#f97316'},
+];
+let mySkin=SKINS[0];
+
+// Word data
+let WD={}, CHAPTERS=null;
+const nL=new URLSearchParams(location.search).get('nL')||'fr';
+const tL=new URLSearchParams(location.search).get('tL')||'en';
+const SPEECH={fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'};
+
+window.addEventListener('message',e=>{
+  if(e.data?.type==='wordData'){WD=e.data.words||{};CHAPTERS=e.data.chapters||null;}
+});
+window.parent.postMessage({type:'getWordData'},'*');
+
+const FALLBACK={hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},
+  dog:{fr:'Chien',en:'Dog',es:'Perro',de:'Hund',cs:'Pes'},
+  cat:{fr:'Chat',en:'Cat',es:'Gato',de:'Katze',cs:'Kočka'},
+  sun:{fr:'Soleil',en:'Sun',es:'Sol',de:'Sonne',cs:'Slunce'},
+  house:{fr:'Maison',en:'House',es:'Casa',de:'Haus',cs:'Dům'},
+  water:{fr:'Eau',en:'Water',es:'Agua',de:'Wasser',cs:'Voda'},
+  bread:{fr:'Pain',en:'Bread',es:'Pan',de:'Brot',cs:'Chléb'},
+  love:{fr:'Amour',en:'Love',es:'Amor',de:'Liebe',cs:'Láska'},
+  book:{fr:'Livre',en:'Book',es:'Libro',de:'Buch',cs:'Kniha'},
+  red:{fr:'Rouge',en:'Red',es:'Rojo',de:'Rot',cs:'Červená'},
+  blue:{fr:'Bleu',en:'Blue',es:'Azul',de:'Blau',cs:'Modrá'},
+  music:{fr:'Musique',en:'Music',es:'Música',de:'Musik',cs:'Hudba'},
+};
+
+function getWords(){
+  const src=Object.keys(WD).length>5?WD:FALLBACK;
+  return Object.entries(src).filter(([id,w])=>w[nL]&&w[tL])
+    .map(([id,w])=>({id,native:w[nL],target:w[tL]}));
+}
+
+function speak(text,lang){
+  if(!text||!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=SPEECH[lang]||'en-GB';u.rate=0.85;
+  const vs=window.speechSynthesis.getVoices();
+  const m=vs.find(v=>v.lang.toLowerCase().startsWith(u.lang.split('-')[0]));
+  if(m)u.voice=m;
+  window.speechSynthesis.speak(u);
+}
+
+// Skin picker
+function renderSkins(){
+  document.getElementById('skin-grid').innerHTML=SKINS.map(s=>
+    `<div class="skin-btn ${s.id===mySkin.id?'sel':''}" style="--c:${s.body}" onclick="pickSkin('${s.id}')">
+      <div class="icon">${s.icon}</div>
+      <div class="name">${s.name}</div>
+    </div>`).join('');
+}
+function pickSkin(id){
+  mySkin=SKINS.find(s=>s.id===id)||SKINS[0];
+  window.parent.postMessage({type:'saveFlappySkin',skin:id},'*');
+  renderSkins();
+}
+// Restore saved skin
+const savedSkin=new URLSearchParams(location.search).get('flappySkin');
+if(savedSkin){const s=SKINS.find(s=>s.id===savedSkin);if(s)mySkin=s;}
+renderSkins();
+
+// ── GAME ENGINE ────────────────────────────────────────────────
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+let W,H,animId,gameActive=false;
+
+// Game state
+let bird={x:0,y:0,vy:0,rot:0,alive:true,flapped:false};
+let pipes=[];
+let score=0,totalQ=0,wordList=[],currentQ=null,wordLog=[];
+let bgParticles=[];
+let frameN=0;
+
+const GRAV=0.45,JUMP=-7,PIPE_W=70,GAP=160,PIPE_SPEED=2.5;
+
+function resize(){
+  const wrap=canvas.parentElement;
+  W=wrap.clientWidth; H=wrap.clientHeight;
+  canvas.width=W; canvas.height=H;
+}
+
+function pickQuestion(){
+  if(!wordList.length)return;
+  currentQ=wordList[Math.floor(Math.random()*wordList.length)];
+  // Update HUD
+  document.getElementById('q-display').textContent=currentQ.native+' → ?';
+  speak(currentQ.native,nL);
+}
+
+function spawnPipe(){
+  // Two pipes — one correct, one wrong
+  const others=wordList.filter(w=>w.id!==currentQ?.id);
+  const wrong=others[Math.floor(Math.random()*others.length)];
+  const correctTop=Math.random()>0.5;
+  const topLabel= correctTop ? currentQ?.target : wrong?.target;
+  const botLabel= correctTop ? wrong?.target : currentQ?.target;
+  const gapY=80+Math.random()*(H-GAP-160);
+  pipes.push({
+    x:W+20, gapY, topLabel, botLabel,
+    topCorrect:correctTop, botCorrect:!correctTop,
+    passed:false, color:`hsl(${Math.floor(Math.random()*360)},60%,35%)`
+  });
+}
+
+function startGame(){
+  wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
+  if(!wordList.length){alert('Pas de mots disponibles !');return;}
+  score=0; totalQ=0; wordLog=[]; pipes=[];
+  bird={x:W*0.25,y:H*0.45,vy:0,rot:0,alive:true};
+  gameActive=true;
+  document.getElementById('start-scr').classList.remove('on');
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('score-display').textContent='⭐ 0';
+  initBgParticles();
+  pickQuestion();
+  spawnPipe();
+  cancelAnimationFrame(animId);
+  animId=requestAnimationFrame(loop);
+
+  // Input
+  document.onclick=()=>{if(gameActive&&bird.alive){bird.vy=JUMP;bird.flapped=true;}};
+  document.onkeydown=e=>{if(e.code==='Space'&&gameActive&&bird.alive){bird.vy=JUMP;e.preventDefault();}};
+  canvas.ontouchstart=e=>{if(gameActive&&bird.alive){bird.vy=JUMP;}e.preventDefault();};
+}
+
+function initBgParticles(){
+  bgParticles=Array.from({length:40},()=>({
+    x:Math.random()*W,y:Math.random()*H,
+    size:Math.random()*2+0.5,
+    speed:0.3+Math.random()*0.8,
+    alpha:0.1+Math.random()*0.3,
+    color:`hsl(${240+Math.floor(Math.random()*60)},70%,70%)`
+  }));
+}
+
+function loop(){
+  frameN++;
+  update();
+  render();
+  if(gameActive) animId=requestAnimationFrame(loop);
+}
+
+function update(){
+  if(!bird.alive)return;
+
+  // Bird physics
+  bird.vy+=GRAV;
+  bird.y+=bird.vy;
+  bird.rot=Math.min(Math.PI/2,Math.max(-0.5,bird.vy*0.06));
+
+  // Ceiling/floor
+  if(bird.y<10){bird.y=10;bird.vy=0;}
+  if(bird.y>H-20){die();}
+
+  // Spawn pipes
+  if(pipes.length===0||pipes[pipes.length-1].x<W-280) spawnPipe();
+
+  // Move pipes
+  pipes.forEach(p=>{
+    p.x-=PIPE_SPEED;
+    if(!p.passed&&p.x+PIPE_W<bird.x){
+      p.passed=true;
+    }
+    // Collision
+    if(bird.x+14>p.x&&bird.x-14<p.x+PIPE_W){
+      if(bird.y-16<p.gapY||bird.y+16>p.gapY+GAP){
+        // Check if bird is in the pipe (not gap)
+        die();
+      } else if(!p.scored){
+        // Bird passed through gap — check which half
+        const inTop=bird.y<p.gapY+GAP/2;
+        const correct=(inTop&&p.topCorrect)||(!inTop&&p.botCorrect);
+        p.scored=true;
+        if(correct){
+          score+=10; totalQ++;
+          document.getElementById('score-display').textContent='⭐ '+score;
+          speak(currentQ.target,tL);
+          wordLog.push({word:currentQ.native,ans:currentQ.target,correct:true});
+          spawnScoreParticles(bird.x,bird.y,'#22c55e');
+          pickQuestion();
+        } else {
+          score=Math.max(0,score-3);
+          document.getElementById('score-display').textContent='⭐ '+score;
+          wordLog.push({word:currentQ.native,ans:inTop?p.topLabel:p.botLabel,correct:false});
+          spawnScoreParticles(bird.x,bird.y,'#ef4444');
+        }
+      }
+    }
+  });
+  pipes=pipes.filter(p=>p.x>-PIPE_W-20);
+
+  // Win at 12 correct
+  if(totalQ>=12) endGame();
+
+  // BG particles
+  bgParticles.forEach(p=>{p.y-=p.speed;if(p.y<-5)p.y=H+5;});
+}
+
+// Score particles
+let scoreParticles=[];
+function spawnScoreParticles(x,y,color){
+  for(let i=0;i<12;i++){
+    const a=Math.random()*Math.PI*2,s=1+Math.random()*4;
+    scoreParticles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,color,size:3+Math.random()*3});
+  }
+}
+
+function die(){
+  bird.alive=false;
+  bird.vy=3;
+  setTimeout(()=>{gameActive=false;endGame();},700);
+}
+
+function render(){
+  // Sky gradient
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#060618');sky.addColorStop(1,'#0d1930');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+
+  // BG particles (stars)
+  bgParticles.forEach(p=>{
+    ctx.globalAlpha=p.alpha*Math.abs(Math.sin(frameN*0.02+p.x));
+    ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+
+  // Pipes
+  pipes.forEach(drawPipe);
+
+  // Score particles
+  scoreParticles=scoreParticles.filter(p=>p.life>0);
+  scoreParticles.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=0.04;p.size*=0.96;
+    ctx.globalAlpha=p.life;ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+
+  // Bird
+  drawBird();
+}
+
+function drawPipe(p){
+  const topH=p.gapY;
+  const botY=p.gapY+GAP;
+  const botH=H-botY;
+
+  // Pipe bodies
+  ctx.fillStyle=p.color;
+  // Top pipe
+  ctx.fillRect(p.x,0,PIPE_W,topH);
+  // Bottom pipe
+  ctx.fillRect(p.x,botY,PIPE_W,botH);
+  // Pipe caps
+  ctx.fillStyle='rgba(255,255,255,.1)';
+  ctx.fillRect(p.x-4,topH-18,PIPE_W+8,18);
+  ctx.fillRect(p.x-4,botY,PIPE_W+8,18);
+  // Shine
+  ctx.fillStyle='rgba(255,255,255,.07)';
+  ctx.fillRect(p.x+6,0,12,topH);
+  ctx.fillRect(p.x+6,botY,12,botH);
+
+  // Word labels on pipes
+  ctx.save();
+  // Top label
+  ctx.fillStyle='rgba(0,0,0,.6)';
+  const tpad=8;
+  const tmetric=ctx.measureText(p.topLabel||'');
+  const tw=Math.max(PIPE_W-4,tmetric.width+tpad*2);
+  ctx.beginPath();
+  if(ctx.roundRect)ctx.roundRect(p.x+(PIPE_W-tw)/2,topH-52,tw,28,8);
+  else ctx.rect(p.x+(PIPE_W-tw)/2,topH-52,tw,28);
+  ctx.fill();
+  ctx.fillStyle='#f1f5f9';ctx.font='bold 13px system-ui,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(p.topLabel||'',p.x+PIPE_W/2,topH-38);
+
+  // Bottom label
+  ctx.fillStyle='rgba(0,0,0,.6)';
+  const bmetric=ctx.measureText(p.botLabel||'');
+  const bw=Math.max(PIPE_W-4,bmetric.width+tpad*2);
+  ctx.beginPath();
+  if(ctx.roundRect)ctx.roundRect(p.x+(PIPE_W-bw)/2,botY+24,bw,28,8);
+  else ctx.rect(p.x+(PIPE_W-bw)/2,botY+24,bw,28);
+  ctx.fill();
+  ctx.fillStyle='#f1f5f9';
+  ctx.fillText(p.botLabel||'',p.x+PIPE_W/2,botY+38);
+  ctx.restore();
+}
+
+function drawBird(){
+  ctx.save();
+  ctx.translate(bird.x,bird.y);
+  ctx.rotate(bird.rot);
+
+  const sk=mySkin;
+  const flap=Math.sin(frameN*0.25)*8*(bird.alive?1:0);
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.beginPath();ctx.ellipse(2,18,14,5,0,0,Math.PI*2);ctx.fill();
+
+  // Body
+  ctx.shadowColor=sk.body;ctx.shadowBlur=bird.alive?12:0;
+  ctx.fillStyle=sk.body;
+  ctx.beginPath();ctx.ellipse(0,0,18,13,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+
+  // Wing
+  ctx.fillStyle=sk.wing;
+  ctx.beginPath();ctx.ellipse(-2,flap,10,6,0.3,0,Math.PI*2);ctx.fill();
+
+  // Belly
+  ctx.fillStyle='rgba(255,255,255,.25)';
+  ctx.beginPath();ctx.ellipse(4,3,8,6,0,0,Math.PI*2);ctx.fill();
+
+  // Eye
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(10,-4,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.arc(11,-4,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(12,-5,1.2,0,Math.PI*2);ctx.fill();
+
+  // Beak
+  ctx.fillStyle=sk.beak;
+  ctx.beginPath();ctx.moveTo(16,-1);ctx.lineTo(24,0);ctx.lineTo(16,4);ctx.closePath();ctx.fill();
+
+  ctx.restore();
+}
+
+function endGame(){
+  document.getElementById('hud').style.display='none';
+  document.getElementById('result-scr').classList.add('on');
+  const won=totalQ>=8;
+  document.getElementById('res-medal').textContent=score>100?'🏆':score>50?'🥈':'🥉';
+  document.getElementById('res-title').textContent=won?'Excellent !':'Continue !';
+  document.getElementById('res-score').textContent=score+' pts · '+totalQ+' ✓';
+  document.getElementById('word-recap').innerHTML=wordLog.slice(-8).map(w=>
+    `<div class="recap-row"><span>${w.word}</span><span class="${w.correct?'recap-correct':'recap-wrong'}">${w.ans} ${w.correct?'✓':'✗'}</span></div>`
+  ).join('');
+  if(won) window.parent.postMessage({type:'gameResult',won:true,myScore:score,game:'flappy'},'*');
+}
+
+function restartGame(){
+  document.getElementById('result-scr').classList.remove('on');
+  document.getElementById('start-scr').classList.add('on');
+  cancelAnimationFrame(animId);
+  gameActive=false;
+}
+
+// Init
+window.addEventListener('resize',()=>{resize();});
+resize();
+</script>
+</body>
+</html>

@@ -549,6 +549,7 @@ function launchGame(words, players, isSolo) {
       .subscribe();
   }
 
+  initStars();
   nextQuestion();
   spawnBubbles();
   bindInput();
@@ -685,22 +686,29 @@ function moveWorm(w) {
     } else {
       w.score=Math.max(0,w.score-5);
       if(w.body.length>3){w.body.pop();w.body.pop();}
+      if(w.isMe) spawnParticles(b.pos.x*CELL+CELL, b.pos.y*CELL+CELL, '#ef4444');
       if(w.isMe){document.getElementById('my-pts').textContent=w.score;updateLB();}
     }
   }
 }
 
 function botMove(w) {
-  if(!currentQ)return;
+  if(!currentQ||!w.alive)return;
   const target=bubbles.find(b=>b.correct);
   if(!target)return;
   const h=w.body[0];
-  const dx=target.pos.x-h.x, dy=target.pos.y-h.y;
+  const tx=target.pos.x+0.5, ty=target.pos.y+0.5;
   const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
-  let best=dirs.filter(d=>!(d.x===-w.dir.x&&d.y===-w.dir.y))
-    .sort((a,b)=>(Math.abs(dx-b.x*2)+Math.abs(dy-b.y*2))-(Math.abs(dx-a.x*2)+Math.abs(dy-a.y*2)));
-  if(Math.random()<0.12)best=best.sort(()=>Math.random()-.5);
-  if(best[0])w.dir=best[0];
+  const valid=dirs.filter(d=>!(d.x===-w.dir.x&&d.y===-w.dir.y));
+  const scored=valid.map(d=>{
+    const nx=(h.x+d.x+COLS)%COLS, ny=(h.y+d.y+ROWS)%ROWS;
+    const selfHit=w.body.slice(1,6).some(s=>s.x===nx&&s.y===ny)?-15:0;
+    const dist=Math.abs(tx-nx)+Math.abs(ty-ny);
+    const noise=Math.random()<0.15?Math.random()*5:0;
+    return {d,score:-dist+selfHit+noise};
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  if(scored[0])w.dir=scored[0].d;
   moveWorm(w);
 }
 
@@ -715,16 +723,68 @@ function updateLB() {
 }
 
 // ── DRAWING ───────────────────────────────────────────────────
+// Particle system for eat effects
+let particles=[];
+function spawnParticles(x,y,color){
+  for(let i=0;i<10;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=1+Math.random()*3;
+    particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      life:1,color,size:2+Math.random()*4});
+  }
+}
+function updateParticles(){
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=0.05;p.size*=0.95;});
+}
+function drawParticles(){
+  particles.forEach(p=>{
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle=p.color;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+// Animated bg stars
+let bgStars=[];
+function initStars(){
+  bgStars=Array.from({length:60},()=>({
+    x:Math.random()*680,y:Math.random()*400,
+    size:Math.random()*1.5+0.3,
+    twinkle:Math.random()*Math.PI*2,
+    speed:0.02+Math.random()*0.04
+  }));
+}
+function drawStars(){
+  bgStars.forEach(s=>{
+    s.twinkle+=s.speed;
+    ctx.globalAlpha=0.15+Math.abs(Math.sin(s.twinkle))*0.25;
+    ctx.fillStyle='#c4b5fd';
+    ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
 function draw() {
-  ctx.fillStyle='#060612'; ctx.fillRect(0,0,W,H);
+  // Deep space bg with gradient feel
+  ctx.fillStyle='#04040f'; ctx.fillRect(0,0,W,H);
+  // Vignette
+  const vig=ctx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.8);
+  vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,20,0.5)');
+  ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
+  // Stars
+  drawStars();
   // Subtle grid
-  ctx.strokeStyle='rgba(255,255,255,.025)'; ctx.lineWidth=.5;
+  ctx.strokeStyle='rgba(100,80,200,.06)'; ctx.lineWidth=.5;
   for(let i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,H);ctx.stroke();}
   for(let j=0;j<=ROWS;j++){ctx.beginPath();ctx.moveTo(0,j*CELL);ctx.lineTo(W,j*CELL);ctx.stroke();}
-  // Question emoji on canvas
+  // Question banner
   drawQuestionEmoji();
   // Bubbles
   bubbles.forEach(drawBubble);
+  // Particles
+  updateParticles();drawParticles();
   // Worms
   Object.values(worms).filter(w=>w.alive).forEach(drawWorm);
 }
