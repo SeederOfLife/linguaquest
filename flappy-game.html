@@ -6,11 +6,11 @@
 <title>FlappyLingo</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:#0d0d1a;font-family:'Nunito',system-ui,sans-serif;color:#f1f5f9;
-  margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;position:relative;}
-canvas{display:block;position:absolute;top:0;left:0;}
-#ui{position:fixed;inset:0;pointer-events:none;z-index:10;}
-#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;
+body{background:#060618;font-family:'Nunito',system-ui,sans-serif;color:#f1f5f9;
+  margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0;}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:5;}
+#hud{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;justify-content:space-between;
   align-items:center;padding:10px 16px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);}
 #score-display{font-weight:900;font-size:1rem;}
 #btn-close{pointer-events:all;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
@@ -18,7 +18,7 @@ canvas{display:block;position:absolute;top:0;left:0;}
 
 /* Screens */
 .scr{display:none;position:fixed;inset:0;align-items:center;justify-content:center;
-  flex-direction:column;gap:10px;padding:24px;text-align:center;pointer-events:all;background:rgba(10,10,26,.9);}
+  flex-direction:column;gap:10px;padding:24px;text-align:center;pointer-events:all;background:rgba(6,6,20,.92);z-index:10;}
 .scr.on{display:flex;}
 .title{font-size:2rem;font-weight:900;margin-bottom:4px;}
 .subtitle{color:#94a3b8;font-size:.85rem;margin-bottom:12px;}
@@ -376,7 +376,10 @@ function launchGame(){
   gameActive=true;
   document.getElementById('start-scr').classList.remove('on');
   document.getElementById('room-scr').classList.remove('on');
+  document.getElementById('result-scr').classList.remove('on');
   document.getElementById('hud').style.display='flex';
+  // Ensure body background is transparent so canvas shows
+  document.body.style.background='transparent';
   // Show opponent score if multiplayer
   const opEl=document.getElementById('op-score');
   if(opEl) opEl.style.display=roomCode?'':'none';
