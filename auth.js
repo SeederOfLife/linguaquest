@@ -147,29 +147,34 @@ function afterLogin(){
   updateTopBar();
 
   if (U.lastNL && U.lastTL && U.lastNL !== U.lastTL) {
-    // Known language pair — restore and go straight to levels
     S.nL = U.lastNL; S.tL = U.lastTL;
     setTimeout(()=>{
-      // Pre-select flags in the language grid (for when user goes back)
-      const ng = document.querySelector(`#native-grid [data-code="${S.nL}"]`);
-      const tg = document.querySelector(`#target-grid [data-code="${S.tL}"]`);
-      if(ng) ng.classList.add('selected');
-      if(tg) tg.classList.add('selected');
-      if(typeof syncPair==='function') syncPair();
-      if(typeof syncDots==='function') syncDots();
-      const ts=$('target-section'); if(ts) ts.style.opacity='1';
-      // Go directly to levels
-      if(typeof goToLevels==='function') goToLevels();
-    }, 150);
+      try{
+        const ng=document.querySelector(`#native-grid [data-code="${S.nL}"]`);
+        const tg=document.querySelector(`#target-grid [data-code="${S.tL}"]`);
+        if(ng) ng.classList.add('selected');
+        if(tg) tg.classList.add('selected');
+        if(typeof syncPair==='function') syncPair();
+        if(typeof syncDots==='function') syncDots();
+        const ts=$('target-section'); if(ts) ts.style.opacity='1';
+      }catch(e){}
+      try{
+        if(typeof goToLevels==='function'
+           && typeof LANGS!=='undefined'
+           && LANGS && LANGS[S.nL] && LANGS[S.tL]){
+          goToLevels();
+        } else {
+          navTo('learn');
+        }
+      }catch(e){ console.warn('afterLogin nav error:',e); navTo('learn'); }
+    }, 400);
   } else {
-    // First time — show language picker
     navTo('learn');
   }
 
-  if(typeof initSocial==='function') setTimeout(initSocial, 500);
-  setTimeout(()=>{ _appReady = true; }, 900);
+  if(typeof initSocial==='function') setTimeout(initSocial, 700);
+  setTimeout(()=>{ _appReady = true; }, 1200);
 }
-
 function showChrome(){$('top-bar').style.display='flex';$('nav-bar').style.display='flex';}
 function hideChrome(){$('top-bar').style.display='none';$('nav-bar').style.display='none';}
 

@@ -315,118 +315,78 @@ function renderChaps(){
 }
 
 // ── DIY Lessons ──────────────────────────────────
-// ── DIY LESSON WITH IMAGES ────────────────────────────────────
-let _diyPairs = []; // [{native, target, imgUrl}]
-
+let _diyPairs=[];
 function openDIY(){
-  _diyPairs = [{native:'',target:'',imgUrl:''}];
-  $('diy-title').value = '';
+  _diyPairs=[{native:'',target:'',imgUrl:''}];
+  $('diy-title').value='';
   renderDIYPairs();
-  $('diy-modal').style.display = 'flex';
-  setTimeout(()=>$('diy-title').focus(), 50);
+  $('diy-modal').style.display='flex';
+  setTimeout(()=>$('diy-title').focus(),50);
 }
-
 function closeDIY(){ $('diy-modal').style.display='none'; }
-
 function renderDIYPairs(){
-  const el = $('diy-pairs-list');
-  if(!el) return;
-  el.innerHTML = _diyPairs.map((p,i) => `
-    <div style="border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;margin-bottom:10px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">
-        <input class="diy-input" placeholder="Mot natif" value="${(p.native||'').replace(/"/g,'&quot;')}"
-          oninput="_diyPairs[${i}].native=this.value" style="font-size:.85rem;">
-        <input class="diy-input" placeholder="Traduction" value="${(p.target||'').replace(/"/g,'&quot;')}"
-          oninput="_diyPairs[${i}].target=this.value" style="font-size:.85rem;">
-        <button class="diy-del-btn" onclick="_diyPairs.splice(${i},1);renderDIYPairs()">✕</button>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        ${p.imgUrl
-          ? `<img src="${p.imgUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;" onerror="this.style.display='none'">`
-          : `<div style="width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🖼️</div>`}
-        <input class="diy-input" placeholder="URL image (ou cherche ci-dessous)"
-          value="${(p.imgUrl||'').replace(/"/g,'&quot;')}"
-          oninput="_diyPairs[${i}].imgUrl=this.value;renderDIYPairs()"
-          style="font-size:.74rem;flex:1;">
-        <button onclick="searchImgFor(${i})" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);
-          border-radius:8px;padding:6px 10px;color:#22d3ee;font-family:inherit;font-weight:800;
-          font-size:.72rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">🔍 Chercher</button>
-      </div>
-      <div id="img-results-${i}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:0;"></div>
-    </div>`).join('');
+  const el=$('diy-pairs-list');if(!el)return;
+  el.innerHTML=_diyPairs.map((p,i)=>{
+    const imgPart=p.imgUrl
+      ? '<img src="'+p.imgUrl+'" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;">'
+      : '<div style="width:44px;height:44px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;">IMG</div>';
+    return '<div style="border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;margin-bottom:8px;">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:7px;">'
+      +'<input class="diy-input" placeholder="Mot natif" value="'+(p.native||'').replace(/"/g,"&quot;")+'" oninput="_diyPairs['+i+'].native=this.value" style="font-size:.84rem;">'
+      +'<input class="diy-input" placeholder="Traduction" value="'+(p.target||'').replace(/"/g,"&quot;")+'" oninput="_diyPairs['+i+'].target=this.value" style="font-size:.84rem;">'
+      +'<button class="diy-del-btn" onclick="_diyPairs.splice('+i+',1);renderDIYPairs()">✕</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;align-items:center;">'
+      +imgPart
+      +'<input class="diy-input" placeholder="URL image (optionnel)" value="'+(p.imgUrl||'').replace(/"/g,"&quot;")+'" oninput="_diyPairs['+i+'].imgUrl=this.value;renderDIYPairs()" style="font-size:.73rem;flex:1;">'
+      +'<button onclick="searchImgFor('+i+')" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);border-radius:8px;padding:6px 9px;color:#22d3ee;font-family:inherit;font-weight:800;font-size:.7rem;cursor:pointer;white-space:nowrap;">🔍</button>'
+      +'</div>'
+      +'<div id="img-results-'+i+'" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;"></div>'
+      +'</div>';
+  }).join('');
 }
-
+function addDIYPair(){ _diyPairs.push({native:'',target:'',imgUrl:''});renderDIYPairs(); }
 async function searchImgFor(idx){
   const p=_diyPairs[idx];
-  const query=(p.native||p.target||'').trim();
-  if(!query){toast('Entre un mot d'abord');return;}
+  const q=(p.native||p.target||'').trim();
+  if(!q){toast('Entre un mot dabord');return;}
   const el=document.getElementById('img-results-'+idx);
   if(!el)return;
-  el.innerHTML='<span style="font-size:.74rem;color:var(--muted)">Recherche…</span>';
-
+  el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">Recherche...</span>';
   try{
-    // Wikimedia Commons — no API key, open license images
-    const url='https://commons.wikimedia.org/w/api.php?action=query'
-      +'&generator=search&gsrsearch='+encodeURIComponent(query)
-      +'&gsrnamespace=6&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=120'
-      +'&format=json&origin=*&gsrlimit=9';
-    const r=await fetch(url);
-    const d=await r.json();
-    const pages=Object.values(d?.query?.pages||{});
-    const imgs=pages.map(p=>p?.imageinfo?.[0]).filter(i=>i&&i.thumburl)
-      .filter(i=>!/\.svg$/i.test(i.url))  // skip SVG
-      .slice(0,6);
-
+    const apiUrl='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(q)+'&gsrnamespace=6&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=120&format=json&origin=*&gsrlimit=9';
+    const r=await fetch(apiUrl);const d=await r.json();
+    let imgs=Object.values(d?.query?.pages||{}).map(pg=>pg?.imageinfo?.[0]).filter(i=>i&&i.thumburl&&!/\.svg$/i.test(i.url)).slice(0,6);
     if(!imgs.length){
-      // Wikipedia thumbnail fallback
-      const wr=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(query));
-      const wd=await wr.json();
-      const thumb=wd?.thumbnail?.source;
-      if(thumb) imgs.push({thumburl:thumb,url:wd?.originalimage?.source||thumb});
+      const wr=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(q));
+      const wd=await wr.json();const th=wd?.thumbnail?.source;
+      if(th)imgs=[{thumburl:th,url:wd?.originalimage?.source||th}];
     }
-
-    if(!imgs.length){el.innerHTML='<span style="font-size:.74rem;color:var(--muted)">Aucune image trouvée</span>';return;}
-
-    el.innerHTML=imgs.map((img,j)=>
-      `<img src="${img.thumburl}" title="Cliquer pour choisir"
-        style="width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;
-          border:2px solid transparent;transition:border-color .15s;"
-        onmouseover="this.style.borderColor='#22d3ee'"
-        onmouseout="this.style.borderColor='transparent'"
-        onclick="pickDIYImg(${idx},'${img.url||img.thumburl}')"
-        onerror="this.style.display='none'">`
-    ).join('');
-  }catch(e){
-    el.innerHTML='<span style="font-size:.74rem;color:var(--muted)">Erreur réseau — colle une URL manuellement</span>';
-  }
+    if(!imgs.length){el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">Aucune image</span>';return;}
+    el.innerHTML='';
+    imgs.forEach(function(img){
+      const im=document.createElement('img');
+      im.src=img.thumburl;
+      im.title='Cliquer pour choisir';
+      im.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:border-color .15s;';
+      im.addEventListener('mouseover',function(){this.style.borderColor='#22d3ee';});
+      im.addEventListener('mouseout',function(){this.style.borderColor='transparent';});
+      im.addEventListener('click',function(){pickDIYImg(idx,img.url||img.thumburl);});
+      im.addEventListener('error',function(){this.remove();});
+      el.appendChild(im);
+    });
+  }catch(e){el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">Erreur — colle une URL</span>';}
 }
-
-function pickDIYImg(idx, url){
-  _diyPairs[idx].imgUrl=url;
-  renderDIYPairs();
-}
-
-function addDIYPair(){
-  _diyPairs.push({native:'',target:'',imgUrl:''});
-  renderDIYPairs();
-}
-
+function pickDIYImg(idx,url){ _diyPairs[idx].imgUrl=url; renderDIYPairs(); }
 function saveDIY(){
-  const title = ($('diy-title').value||'').trim();
+  const title=($('diy-title').value||'').trim();
   if(!title){ toast(t('diy_title_required')); return; }
-  const pairs = _diyPairs.filter(p=>p.native&&p.target).map(p=>({
-    native:p.native.trim(), target:p.target.trim(),
-    imgUrl:(p.imgUrl||'').trim()||undefined
-  }));
+  const pairs=_diyPairs.filter(p=>p.native&&p.target).map(p=>({native:p.native.trim(),target:p.target.trim(),imgUrl:(p.imgUrl||'').trim()||undefined}));
   if(pairs.length<2){ toast(t('diy_min_pairs')); return; }
   if(!U.diyLessons) U.diyLessons=[];
   U.diyLessons.push({title, level:S.level||'A1', pairs, created:Date.now()});
-  saveU();
-  closeDIY();
-  S._activeTopic='diy';
-  renderTopicTabs();
-  renderChaps();
-  toast(`✨ "${title}" `+t('diy_created').replace('{n}',pairs.length));
+  saveU();closeDIY();S._activeTopic='diy';renderTopicTabs();renderChaps();
+  toast('✨ "'+title+'" '+t('diy_created').replace('{n}',pairs.length));
 }
 function deleteDIY(idx){
   if(!confirm(t('diy_delete_confirm'))) return;
@@ -451,24 +411,18 @@ function closeQR(e){if(!e||e.target===$('qr-modal'))$('qr-modal').style.display=
 
 function openFlappyQR(){
   const N=LANGS[S.nL],T=LANGS[S.tL];
-  const base=location.href.split('?')[0].split('#')[0].replace('app.html','')+'flappy-game.html';
+  const base=location.href.split('?')[0].replace('app.html','')+'flappy-game.html';
   const name=encodeURIComponent((U&&U.name)||'Joueur');
-  const email=encodeURIComponent((U&&U.email)||'guest');
   const level=S.level||'any';
   const topic=S._activeTopic||'any';
-  const url=`${base}?nL=${S.nL}&tL=${S.tL}&name=${name}&email=${email}&level=${level}&topic=${topic}`;
-  sT('lbl-qr-title','🐦 FlappyLingo — Rejoins ma partie !');
-  sT('qr-sub',`${N.flag} → ${T.flag} · Niveau ${level} · ${topic==='any'?'Tout':topic}`);
+  const url=base+'?nL='+S.nL+'&tL='+S.tL+'&name='+name+'&level='+level+'&topic='+topic;
+  sT('lbl-qr-title','🐦 FlappyLingo — Rejoins !');
+  sT('qr-sub',N.flag+' → '+T.flag+' · Niveau '+level);
   sT('qr-url',url);
-  const cont=$('qr-container');
-  cont.innerHTML='';
-  try{
-    new QRCode(cont,{text:url,width:180,height:180,colorDark:'#16a34a',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
-  }catch(e){
-    cont.innerHTML=`<div style="padding:14px;font-size:.74rem;color:var(--muted);word-break:break-all;">${url}</div>`;
-  }
-  $('qr-modal').style.display='flex';
-  S._shareUrl=url;
+  const cont=$('qr-container');cont.innerHTML='';
+  try{new QRCode(cont,{text:url,width:180,height:180,colorDark:'#16a34a',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}
+  catch(e){cont.innerHTML='<div style="padding:14px;font-size:.74rem;word-break:break-all;">'+url+'</div>';}
+  $('qr-modal').style.display='flex';S._shareUrl=url;
 }
 function copyUrl(){navigator.clipboard?.writeText(S._shareUrl||'').then(()=>{const btn=event.target;btn.textContent='✅ Copié !';setTimeout(()=>btn.textContent='📋 Copier',2000);}).catch(()=>prompt('Lien :',S._shareUrl));}
 
@@ -708,7 +662,9 @@ function openGame(type) {
     ? `flappy-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&flappySkin=${fSkin}`
     : `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}`;
 
-  // Add listener BEFORE setting src so we don't miss getWordData
+  iframe.src = src;
+  overlay.style.display = 'flex';
+
   window._minigameListener = function(e) {
     if(e.data==='close'||e.data?.type==='close'){closeMiniGame();return;}
     if(!e.data||typeof e.data!=='object') return;
@@ -729,9 +685,6 @@ function openGame(type) {
     }
   };
   window.addEventListener('message', window._minigameListener);
-  // Set src after listener is ready
-  iframe.src = src;
-  overlay.style.display = 'flex';
 }
 
 function closeMiniGame() {

@@ -32,34 +32,46 @@ applyUILang();
 (async function(){
   const saved=loadCurrent();
   if(saved){
+    // Show loading state immediately so user sees something
+    const tp=document.getElementById('screen-theme-picker');
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+
+    // Try localStorage first (instant)
+    const usersLocal=loadUsers();
+    if(usersLocal&&usersLocal[saved]){
+      U=usersLocal[saved];
+      afterLogin();
+      // Then try to refresh from Supabase in background
+      loadUserFromDB(saved).then(fresh=>{
+        if(fresh&&U){U=fresh;updateTopBar();}
+      }).catch(()=>{});
+      return;
+    }
+
+    // No local data — try Supabase with loading indicator
+    if(tp){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      const load=document.getElementById('screen-loading');
+      if(load)load.classList.add('active');
+    }
     try{
       const loaded=await loadUserFromDB(saved);
       if(loaded){U=loaded;afterLogin();return;}
     }catch(e){}
-    const users=loadUsers();
-    if(users[saved]){U=users[saved];afterLogin();return;}
+
+    // Nothing worked — go to login
+    window.location.href='index.html';
+    return;
   }
   // No saved session at all — go to landing
-  if (!saved) {
-    if (!localStorage.getItem('lq_theme')) {
-      const tp = document.getElementById('screen-theme-picker');
-      if (tp) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); tp.classList.add('active'); }
+  if(!saved){
+    if(!localStorage.getItem('lq_theme')){
+      const tp=document.getElementById('screen-theme-picker');
+      if(tp){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));tp.classList.add('active');}
     } else {
-      window.location.href = 'index.html';
+      window.location.href='index.html';
     }
     return;
   }
-  // Had a session key but Supabase was slow — wait longer then try localStorage
-  setTimeout(()=>{
-    if (!U) {
-      const users = loadUsers();
-      if (users && users[saved]) {
-        U = users[saved]; afterLogin();
-      } else {
-        window.location.href = 'index.html';
-      }
-    }
-  }, 4000);
 })();
 // Dividend tick every 60s while app is open
 setInterval(()=>{if(U){calcDividends();const db=$('div-banner');if(U.pendingDiv>=1&&db) db.style.display='flex';}},60000);
