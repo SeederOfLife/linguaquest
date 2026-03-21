@@ -595,11 +595,8 @@ function openGame(type) {
   overlay.style.display = 'flex';
 
   window._minigameListener = function(e) {
-    if(!e.data||typeof e.data!=='object') {
-      if(e.data==='close') closeMiniGame();
-      return;
-    }
-    if(e.data.type==='close') closeMiniGame();
+    if(e.data==='close'||e.data?.type==='close'){closeMiniGame();return;}
+    if(!e.data||typeof e.data!=='object') return;
     if(e.data.type==='getWordData') {
       iframe.contentWindow.postMessage({
         type:'wordData',

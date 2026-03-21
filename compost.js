@@ -19,9 +19,9 @@ function openCompostGame(opts) {
   overlay.style.display = 'flex';
 
   window._compostListener = function(e) {
+    // Handle both string 'close' and {type:'close'}
+    if (e.data === 'close' || e.data?.type === 'close') { closeCompostGame(); return; }
     if (!e.data || typeof e.data !== 'object') return;
-
-    if (e.data.type === 'close') closeCompostGame();
 
     if (e.data.type === 'getWordData') {
       // Send WD + CHAPTERS to iframe
