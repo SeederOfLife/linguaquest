@@ -315,21 +315,51 @@ function renderChaps(){
 }
 
 // ── DIY Lessons ──────────────────────────────────
+// ── DIY LESSON WITH IMAGES ────────────────────────────────────
+let _diyPairs = []; // [{native, target, imgUrl}]
+
 function openDIY(){
-  $('diy-title').value='';
-  $('diy-words').value='';
-  $('diy-modal').style.display='flex';
-  setTimeout(()=>$('diy-title').focus(),50);
+  _diyPairs = [{native:'',target:'',imgUrl:''}];
+  $('diy-title').value = '';
+  renderDIYPairs();
+  $('diy-modal').style.display = 'flex';
+  setTimeout(()=>$('diy-title').focus(), 50);
 }
+
 function closeDIY(){ $('diy-modal').style.display='none'; }
+
+function renderDIYPairs(){
+  const el = $('diy-pairs-list');
+  if(!el) return;
+  el.innerHTML = _diyPairs.map((p,i) => `
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">
+      <input class="diy-input" placeholder="Mot natif" value="${(p.native||'').replace(/"/g,'&quot;')}"
+        oninput="_diyPairs[${i}].native=this.value" style="font-size:.85rem;">
+      <input class="diy-input" placeholder="Traduction" value="${(p.target||'').replace(/"/g,'&quot;')}"
+        oninput="_diyPairs[${i}].target=this.value" style="font-size:.85rem;">
+      <button class="diy-del-btn" onclick="_diyPairs.splice(${i},1);renderDIYPairs()">✕</button>
+      <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;">
+        <input class="diy-input" placeholder="🖼️ URL image (optionnel)"
+          value="${(p.imgUrl||'').replace(/"/g,'&quot;')}"
+          oninput="_diyPairs[${i}].imgUrl=this.value"
+          style="font-size:.75rem;flex:1;">
+        ${p.imgUrl ? `<img src="${p.imgUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:8px;" onerror="this.style.display='none'">` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function addDIYPair(){
+  _diyPairs.push({native:'',target:'',imgUrl:''});
+  renderDIYPairs();
+}
+
 function saveDIY(){
-  const title=($('diy-title').value||'').trim();
-  const raw=($('diy-words').value||'');
+  const title = ($('diy-title').value||'').trim();
   if(!title){ toast(t('diy_title_required')); return; }
-  const pairs=raw.split('\\n').map(l=>l.trim()).filter(l=>l.includes('=')).map(l=>{
-    const [a,b]=l.split('=').map(s=>s.trim());
-    return {native:a,target:b};
-  }).filter(p=>p.native&&p.target);
+  const pairs = _diyPairs.filter(p=>p.native&&p.target).map(p=>({
+    native:p.native.trim(), target:p.target.trim(),
+    imgUrl:(p.imgUrl||'').trim()||undefined
+  }));
   if(pairs.length<2){ toast(t('diy_min_pairs')); return; }
   if(!U.diyLessons) U.diyLessons=[];
   U.diyLessons.push({title, level:S.level||'A1', pairs, created:Date.now()});
@@ -353,13 +383,35 @@ function startDIYLesson(d){
   sT('bc-p3','DIY'); sT('bc-l3',d.level||''); sT('bc-c3',d.title);
   goTo('game-select');
 }
-function goToSel(cid){S.chap=cid;const cs=CHAPTERS[S.level]||[],ch=cs.find(c=>c.id===cid);const N=LANGS[S.nL],T=LANGS[S.tL];sT('bc-p3',`${N.flag}→${T.flag}`);sT('bc-l3',S.level);sT('bc-c3',ch?.title?.[S.nL]||cid);sT('gsel-title',ch?.title?.[S.nL]||cid);sT('gsel-sub',ch?.subtitle?.[S.nL]||'');goTo('game-select');}
+function goToSel(cid){S._diyLesson=null;S.chap=cid;const cs=CHAPTERS[S.level]||[],ch=cs.find(c=>c.id===cid);const N=LANGS[S.nL],T=LANGS[S.tL];sT('bc-p3',`${N.flag}→${T.flag}`);sT('bc-l3',S.level);sT('bc-c3',ch?.title?.[S.nL]||cid);sT('gsel-title',ch?.title?.[S.nL]||cid);sT('gsel-sub',ch?.subtitle?.[S.nL]||'');goTo('game-select');}
 
 // ══════════════════════════════════════════════
 // QR
 // ══════════════════════════════════════════════
 function openQR(cid){const ch=(CHAPTERS[S.level]||[]).find(c=>c.id===cid)||{};const title=ch.title?.[S.nL]||cid;const N=LANGS[S.nL],T=LANGS[S.tL];const base=location.href.split('?')[0].split('#')[0];const url=`${base}?n=${S.nL}&t=${S.tL}&l=${S.level}&c=${cid}`;sT('qr-sub',`${N.flag} → ${T.flag} · ${S.level} · ${title}`);sT('qr-url',url);const cont=$('qr-container');cont.innerHTML='';try{new QRCode(cont,{text:url,width:180,height:180,colorDark:'#1e1e35',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){cont.innerHTML=`<div style="padding:14px;font-size:.74rem;color:var(--muted)">${url}</div>`;}$('qr-modal').style.display='flex';S._shareUrl=url;}
 function closeQR(e){if(!e||e.target===$('qr-modal'))$('qr-modal').style.display='none';}
+
+function openFlappyQR(){
+  const N=LANGS[S.nL],T=LANGS[S.tL];
+  const base=location.href.split('?')[0].split('#')[0].replace('app.html','')+'flappy-game.html';
+  const name=encodeURIComponent((U&&U.name)||'Joueur');
+  const email=encodeURIComponent((U&&U.email)||'guest');
+  const level=S.level||'any';
+  const topic=S._activeTopic||'any';
+  const url=`${base}?nL=${S.nL}&tL=${S.tL}&name=${name}&email=${email}&level=${level}&topic=${topic}`;
+  sT('lbl-qr-title','🐦 FlappyLingo — Rejoins ma partie !');
+  sT('qr-sub',`${N.flag} → ${T.flag} · Niveau ${level} · ${topic==='any'?'Tout':topic}`);
+  sT('qr-url',url);
+  const cont=$('qr-container');
+  cont.innerHTML='';
+  try{
+    new QRCode(cont,{text:url,width:180,height:180,colorDark:'#16a34a',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+  }catch(e){
+    cont.innerHTML=`<div style="padding:14px;font-size:.74rem;color:var(--muted);word-break:break-all;">${url}</div>`;
+  }
+  $('qr-modal').style.display='flex';
+  S._shareUrl=url;
+}
 function copyUrl(){navigator.clipboard?.writeText(S._shareUrl||'').then(()=>{const btn=event.target;btn.textContent='✅ Copié !';setTimeout(()=>btn.textContent='📋 Copier',2000);}).catch(()=>prompt('Lien :',S._shareUrl));}
 
 // ══════════════════════════════════════════════

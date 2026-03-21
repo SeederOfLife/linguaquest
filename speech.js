@@ -116,19 +116,8 @@ function speakAnswer(text, lang) {
   setTimeout(() => speakWord(text, lang || S.tL, { rate: 0.78 }), 220);
 }
 
-// Speak a congratulatory/results sentence
-function speakResult(correct, lang) {
-  const msgs = {
-    fr: { win: 'Bravo ! Excellent travail !', lose: 'Continue comme ça !' },
-    en: { win: 'Well done! Excellent work!', lose: 'Keep it up!' },
-    es: { win: '¡Muy bien! ¡Excelente trabajo!', lose: '¡Sigue así!' },
-    de: { win: 'Gut gemacht! Ausgezeichnete Arbeit!', lose: 'Weiter so!' },
-    cs: { win: 'Výborně! Skvělá práce!', lose: 'Pokračuj dál!' },
-  };
-  const l = lang || S.nL || 'fr';
-  const msg = (msgs[l] || msgs.fr)[correct ? 'win' : 'lose'];
-  setTimeout(() => speakWord(msg, l, { rate: 0.9, pitch: correct ? 1.1 : 1.0 }), 400);
-}
+// speakResult disabled — was too annoying after every answer
+function speakResult(correct, lang) { /* disabled */ }
 
 // ── Tooltip ──────────────────────────────────────────────────────
 let _tooltipTimer = null;

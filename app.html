@@ -233,12 +233,19 @@
 
 <!-- ══════════════════ DIY LESSON MODAL ══════════════════ -->
 <div class="modal-overlay" id="diy-modal" style="display:none;" onclick="if(event.target===this)closeDIY()">
-  <div class="modal-box" style="max-width:480px;width:94%;">
+  <div class="modal-box" style="max-width:520px;width:96%;max-height:90vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeDIY()">✕</button>
     <div style="font-weight:900;font-size:1.1rem;margin-bottom:14px;">✏️ Créer une leçon</div>
-    <input id="diy-title" class="diy-input" placeholder="Titre de la leçon…" style="margin-bottom:10px;">
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">Paires de mots — un par ligne : <strong>mot natif = traduction</strong></div>
-    <textarea id="diy-words" class="diy-textarea" placeholder="chien = dog&#10;chat = cat&#10;maison = house"></textarea>
-    <div style="display:flex;gap:8px;margin-top:12px;">
+    <input id="diy-title" class="diy-input" placeholder="Titre de la leçon…" style="margin-bottom:12px;">
+
+    <!-- Word pairs with image support -->
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">
+      Ajoute tes mots — image optionnelle par paire :
+    </div>
+    <div id="diy-pairs-list"></div>
+    <button class="diy-add-btn" onclick="addDIYPair()" style="margin-top:6px;">＋ Ajouter une paire</button>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn btn-secondary" onclick="closeDIY()" style="flex:1;">Annuler</button>
       <button class="btn btn-primary" onclick="saveDIY()" style="flex:2;">Enregistrer →</button>
     </div>
@@ -257,6 +264,14 @@
   <div class="section-sub" id="gsel-sub"></div>
   <div style="display:flex;justify-content:flex-end;width:100%;max-width:700px;margin-bottom:7px;">
     <span class="mix-badge" id="lbl-mix-badge">🎲 Mode Mixte recommandé</span>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;width:100%;max-width:700px;">
+    <button class="btn-qr" onclick="openFlappyQR()" style="flex:1;justify-content:center;">
+      🐦 QR Flappy Bird
+    </button>
+    <button class="btn-qr" onclick="openQR(S.chap)" style="flex:1;justify-content:center;">
+      📱 QR Exercices
+    </button>
   </div>
   <div class="game-types">
 
@@ -294,6 +309,9 @@
   <div class="question-card">
     <div class="q-dir" id="g-dir"></div>
     <div class="q-num" id="g-num"></div>
+    <div id="g-img-wrap" style="display:none;margin-bottom:10px;">
+      <img id="g-img" src="" style="max-height:120px;max-width:100%;border-radius:12px;object-fit:contain;">
+    </div>
     <div class="q-text-wrap"><div class="q-text" id="g-text"></div></div>
     <div class="q-hint" id="g-hint"></div>
   </div>
