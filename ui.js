@@ -332,20 +332,78 @@ function renderDIYPairs(){
   const el = $('diy-pairs-list');
   if(!el) return;
   el.innerHTML = _diyPairs.map((p,i) => `
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">
-      <input class="diy-input" placeholder="Mot natif" value="${(p.native||'').replace(/"/g,'&quot;')}"
-        oninput="_diyPairs[${i}].native=this.value" style="font-size:.85rem;">
-      <input class="diy-input" placeholder="Traduction" value="${(p.target||'').replace(/"/g,'&quot;')}"
-        oninput="_diyPairs[${i}].target=this.value" style="font-size:.85rem;">
-      <button class="diy-del-btn" onclick="_diyPairs.splice(${i},1);renderDIYPairs()">✕</button>
-      <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;">
-        <input class="diy-input" placeholder="🖼️ URL image (optionnel)"
-          value="${(p.imgUrl||'').replace(/"/g,'&quot;')}"
-          oninput="_diyPairs[${i}].imgUrl=this.value"
-          style="font-size:.75rem;flex:1;">
-        ${p.imgUrl ? `<img src="${p.imgUrl}" style="width:36px;height:36px;object-fit:cover;border-radius:8px;" onerror="this.style.display='none'">` : ''}
+    <div style="border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">
+        <input class="diy-input" placeholder="Mot natif" value="${(p.native||'').replace(/"/g,'&quot;')}"
+          oninput="_diyPairs[${i}].native=this.value" style="font-size:.85rem;">
+        <input class="diy-input" placeholder="Traduction" value="${(p.target||'').replace(/"/g,'&quot;')}"
+          oninput="_diyPairs[${i}].target=this.value" style="font-size:.85rem;">
+        <button class="diy-del-btn" onclick="_diyPairs.splice(${i},1);renderDIYPairs()">✕</button>
       </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${p.imgUrl
+          ? `<img src="${p.imgUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;" onerror="this.style.display='none'">`
+          : `<div style="width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🖼️</div>`}
+        <input class="diy-input" placeholder="URL image (ou cherche ci-dessous)"
+          value="${(p.imgUrl||'').replace(/"/g,'&quot;')}"
+          oninput="_diyPairs[${i}].imgUrl=this.value;renderDIYPairs()"
+          style="font-size:.74rem;flex:1;">
+        <button onclick="searchImgFor(${i})" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);
+          border-radius:8px;padding:6px 10px;color:#22d3ee;font-family:inherit;font-weight:800;
+          font-size:.72rem;cursor:pointer;white-space:nowrap;flex-shrink:0;">🔍 Chercher</button>
+      </div>
+      <div id="img-results-${i}" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;min-height:0;"></div>
     </div>`).join('');
+}
+
+async function searchImgFor(idx){
+  const p=_diyPairs[idx];
+  const query=(p.native||p.target||'').trim();
+  if(!query){toast('Entre un mot d'abord');return;}
+  const el=document.getElementById('img-results-'+idx);
+  if(!el)return;
+  el.innerHTML='<span style="font-size:.74rem;color:var(--muted)">Recherche…</span>';
+
+  try{
+    // Wikimedia Commons — no API key, open license images
+    const url='https://commons.wikimedia.org/w/api.php?action=query'
+      +'&generator=search&gsrsearch='+encodeURIComponent(query)
+      +'&gsrnamespace=6&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=120'
+      +'&format=json&origin=*&gsrlimit=9';
+    const r=await fetch(url);
+    const d=await r.json();
+    const pages=Object.values(d?.query?.pages||{});
+    const imgs=pages.map(p=>p?.imageinfo?.[0]).filter(i=>i&&i.thumburl)
+      .filter(i=>!/\.svg$/i.test(i.url))  // skip SVG
+      .slice(0,6);
+
+    if(!imgs.length){
+      // Wikipedia thumbnail fallback
+      const wr=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(query));
+      const wd=await wr.json();
+      const thumb=wd?.thumbnail?.source;
+      if(thumb) imgs.push({thumburl:thumb,url:wd?.originalimage?.source||thumb});
+    }
+
+    if(!imgs.length){el.innerHTML='<span style="font-size:.74rem;color:var(--muted)">Aucune image trouvée</span>';return;}
+
+    el.innerHTML=imgs.map((img,j)=>
+      `<img src="${img.thumburl}" title="Cliquer pour choisir"
+        style="width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;
+          border:2px solid transparent;transition:border-color .15s;"
+        onmouseover="this.style.borderColor='#22d3ee'"
+        onmouseout="this.style.borderColor='transparent'"
+        onclick="pickDIYImg(${idx},'${img.url||img.thumburl}')"
+        onerror="this.style.display='none'">`
+    ).join('');
+  }catch(e){
+    el.innerHTML='<span style="font-size:.74rem;color:var(--muted)">Erreur réseau — colle une URL manuellement</span>';
+  }
+}
+
+function pickDIYImg(idx, url){
+  _diyPairs[idx].imgUrl=url;
+  renderDIYPairs();
 }
 
 function addDIYPair(){
