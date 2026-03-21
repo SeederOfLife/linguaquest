@@ -214,7 +214,7 @@ function startGame(){
   wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
   if(!wordList.length){alert('Pas de mots disponibles !');return;}
   score=0; totalQ=0; wordLog=[]; pipes=[];
-  bird={x:W*0.25,y:H*0.45,vy:-3,rot:0,alive:true}; // slight upward start
+  bird={x:Math.round(W*0.25),y:Math.round(H*0.45),vy:-2,rot:0,alive:true};
   gameActive=true;
   document.getElementById('start-scr').classList.remove('on');
   document.getElementById('hud').style.display='flex';
@@ -263,51 +263,62 @@ function update(){
   if(bird.y<10){bird.y=10;bird.vy=0;}
   if(bird.y>H-30&&frameN>30){die();} // grace period at start
 
-  // Spawn pipes
-  if(pipes.length===0||pipes[pipes.length-1].x<-20) spawnPipe();
+  const PW = 68; // pipe wall width
 
-  // Move pipes
-  pipes.forEach(p=>{
-    p.x-=PIPE_SPEED;
-    if(!p.passed&&p.x+PIPE_W<bird.x){
-      p.passed=true;
-    }
-    // Collision with full-width pipe
-    const pw=72;
-    if(bird.x+12>p.x && bird.x-12<p.x+pw && !p.passed){
-      // Check if bird is in top hole, bottom hole, or solid
-      const inTopHole = bird.y-14 > p.topHoleY && bird.y+14 < p.topHoleY+HOLE_H;
-      const inBotHole = bird.y-14 > p.botHoleY && bird.y+14 < p.botHoleY+HOLE_H;
+  // Move all pipes
+  for(let i=0;i<pipes.length;i++){
+    const p=pipes[i];
+    p.x -= PIPE_SPEED;
+  }
 
-      if(!inTopHole && !inBotHole){
-        // Hit solid section
-        die();
-      } else if(!p.scored){
-        p.scored=true;
-        const correct=(inTopHole&&p.topCorrect)||(inBotHole&&p.botCorrect);
-        const chosenLabel=inTopHole?p.topLabel:p.botLabel;
-        if(correct){
-          score+=10; totalQ++;
-          document.getElementById('score-display').textContent='⭐ '+score;
-          speak(currentQ.target,tL);
-          wordLog.push({word:currentQ.native,ans:currentQ.target,correct:true});
-          spawnScoreParticles(bird.x,bird.y,'#22c55e');
-          pickQuestion();
-        } else {
-          score=Math.max(0,score-3);
-          document.getElementById('score-display').textContent='⭐ '+score;
-          wordLog.push({word:currentQ.native,ans:chosenLabel,correct:false});
-          spawnScoreParticles(bird.x,bird.y,'#ef4444');
-        }
+  // Spawn next pipe as soon as the current one has passed the center of screen
+  if(pipes.length===0){
+    spawnPipe();
+  } else {
+    const last=pipes[pipes.length-1];
+    if(last.x + PW < W*0.5) spawnPipe(); // new pipe once current is past center
+  }
+
+  // Remove pipes that are off screen left
+  pipes=pipes.filter(p=>p.x+PW > -10);
+
+  // Collision — check each pipe
+  for(let i=0;i<pipes.length;i++){
+    const p=pipes[i];
+    // Bird's hitbox: circle radius ~12px
+    const bx=bird.x, by=bird.y, br=12;
+
+    // Is bird horizontally overlapping this pipe?
+    if(bx+br < p.x || bx-br > p.x+PW) continue; // no overlap
+
+    // Bird is in pipe's x range — check vertical position
+    const inTop = by+br < p.topHoleY+HOLE_H && by-br > p.topHoleY;
+    const inBot = by+br < p.botHoleY+HOLE_H && by-br > p.botHoleY;
+
+    if(!inTop && !inBot){
+      // Hit solid — die
+      if(!p.scored) die();
+    } else if(!p.scored){
+      // Passed through a hole — score it
+      p.scored=true;
+      const correct=(inTop&&p.topCorrect)||(inBot&&p.botCorrect);
+      const label=inTop?p.topLabel:p.botLabel;
+      if(correct){
+        score+=10; totalQ++;
+        document.getElementById('score-display').textContent='⭐ '+score;
+        speak(currentQ?.target||'',tL);
+        wordLog.push({word:currentQ?.native||'',ans:label,correct:true});
+        spawnScoreParticles(bx,by,'#22c55e');
+        pickQuestion();
+        if(totalQ>=12) endGame();
+      } else {
+        score=Math.max(0,score-3);
+        document.getElementById('score-display').textContent='⭐ '+score;
+        wordLog.push({word:currentQ?.native||'',ans:label,correct:false});
+        spawnScoreParticles(bx,by,'#ef4444');
       }
-      // Mark passed when fully through
-      if(bird.x > p.x + 20) p.passed=true;
     }
-  });
-  pipes=pipes.filter(p=>p.x>-PIPE_W-20);
-
-  // Win at 12 correct
-  if(totalQ>=12) endGame();
+  }
 
   // BG particles
   bgParticles.forEach(p=>{p.y-=p.speed;if(p.y<-5)p.y=H+5;});
@@ -360,7 +371,7 @@ function render(){
 }
 
 function drawPipe(p){
-  const pw = 72; // wall thickness
+  const pw = 68; // wall thickness
 
   ctx.fillStyle = p.color;
   // Top block (above top hole)
