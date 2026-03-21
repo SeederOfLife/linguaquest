@@ -46,12 +46,14 @@ canvas{display:block;position:absolute;top:0;left:0;}
 .recap-correct{color:#22c55e;}
 .recap-wrong{color:#ef4444;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="ui">
   <div id="hud" style="display:none;">
     <div id="score-display">⭐ 0</div>
+    <div id="op-score" style="font-size:.75rem;color:#94a3b8;font-weight:800;display:none;"></div>
     <div id="q-display" style="font-size:.88rem;font-weight:900;color:#c4b5fd;"></div>
     <button id="btn-close" onclick="window.parent.postMessage('close','*')">✕</button>
   </div>
@@ -63,8 +65,27 @@ canvas{display:block;position:absolute;top:0;left:0;}
     <div style="font-size:.75rem;font-weight:800;color:var(--muted,#64748b);text-transform:uppercase;
       letter-spacing:1px;margin-bottom:6px;">Choisis ton oiseau</div>
     <div class="skin-grid" id="skin-grid"></div>
-    <button class="btn btn-green" onclick="startGame()">▶ Jouer</button>
-    <button class="btn btn-gray" style="margin-top:6px;" onclick="window.parent.postMessage('close','*')">← Retour</button>
+    <!-- Level/topic quick selectors -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;" id="flappy-level-btns">
+      <button class="btn-sm-sel active" onclick="setFlappyFilter(this,'level','any')">🔀 Tout</button>
+      <button class="btn-sm-sel" onclick="setFlappyFilter(this,'level','A1')">A1</button>
+      <button class="btn-sm-sel" onclick="setFlappyFilter(this,'level','A2')">A2</button>
+      <button class="btn-sm-sel" onclick="setFlappyFilter(this,'level','B1')">B1</button>
+      <button class="btn-sm-sel" onclick="setFlappyFilter(this,'level','B2')">B2</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;" id="flappy-topic-btns">
+      <button class="btn-sm-sel active" onclick="setFlappyFilter(this,'topic','any')">🔀 Tout</button>
+      <button class="btn-sm-sel" onclick="setFlappyFilter(this,'topic','conv')">💬 Conv.</button>
+      <button class="btn-sm-sel" onclick="setFlappyFilter(this,'topic','vocab')">📚 Vocab</button>
+      <button class="btn-sm-sel" onclick="setFlappyFilter(this,'topic','gram')">✏️ Gram.</button>
+    </div>
+    <button class="btn btn-green" onclick="startGame()">▶ Solo</button>
+    <div style="display:flex;gap:8px;margin-top:8px;width:100%;max-width:280px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="createFlappyRoom()">🏠 Créer</button>
+      <input id="flappy-join-input" style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px;color:#fff;font-family:inherit;font-weight:800;text-transform:uppercase;letter-spacing:2px;text-align:center;font-size:.85rem;" placeholder="CODE" maxlength="5" oninput="this.value=this.value.toUpperCase()">
+      <button class="btn btn-primary" style="flex:1;" onclick="joinFlappyRoom()">→ Join</button>
+    </div>
+    <button class="btn btn-gray" style="margin-top:8px;" onclick="window.parent.postMessage('close','*')">← Retour</button>
   </div>
 
   <!-- RESULT SCREEN -->
@@ -79,6 +100,11 @@ canvas{display:block;position:absolute;top:0;left:0;}
 </div>
 
 <script>
+// ── PARAMS ───────────────────────────────────────────────────
+const _P   = new URLSearchParams(location.search);
+const pLevel = _P.get('level')||'any';
+const pTopic = _P.get('topic')||'any';
+
 const SKINS=[
   {id:'bluebird',icon:'🐦',name:'Blue',body:'#3b82f6',wing:'#1d4ed8',beak:'#fbbf24'},
   {id:'parrot',  icon:'🦜',name:'Parrot',body:'#22c55e',wing:'#16a34a',beak:'#f97316'},
@@ -114,9 +140,111 @@ const FALLBACK={hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},
   music:{fr:'Musique',en:'Music',es:'Música',de:'Musik',cs:'Hudba'},
 };
 
+// ── MULTIPLAYER ──────────────────────────────────────────────
+const SB_URL='https://luufdddauoucmjiixrax.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4';
+let _SB=null;
+try{_SB=supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+
+const pName  = decodeURIComponent(_P.get('name') ||'Joueur');
+const pEmail = decodeURIComponent(_P.get('email')||'guest@local');
+let roomCode=null, roomChannel=null, isHost=false, roomPlayers={};
+let opponentScore=0, opponentName='';
+
+function _randRoomCode(){
+  return Array.from({length:5},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+}
+
+async function createFlappyRoom(){
+  if(!_SB){toast('Connexion indisponible');return;}
+  roomCode=_randRoomCode(); isHost=true;
+  roomPlayers={};
+  roomPlayers[pEmail]={name:pName,skin:mySkin.id,email:pEmail};
+  roomChannel=_SB.channel('flappy-'+roomCode,{config:{broadcast:{self:true}}})
+    .on('broadcast',{event:'join'},({payload})=>{
+      roomPlayers[payload.email]=payload;
+      renderRoomPlayers();
+      document.getElementById('flappy-start-multi-btn').disabled=false;
+    })
+    .on('broadcast',{event:'score'},({payload})=>{
+      if(payload.email!==pEmail){
+        opponentScore=payload.score;
+        opponentName=payload.name;
+        document.getElementById('op-score').textContent=`${opponentName}: ${opponentScore}`;
+      }
+    })
+    .subscribe(s=>{
+      if(s==='SUBSCRIBED')
+        roomChannel.send({type:'broadcast',event:'join',payload:{name:pName,skin:mySkin.id,email:pEmail}});
+    });
+  showFlappyRoom();
+}
+
+async function joinFlappyRoom(){
+  const code=(document.getElementById('flappy-join-input')?.value||'').trim().toUpperCase();
+  if(!code||code.length<4){alert('Entre un code valide');return;}
+  if(!_SB){toast('Connexion indisponible');return;}
+  roomCode=code; isHost=false;
+  roomChannel=_SB.channel('flappy-'+code,{config:{broadcast:{self:true}}})
+    .on('broadcast',{event:'join'},({payload})=>{roomPlayers[payload.email]=payload;renderRoomPlayers();})
+    .on('broadcast',{event:'start'},({payload})=>{
+      wordList=(payload.words||[]);
+      if(!wordList.length)wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
+      launchGame();
+    })
+    .on('broadcast',{event:'score'},({payload})=>{
+      if(payload.email!==pEmail){opponentScore=payload.score;opponentName=payload.name;
+        const el=document.getElementById('op-score');if(el)el.textContent=`${opponentName}: ${opponentScore}`;}
+    })
+    .subscribe(s=>{
+      if(s==='SUBSCRIBED')
+        roomChannel.send({type:'broadcast',event:'join',payload:{name:pName,skin:mySkin.id,email:pEmail}});
+    });
+  showFlappyRoom();
+}
+
+function showFlappyRoom(){
+  document.getElementById('start-scr').classList.remove('on');
+  document.getElementById('room-scr').classList.add('on');
+  document.getElementById('flappy-room-code').textContent=roomCode;
+  renderRoomPlayers();
+}
+
+function renderRoomPlayers(){
+  const pl=Object.values(roomPlayers);
+  document.getElementById('room-players-list').innerHTML=pl.map(p=>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+      <span style="font-size:1.2rem;">${SKINS.find(s=>s.id===p.skin)?.icon||'🐦'}</span>
+      <span style="font-weight:800;">${p.name}${p.email===pEmail?' (toi)':''}</span>
+    </div>`).join('');
+}
+
+function startMultiGame(){
+  const words=getWords().sort(()=>Math.random()-.5).slice(0,15);
+  roomChannel?.send({type:'broadcast',event:'start',payload:{words}});
+  wordList=words; launchGame();
+}
+
+function broadcastScore(){
+  roomChannel?.send({type:'broadcast',event:'score',payload:{email:pEmail,name:pName,score}});
+}
+
 function getWords(){
   const src=Object.keys(WD).length>5?WD:FALLBACK;
-  return Object.entries(src).filter(([id,w])=>w[nL]&&w[tL])
+  let allowed=null;
+  if(CHAPTERS&&(pLevel!=='any'||pTopic!=='any')){
+    const ids=new Set();
+    Object.entries(CHAPTERS).forEach(([lv,chs])=>{
+      if(pLevel!=='any'&&lv!==pLevel)return;
+      chs.forEach(ch=>{
+        if(pTopic!=='any'&&ch.topic!==pTopic)return;
+        (ch.wids||[]).forEach(id=>ids.add(id));
+      });
+    });
+    if(ids.size>=5)allowed=ids;
+  }
+  return Object.entries(src)
+    .filter(([id,w])=>w[nL]&&w[tL]&&(!allowed||allowed.has(id)))
     .map(([id,w])=>({id,native:w[nL],target:w[tL]}));
 }
 
@@ -173,32 +301,41 @@ function resize(){
 }
 
 function pickQuestion(){
-  if(!wordList.length)return;
-  currentQ=wordList[Math.floor(Math.random()*wordList.length)];
-  // Update HUD
+  // Show the question of the first unscored pipe
+  const front = pipes.find(p=>!p.scored);
+  if(!front) return;
+  currentQ = front.question;
+  document.getElementById('q-display').textContent=currentQ.native+' → ?';
+  speak(currentQ.native,nL);
+}
+
+function updateHUDQuestion(){
+  const front = pipes.find(p=>!p.scored);
+  if(!front||!front.question) return;
+  if(currentQ?.id === front.question.id) return; // already showing
+  currentQ = front.question;
   document.getElementById('q-display').textContent=currentQ.native+' → ?';
   speak(currentQ.native,nL);
 }
 
 function spawnPipe(){
-  const others=wordList.filter(w=>w.id!==currentQ?.id);
-  const wrong=others[Math.floor(Math.random()*others.length)];
-  const correctTop=Math.random()>0.5;
-  // Top hole: starts at topHoleY, height HOLE_H
-  // Middle solid: HOLE_GAP
-  // Bottom hole: starts after middle solid
-  const minTop=50;
-  const maxTop=H-HOLE_H*2-HOLE_GAP-80;
-  const topHoleY=minTop+Math.random()*maxTop;
-  const midSolidY=topHoleY+HOLE_H;     // start of middle bar
-  const botHoleY=midSolidY+HOLE_GAP;   // start of bottom hole
+  if(!wordList.length) return;
+  // Each pipe gets its own fresh question
+  const q = wordList[Math.floor(Math.random()*wordList.length)];
+  const others = wordList.filter(w=>w.id!==q.id);
+  const wrong  = others[Math.floor(Math.random()*others.length)] || wordList[0];
+  const correctTop = Math.random()>0.5;
+  const minTop=60, maxTop=H-HOLE_H*2-HOLE_GAP-100;
+  const topHoleY = minTop+Math.random()*Math.max(10,maxTop);
+  const midSolidY = topHoleY+HOLE_H;
+  const botHoleY  = midSolidY+HOLE_GAP;
   const hue=Math.floor(Math.random()*360);
   pipes.push({
     x:W+20,
-    topHoleY, botHoleY,
-    midSolidY,
-    topLabel:  correctTop ? currentQ?.target : wrong?.target,
-    botLabel:  correctTop ? wrong?.target    : currentQ?.target,
+    topHoleY, botHoleY, midSolidY,
+    question: q,
+    topLabel:  correctTop ? q.target    : wrong.target,
+    botLabel:  correctTop ? wrong.target : q.target,
     topCorrect:correctTop,
     botCorrect:!correctTop,
     passed:false, scored:false,
@@ -207,31 +344,60 @@ function spawnPipe(){
   });
 }
 
-function startGame(){
-  resize(); // ensure W/H are correct before anything
-  if(!W||!H){setTimeout(startGame,100);return;}
+// Filter state
+let _flappyLevel='any', _flappyTopic='any';
+function setFlappyFilter(btn, type, val){
+  if(type==='level') _flappyLevel=val;
+  else _flappyTopic=val;
+  const grpId = type==='level' ? 'flappy-level-btns' : 'flappy-topic-btns';
+  document.querySelectorAll('#'+grpId+' .btn-sm-sel').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function leaveFlappyRoom(){
+  roomChannel?.send({type:'broadcast',event:'leave',payload:{email:pEmail}});
+  if(_SB&&roomChannel) _SB.removeChannel(roomChannel);
+  roomChannel=null; roomCode=null;
+  document.getElementById('room-scr').classList.remove('on');
+  document.getElementById('start-scr').classList.add('on');
+}
+
+// Separate launchGame from startGame so multiplayer can call it
+function launchGame(){
+  resize();
+  if(!W||!H){setTimeout(launchGame,100);return;}
   HOLE_H=Math.round(H*0.14); HOLE_GAP=Math.round(H*0.1);
-  wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
+  if(!wordList.length) wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
   if(!wordList.length){alert('Pas de mots disponibles !');return;}
-  score=0; totalQ=0; wordLog=[]; pipes=[];
+  score=0; totalQ=0; wordLog=[]; pipes=[]; opponentScore=0;
   bird={x:Math.round(W*0.25),y:Math.round(H*0.45),vy:-2,rot:0,alive:true};
   gameActive=true;
   document.getElementById('start-scr').classList.remove('on');
+  document.getElementById('room-scr').classList.remove('on');
   document.getElementById('hud').style.display='flex';
+  // Show opponent score if multiplayer
+  const opEl=document.getElementById('op-score');
+  if(opEl) opEl.style.display=roomCode?'':'none';
   document.getElementById('score-display').textContent='⭐ 0';
   initBgParticles();
-  pickQuestion();
   spawnPipe();
+  pickQuestion();
   cancelAnimationFrame(animId);
-  render(); // draw one frame immediately so player sees the game
+  render();
   animId=requestAnimationFrame(loop);
-
-  // Input — delay to avoid the "Play" button click triggering a flap
   setTimeout(()=>{
-    document.onclick=()=>{if(gameActive&&bird.alive){bird.vy=JUMP;bird.flapped=true;}};
+    document.onclick=()=>{if(gameActive&&bird.alive){bird.vy=JUMP;}};
     canvas.ontouchstart=e=>{if(gameActive&&bird.alive){bird.vy=JUMP;}e.preventDefault();};
-  }, 200);
+  },200);
   document.onkeydown=e=>{if(e.code==='Space'&&gameActive&&bird.alive){bird.vy=JUMP;e.preventDefault();}};
+}
+
+function startGame(){
+  resize();
+  if(!W||!H){setTimeout(startGame,100);return;}
+  // Apply filter overrides from UI selectors
+  wordList = getWords().sort(()=>Math.random()-.5).slice(0,15);
+  launchGame();
 }
 
 function initBgParticles(){
@@ -247,6 +413,7 @@ function initBgParticles(){
 function loop(){
   frameN++;
   try{update();}catch(e){console.error('update:',e);}
+  try{updateHUDQuestion();}catch(e){}
   try{render();}catch(e){console.error('render:',e);}
   if(gameActive) animId=requestAnimationFrame(loop);
 }
