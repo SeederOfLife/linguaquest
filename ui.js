@@ -598,9 +598,7 @@ function openGame(type) {
     ? `flappy-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&flappySkin=${fSkin}`
     : `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}`;
 
-  iframe.src = src;
-  overlay.style.display = 'flex';
-
+  // Add listener BEFORE setting src so we don't miss getWordData
   window._minigameListener = function(e) {
     if(e.data==='close'||e.data?.type==='close'){closeMiniGame();return;}
     if(!e.data||typeof e.data!=='object') return;
@@ -621,6 +619,9 @@ function openGame(type) {
     }
   };
   window.addEventListener('message', window._minigameListener);
+  // Set src after listener is ready
+  iframe.src = src;
+  overlay.style.display = 'flex';
 }
 
 function closeMiniGame() {
