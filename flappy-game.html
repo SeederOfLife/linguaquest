@@ -6,20 +6,25 @@
 <title>FlappyLingo</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;overflow:hidden;background:#060618;
-  font-family:'Nunito',system-ui,sans-serif;color:#f1f5f9;}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a18;
+  font-family:'Nunito',system-ui,sans-serif;color:#f1f5f9;display:flex;
+  align-items:center;justify-content:center;}
+/* Game container - fixed max size */
+#game-wrap{position:relative;width:min(480px,100vw);height:min(680px,100vh);
+  flex-shrink:0;overflow:hidden;border-radius:0;box-shadow:0 0 60px rgba(124,58,237,.25);}
+@media(min-width:520px){#game-wrap{border-radius:18px;}}
 
 /* The whole page is one game canvas */
-#game-canvas{position:fixed;inset:0;display:block;}
+#game-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
 
 /* Overlay screens sit on top */
-.scr{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;
+.scr{display:none;position:absolute;inset:0;flex-direction:column;align-items:center;
   justify-content:center;gap:10px;padding:24px;text-align:center;
   background:rgba(6,6,20,.93);z-index:20;}
 .scr.on{display:flex;}
 
 /* HUD */
-#hud{display:none;position:fixed;top:0;left:0;right:0;z-index:15;
+#hud{display:none;position:absolute;top:0;left:0;right:0;z-index:15;
   background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
   padding:8px 16px;align-items:center;justify-content:space-between;}
 .hud-on{display:flex!important;}
@@ -61,6 +66,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060618;
 </head>
 <body>
 
+<div id="game-wrap">
 <canvas id="game-canvas"></canvas>
 
 <!-- HUD -->
@@ -104,6 +110,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060618;
   <button class="btn btn-gray" style="margin-top:6px;"
     onclick="window.parent.postMessage('close','*')">← Menu</button>
 </div>
+
+</div><!-- /game-wrap -->
 
 <script>
 // ── WORD DATA ─────────────────────────────────────────────────
@@ -220,16 +228,14 @@ const ctx=canvas.getContext('2d');
 let W=0,H=0,animId=0,gameActive=false,frameN=0;
 
 function resize(){
-  W=window.innerWidth||400;
-  H=window.innerHeight||700;
-  canvas.width=W;
-  canvas.height=H;
+  W=420; H=560;
+  canvas.width=W; canvas.height=H;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
 }
 resize();
-window.addEventListener('resize',()=>{resize();});
 
 // ── GAME STATE ────────────────────────────────────────────────
-const GRAV=0.4,JUMP=-7.5,PIPE_SPEED=2,PW=70;
+const GRAV=0.36,JUMP=-6.5,PIPE_SPEED=1.4,PW=60;
 let HOLE_H=100,HOLE_GAP=80;
 let bird={x:0,y:0,vy:0,rot:0,alive:true};
 let pipes=[],bgStars=[];
@@ -238,8 +244,8 @@ let score=0,totalQ=0,wordLog=[],wordList=[],scoreParticles=[];
 // ── START ─────────────────────────────────────────────────────
 function startGame(){
   resize();
-  HOLE_H=Math.round(H*0.15);
-  HOLE_GAP=Math.round(H*0.11);
+  HOLE_H=Math.round(H*0.30); // large holes
+  HOLE_GAP=Math.round(H*0.22); // large gap
   wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
   if(!wordList.length){alert('Pas de mots disponibles — vérifie la langue choisie.');return;}
   score=0;totalQ=0;wordLog=[];pipes=[];scoreParticles=[];frameN=0;
