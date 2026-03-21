@@ -121,14 +121,16 @@ function getWords(){
 }
 
 function speak(text,lang){
-  if(!text||!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=SPEECH[lang]||'en-GB';u.rate=0.85;
-  const vs=window.speechSynthesis.getVoices();
-  const m=vs.find(v=>v.lang.toLowerCase().startsWith(u.lang.split('-')[0]));
-  if(m)u.voice=m;
-  window.speechSynthesis.speak(u);
+  try{
+    if(!text||!window.speechSynthesis)return;
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=SPEECH[lang]||'en-GB';u.rate=0.85;
+    const vs=window.speechSynthesis.getVoices();
+    const m=vs.find(v=>v.lang.toLowerCase().startsWith(u.lang.split('-')[0]));
+    if(m)u.voice=m;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
 }
 
 // Skin picker
@@ -212,7 +214,7 @@ function startGame(){
   wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
   if(!wordList.length){alert('Pas de mots disponibles !');return;}
   score=0; totalQ=0; wordLog=[]; pipes=[];
-  bird={x:W*0.25,y:H*0.45,vy:0,rot:0,alive:true};
+  bird={x:W*0.25,y:H*0.45,vy:-3,rot:0,alive:true}; // slight upward start
   gameActive=true;
   document.getElementById('start-scr').classList.remove('on');
   document.getElementById('hud').style.display='flex';
@@ -244,8 +246,8 @@ function initBgParticles(){
 
 function loop(){
   frameN++;
-  update();
-  render();
+  try{update();}catch(e){console.error('update:',e);}
+  try{render();}catch(e){console.error('render:',e);}
   if(gameActive) animId=requestAnimationFrame(loop);
 }
 
@@ -259,7 +261,7 @@ function update(){
 
   // Ceiling/floor
   if(bird.y<10){bird.y=10;bird.vy=0;}
-  if(bird.y>H-20){die();}
+  if(bird.y>H-30&&frameN>30){die();} // grace period at start
 
   // Spawn pipes
   if(pipes.length===0||pipes[pipes.length-1].x<-20) spawnPipe();
@@ -326,6 +328,7 @@ function die(){
 }
 
 function render(){
+  if(!ctx||!W||!H) return;
   // Sky gradient
   const sky=ctx.createLinearGradient(0,0,0,H);
   sky.addColorStop(0,'#060618');sky.addColorStop(1,'#0d1930');
