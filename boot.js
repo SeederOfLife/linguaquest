@@ -39,11 +39,27 @@ applyUILang();
     const users=loadUsers();
     if(users[saved]){U=users[saved];afterLogin();return;}
   }
-  // No session — redirect to landing (index.html) for login
-  // Small delay to let Supabase finish trying
+  // No saved session at all — go to landing
+  if (!saved) {
+    if (!localStorage.getItem('lq_theme')) {
+      const tp = document.getElementById('screen-theme-picker');
+      if (tp) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); tp.classList.add('active'); }
+    } else {
+      window.location.href = 'index.html';
+    }
+    return;
+  }
+  // Had a session key but Supabase was slow — wait longer then try localStorage
   setTimeout(()=>{
-    if(!U) window.location.href='index.html';
-  }, 1500);
+    if (!U) {
+      const users = loadUsers();
+      if (users && users[saved]) {
+        U = users[saved]; afterLogin();
+      } else {
+        window.location.href = 'index.html';
+      }
+    }
+  }, 4000);
 })();
 // Dividend tick every 60s while app is open
 setInterval(()=>{if(U){calcDividends();const db=$('div-banner');if(U.pendingDiv>=1&&db) db.style.display='flex';}},60000);

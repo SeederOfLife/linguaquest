@@ -145,23 +145,29 @@ function afterLogin(){
   showChrome();
   calcDividends();
   updateTopBar();
-  // Restore last used language pair
-  if(U.lastNL && U.lastTL && U.lastNL !== U.lastTL){
+
+  if (U.lastNL && U.lastTL && U.lastNL !== U.lastTL) {
+    // Known language pair — restore and go straight to levels
     S.nL = U.lastNL; S.tL = U.lastTL;
     setTimeout(()=>{
-      const ng=document.querySelector(`#native-grid [data-code="${S.nL}"]`);
-      const tg=document.querySelector(`#target-grid [data-code="${S.tL}"]`);
+      // Pre-select flags in the language grid (for when user goes back)
+      const ng = document.querySelector(`#native-grid [data-code="${S.nL}"]`);
+      const tg = document.querySelector(`#target-grid [data-code="${S.tL}"]`);
       if(ng) ng.classList.add('selected');
       if(tg) tg.classList.add('selected');
       if(typeof syncPair==='function') syncPair();
       if(typeof syncDots==='function') syncDots();
-      const ts=$('target-section');
-      if(ts) ts.style.opacity='1';
-    }, 300);
+      const ts=$('target-section'); if(ts) ts.style.opacity='1';
+      // Go directly to levels
+      if(typeof goToLevels==='function') goToLevels();
+    }, 150);
+  } else {
+    // First time — show language picker
+    navTo('learn');
   }
-  navTo('learn');
-  if (typeof initSocial === 'function') initSocial();
-  setTimeout(()=>{ _appReady = true; }, 800);
+
+  if(typeof initSocial==='function') setTimeout(initSocial, 500);
+  setTimeout(()=>{ _appReady = true; }, 900);
 }
 
 function showChrome(){$('top-bar').style.display='flex';$('nav-bar').style.display='flex';}

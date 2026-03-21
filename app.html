@@ -199,7 +199,11 @@
 <!-- ══════════════════ LEVELS ══════════════════ -->
 <div class="screen screen-padded" id="screen-levels">
   <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span><span id="bc-pair">Lang</span>
+    <span class="crumb" onclick="navTo('learn')">🏠</span>
+    <span class="sep">›</span>
+    <span class="crumb" id="bc-pair" onclick="navTo('learn')" title="Changer de langue" style="cursor:pointer;">Lang</span>
+    <span class="sep">›</span>
+    <span style="font-size:.72rem;color:var(--muted);" id="bc-level-label">Niveaux</span>
   </div>
   <div class="xp-mini">
     <span style="font-size:.72rem;color:var(--accent4);font-weight:800;">⭐ XP</span>
@@ -629,7 +633,7 @@
   </div>
 
   <!-- LEADERBOARD -->
-  <div id="rank-lb-zone">
+  <div id="rank-lb-zone" style="width:100%;max-width:700px;">
     <div class="lb-tabs">
       <button class="lb-tab active" id="lb-tab-xp" onclick="setLbTab('xp')">⭐ XP</button>
       <button class="lb-tab" id="lb-tab-coins" onclick="setLbTab('coins')">🪙 Pièces</button>
@@ -942,12 +946,12 @@
 </div>
 
 <!-- ══════════════════ FLAPPY/CAR OVERLAY ══════════════════ -->
-<div id="minigame-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:#0a0a14;flex-direction:column;">
+<div id="minigame-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:#0a0a14;flex-direction:column;">
   <iframe id="minigame-iframe" src="" style="flex:1;border:none;width:100%;height:100%;"></iframe>
 </div>
 
 <!-- ══════════════════ COMPOST GAME OVERLAY ══════════════════ -->
-<div id="compost-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:#0a0a14;flex-direction:column;">
+<div id="compost-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:#0a0a14;flex-direction:column;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(0,0,0,.7);flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:8px;">
       <svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
