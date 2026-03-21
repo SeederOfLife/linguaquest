@@ -206,6 +206,8 @@ function spawnPipe(){
 }
 
 function startGame(){
+  resize(); // ensure W/H are correct before anything
+  if(!W||!H){setTimeout(startGame,100);return;}
   HOLE_H=Math.round(H*0.14); HOLE_GAP=Math.round(H*0.1);
   wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
   if(!wordList.length){alert('Pas de mots disponibles !');return;}
@@ -219,12 +221,15 @@ function startGame(){
   pickQuestion();
   spawnPipe();
   cancelAnimationFrame(animId);
+  render(); // draw one frame immediately so player sees the game
   animId=requestAnimationFrame(loop);
 
-  // Input
-  document.onclick=()=>{if(gameActive&&bird.alive){bird.vy=JUMP;bird.flapped=true;}};
+  // Input — delay to avoid the "Play" button click triggering a flap
+  setTimeout(()=>{
+    document.onclick=()=>{if(gameActive&&bird.alive){bird.vy=JUMP;bird.flapped=true;}};
+    canvas.ontouchstart=e=>{if(gameActive&&bird.alive){bird.vy=JUMP;}e.preventDefault();};
+  }, 200);
   document.onkeydown=e=>{if(e.code==='Space'&&gameActive&&bird.alive){bird.vy=JUMP;e.preventDefault();}};
-  canvas.ontouchstart=e=>{if(gameActive&&bird.alive){bird.vy=JUMP;}e.preventDefault();};
 }
 
 function initBgParticles(){
