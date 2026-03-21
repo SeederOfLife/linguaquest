@@ -161,7 +161,8 @@ let score=0,totalQ=0,wordList=[],currentQ=null,wordLog=[];
 let bgParticles=[];
 let frameN=0;
 
-const GRAV=0.45,JUMP=-7,PIPE_W=70,GAP=160,PIPE_SPEED=2.5;
+const GRAV=0.45,JUMP=-7.5,PIPE_SPEED=2.2;
+let HOLE_H=90, HOLE_GAP=70;
 
 function resize(){
   const wrap=canvas.parentElement;
@@ -178,21 +179,34 @@ function pickQuestion(){
 }
 
 function spawnPipe(){
-  // Two pipes — one correct, one wrong
   const others=wordList.filter(w=>w.id!==currentQ?.id);
   const wrong=others[Math.floor(Math.random()*others.length)];
   const correctTop=Math.random()>0.5;
-  const topLabel= correctTop ? currentQ?.target : wrong?.target;
-  const botLabel= correctTop ? wrong?.target : currentQ?.target;
-  const gapY=80+Math.random()*(H-GAP-160);
+  // Top hole: starts at topHoleY, height HOLE_H
+  // Middle solid: HOLE_GAP
+  // Bottom hole: starts after middle solid
+  const minTop=50;
+  const maxTop=H-HOLE_H*2-HOLE_GAP-80;
+  const topHoleY=minTop+Math.random()*maxTop;
+  const midSolidY=topHoleY+HOLE_H;     // start of middle bar
+  const botHoleY=midSolidY+HOLE_GAP;   // start of bottom hole
+  const hue=Math.floor(Math.random()*360);
   pipes.push({
-    x:W+20, gapY, topLabel, botLabel,
-    topCorrect:correctTop, botCorrect:!correctTop,
-    passed:false, color:`hsl(${Math.floor(Math.random()*360)},60%,35%)`
+    x:W+20,
+    topHoleY, botHoleY,
+    midSolidY,
+    topLabel:  correctTop ? currentQ?.target : wrong?.target,
+    botLabel:  correctTop ? wrong?.target    : currentQ?.target,
+    topCorrect:correctTop,
+    botCorrect:!correctTop,
+    passed:false, scored:false,
+    color:`hsl(${hue},55%,30%)`,
+    colorDark:`hsl(${hue},55%,18%)`
   });
 }
 
 function startGame(){
+  HOLE_H=Math.round(H*0.14); HOLE_GAP=Math.round(H*0.1);
   wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
   if(!wordList.length){alert('Pas de mots disponibles !');return;}
   score=0; totalQ=0; wordLog=[]; pipes=[];
@@ -243,7 +257,7 @@ function update(){
   if(bird.y>H-20){die();}
 
   // Spawn pipes
-  if(pipes.length===0||pipes[pipes.length-1].x<W-280) spawnPipe();
+  if(pipes.length===0||pipes[pipes.length-1].x<-20) spawnPipe();
 
   // Move pipes
   pipes.forEach(p=>{
@@ -251,16 +265,19 @@ function update(){
     if(!p.passed&&p.x+PIPE_W<bird.x){
       p.passed=true;
     }
-    // Collision
-    if(bird.x+14>p.x&&bird.x-14<p.x+PIPE_W){
-      if(bird.y-16<p.gapY||bird.y+16>p.gapY+GAP){
-        // Check if bird is in the pipe (not gap)
+    // Collision with full-width pipe
+    if(bird.x+12>p.x && !p.passed){
+      // Check if bird is in top hole, bottom hole, or solid
+      const inTopHole = bird.y-14 > p.topHoleY && bird.y+14 < p.topHoleY+HOLE_H;
+      const inBotHole = bird.y-14 > p.botHoleY && bird.y+14 < p.botHoleY+HOLE_H;
+
+      if(!inTopHole && !inBotHole){
+        // Hit solid section
         die();
       } else if(!p.scored){
-        // Bird passed through gap — check which half
-        const inTop=bird.y<p.gapY+GAP/2;
-        const correct=(inTop&&p.topCorrect)||(!inTop&&p.botCorrect);
         p.scored=true;
+        const correct=(inTopHole&&p.topCorrect)||(inBotHole&&p.botCorrect);
+        const chosenLabel=inTopHole?p.topLabel:p.botLabel;
         if(correct){
           score+=10; totalQ++;
           document.getElementById('score-display').textContent='⭐ '+score;
@@ -271,10 +288,12 @@ function update(){
         } else {
           score=Math.max(0,score-3);
           document.getElementById('score-display').textContent='⭐ '+score;
-          wordLog.push({word:currentQ.native,ans:inTop?p.topLabel:p.botLabel,correct:false});
+          wordLog.push({word:currentQ.native,ans:chosenLabel,correct:false});
           spawnScoreParticles(bird.x,bird.y,'#ef4444');
         }
       }
+      // Mark passed when fully through
+      if(bird.x > p.x + 20) p.passed=true;
     }
   });
   pipes=pipes.filter(p=>p.x>-PIPE_W-20);
@@ -332,50 +351,57 @@ function render(){
 }
 
 function drawPipe(p){
-  const topH=p.gapY;
-  const botY=p.gapY+GAP;
-  const botH=H-botY;
+  const pw=W; // full screen width pipe
+  // 3 solid sections: top bar, middle bar, bottom bar
+  // Gaps: top hole (topHoleY → topHoleY+HOLE_H), bot hole (botHoleY → botHoleY+HOLE_H)
 
-  // Pipe bodies
   ctx.fillStyle=p.color;
-  // Top pipe
-  ctx.fillRect(p.x,0,PIPE_W,topH);
-  // Bottom pipe
-  ctx.fillRect(p.x,botY,PIPE_W,botH);
-  // Pipe caps
-  ctx.fillStyle='rgba(255,255,255,.1)';
-  ctx.fillRect(p.x-4,topH-18,PIPE_W+8,18);
-  ctx.fillRect(p.x-4,botY,PIPE_W+8,18);
-  // Shine
-  ctx.fillStyle='rgba(255,255,255,.07)';
-  ctx.fillRect(p.x+6,0,12,topH);
-  ctx.fillRect(p.x+6,botY,12,botH);
+  // Top solid block
+  ctx.fillRect(p.x, 0, pw, p.topHoleY);
+  // Middle solid block (between two holes)
+  ctx.fillRect(p.x, p.midSolidY, pw, HOLE_GAP);
+  // Bottom solid block
+  const botEnd=p.botHoleY+HOLE_H;
+  ctx.fillRect(p.x, botEnd, pw, H-botEnd);
 
-  // Word labels on pipes
+  // Shine on each block
+  ctx.fillStyle='rgba(255,255,255,.06)';
+  ctx.fillRect(p.x+pw*0.1,0,pw*0.05,p.topHoleY);
+  ctx.fillRect(p.x+pw*0.1,p.midSolidY,pw*0.05,HOLE_GAP);
+  ctx.fillRect(p.x+pw*0.1,botEnd,pw*0.05,H-botEnd);
+
+  // Edge highlight on hole entrances
+  ctx.fillStyle='rgba(255,255,255,.12)';
+  ctx.fillRect(p.x, p.topHoleY-6, pw, 6);
+  ctx.fillRect(p.x, p.midSolidY-6, pw, 6);
+  ctx.fillRect(p.x, p.botHoleY-6,  pw, 6);
+  ctx.fillRect(p.x, botEnd,         pw, 6);
+
+  // Labels inside each hole
   ctx.save();
-  // Top label
-  ctx.fillStyle='rgba(0,0,0,.6)';
-  const tpad=8;
-  const tmetric=ctx.measureText(p.topLabel||'');
-  const tw=Math.max(PIPE_W-4,tmetric.width+tpad*2);
-  ctx.beginPath();
-  if(ctx.roundRect)ctx.roundRect(p.x+(PIPE_W-tw)/2,topH-52,tw,28,8);
-  else ctx.rect(p.x+(PIPE_W-tw)/2,topH-52,tw,28);
-  ctx.fill();
-  ctx.fillStyle='#f1f5f9';ctx.font='bold 13px system-ui,sans-serif';
+  ctx.font='bold 15px system-ui,sans-serif';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(p.topLabel||'',p.x+PIPE_W/2,topH-38);
 
-  // Bottom label
-  ctx.fillStyle='rgba(0,0,0,.6)';
-  const bmetric=ctx.measureText(p.botLabel||'');
-  const bw=Math.max(PIPE_W-4,bmetric.width+tpad*2);
-  ctx.beginPath();
-  if(ctx.roundRect)ctx.roundRect(p.x+(PIPE_W-bw)/2,botY+24,bw,28,8);
-  else ctx.rect(p.x+(PIPE_W-bw)/2,botY+24,bw,28);
-  ctx.fill();
+  // TOP hole label
+  const topCY=p.topHoleY+HOLE_H/2;
+  const topLabel=p.topLabel||'';
+  const tlw=ctx.measureText(topLabel).width+20;
+  ctx.fillStyle='rgba(0,0,0,.7)';
+  ctx.beginPath();if(ctx.roundRect)ctx.roundRect(W/2-tlw/2,topCY-16,tlw,32,10);
+  else ctx.rect(W/2-tlw/2,topCY-16,tlw,32);ctx.fill();
   ctx.fillStyle='#f1f5f9';
-  ctx.fillText(p.botLabel||'',p.x+PIPE_W/2,botY+38);
+  ctx.fillText(topLabel,W/2,topCY);
+
+  // BOTTOM hole label
+  const botCY=p.botHoleY+HOLE_H/2;
+  const botLabel=p.botLabel||'';
+  const blw=ctx.measureText(botLabel).width+20;
+  ctx.fillStyle='rgba(0,0,0,.7)';
+  ctx.beginPath();if(ctx.roundRect)ctx.roundRect(W/2-blw/2,botCY-16,blw,32,10);
+  else ctx.rect(W/2-blw/2,botCY-16,blw,32);ctx.fill();
+  ctx.fillStyle='#f1f5f9';
+  ctx.fillText(botLabel,W/2,botCY);
+
   ctx.restore();
 }
 
