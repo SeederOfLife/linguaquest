@@ -248,6 +248,37 @@ function renderLevels(){
     g.appendChild(el);
   });
 }
+function buyLevel(lvId){
+  if(!U.unlockedLevels) U.unlockedLevels=['A1'];
+  if(U.unlockedLevels.includes(lvId)) return;
+  const lv=LEVELS.find(l=>l.id===lvId);
+  if(!lv) return;
+  if(Math.floor(U.coins)<lv.price){ toast('Pas assez de pièces !'); return; }
+  if(!confirm(t('level_unlock_confirm').replace('{id}',lvId).replace('{n}',lv.price))) return;
+  U.coins-=lv.price; U.unlockedLevels.push(lvId); saveU();
+  toast(t('level_unlocked').replace('{id}',lvId));
+  renderLevels(); updateTopBar();
+}
+
+function renderTopicTabs(){
+  const wrap=$('topic-tabs'); if(!wrap) return;
+  const lang=S.nL||'fr';
+  const allCs=CHAPTERS[S.level]||[];
+  const diyCs=(U.diyLessons||[]).filter(d=>d.level===S.level);
+  const counts={};
+  allCs.forEach(c=>{ counts[c.topic]=(counts[c.topic]||0)+1; });
+  if(diyCs.length) counts['diy']=diyCs.length;
+  wrap.innerHTML='';
+  (typeof TOPIC_DEFS!=='undefined'?TOPIC_DEFS:[]).forEach(tp=>{
+    const n=counts[tp.id]||0;
+    const btn=document.createElement('button');
+    btn.className='topic-tab'+(S._activeTopic===tp.id?' active':'')+(n===0?' empty':'');
+    btn.innerHTML=`${tp.icon} ${tp.label[lang]||tp.label.fr}${n?` <span class="topic-count">${n}</span>`:''}`;
+    btn.onclick=()=>{ S._activeTopic=tp.id; renderTopicTabs(); renderChaps(); };
+    wrap.appendChild(btn);
+  });
+}
+
 function goToChaps(lvId){
   S.level=lvId;S._activeTopic='conv';
   const T=LANGS[S.tL];
