@@ -30,47 +30,51 @@ applyUILang();
 // Auto-login if session exists
 // Auto-login: Supabase first, localStorage fallback
 (async function(){
-  const saved=loadCurrent();
-  if(saved){
-    // Show loading state immediately so user sees something
-    const tp=document.getElementById('screen-theme-picker');
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const saved = loadCurrent();
 
-    // Try localStorage first (instant)
-    const usersLocal=loadUsers();
-    if(usersLocal&&usersLocal[saved]){
-      U=usersLocal[saved];
+  if(saved){
+    // 1. Try localStorage first — instant
+    const usersLocal = loadUsers();
+    if(usersLocal && usersLocal[saved]){
+      U = usersLocal[saved];
       afterLogin();
-      // Then try to refresh from Supabase in background
+      // Refresh from Supabase silently in background
       loadUserFromDB(saved).then(fresh=>{
-        if(fresh&&U){U=fresh;updateTopBar();}
+        if(fresh && U){ U=fresh; updateTopBar(); }
       }).catch(()=>{});
       return;
     }
 
-    // No local data — try Supabase with loading indicator
-    if(tp){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-      const load=document.getElementById('screen-loading');
-      if(load)load.classList.add('active');
-    }
+    // 2. Show loading screen while trying Supabase
+    const loadEl = document.getElementById('screen-loading');
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    if(loadEl) loadEl.classList.add('active');
+
     try{
-      const loaded=await loadUserFromDB(saved);
-      if(loaded){U=loaded;afterLogin();return;}
+      // Timeout after 5s
+      const loaded = await Promise.race([
+        loadUserFromDB(saved),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
+      ]);
+      if(loaded){ U=loaded; afterLogin(); return; }
     }catch(e){}
 
-    // Nothing worked — go to login
-    window.location.href='index.html';
+    // 3. Nothing worked — clear bad session, show auth
+    clearCurrent();
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const authEl = document.getElementById('screen-auth');
+    if(authEl) authEl.classList.add('active');
     return;
   }
-  // No saved session at all — go to landing
-  if(!saved){
-    if(!localStorage.getItem('lq_theme')){
-      const tp=document.getElementById('screen-theme-picker');
-      if(tp){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));tp.classList.add('active');}
-    } else {
-      window.location.href='index.html';
-    }
-    return;
+
+  // No saved session — show auth screen directly (no redirect)
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const authEl = document.getElementById('screen-auth');
+  if(authEl){
+    authEl.classList.add('active');
+  } else {
+    // Fallback: auth screen might be in index.html
+    window.location.href='index.html';
   }
 })();
 // Dividend tick every 60s while app is open

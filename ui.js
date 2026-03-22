@@ -187,6 +187,12 @@ function goToLevels(){
   renderLevels();
   goTo('levels');
 }
+
+function lvDone(id){const cs=CHAPTERS[id]||[];return cs.length>0&&cs.every(c=>U?.progress[pk(c.id)]?.completed);}
+function lvStars(id){const cs=CHAPTERS[id]||[];if(!cs.length)return 0;return Math.round(cs.reduce((a,c)=>a+(U?.progress[pk(c.id)]?.stars||0),0)/cs.length);}
+function pk(cid){return`${S.nL}-${S.tL}-${cid}`;}
+function stHTML(n){return[0,1,2].map(i=>`<span style="color:${i<n?'var(--accent4)':'rgba(255,255,255,.1)'}">★</span>`).join('');}
+
 function renderLevels(){
   const g=$('dungeon-zones')||$('levels-grid');
   if(!g)return;
@@ -210,18 +216,22 @@ function renderLevels(){
     const starsHtml=done?'<span style="font-size:.8rem;">'+stHTML(lvStars(lv.id))+'</span>':'';
 
     if(!unlocked){
-      el.innerHTML=
+      const btnClass = canAfford ? 'can-afford' : 'cant-afford';
+      const btnLabel = (canAfford ? '🔓 Débloquer — ' : '🔒 ') + (lv.price||0) + ' 🪙';
+      el.innerHTML =
         '<div class="dungeon-zone-banner" style="background:'+dz.color+';opacity:.5;">'
         +'<div class="dungeon-zone-emoji">'+dz.emoji+'</div>'
         +'<div class="dungeon-zone-info">'
         +'<div class="dungeon-zone-name">'+dz.name+'</div>'
-        +'<div class="dungeon-zone-sub">'+dz.desc+'</div></div>'
+        +'<div class="dungeon-zone-sub">'+lv.id+' · '+dz.desc+'</div></div>'
         +'<div class="dungeon-zone-badge">🔒 '+lv.id+'</div></div>'
         +'<div class="dungeon-zone-footer">'
-        +'<button class="btn-unlock-level '+(canAfford?'can-afford':'cant-afford')+'" onclick="event.stopPropagation();buyLevel(''+lv.id+'')" style="width:100%;">'
-        +(canAfford?'🔓 Débloquer — ':'🔒 ')+(lv.price||0)+' 🪙'
-        +'</button></div>';
-    } else {
+        +'<button class="btn-unlock-level '+btnClass+'" style="width:100%;">'
+        +btnLabel+'</button></div>';
+      el.querySelector('.btn-unlock-level').addEventListener('click', function(ev){
+        ev.stopPropagation(); buyLevel(lv.id);
+      });
+        } else {
       el.innerHTML=
         '<div class="dungeon-zone-banner" style="background:'+dz.color+'">'
         +'<div class="dungeon-zone-emoji">'+dz.emoji+'</div>'
@@ -328,11 +338,17 @@ function renderChaps(){
         +'</div>'
         +'<div style="text-align:right;flex-shrink:0;">'
         +(done?stars:'<span style="font-size:.7rem;color:var(--muted);">Non clair</span>')
-        +(locked?'':'<br><button class="btn-qr" style="margin-top:4px;" onclick="event.stopPropagation();openQR(''+ch.id+'')">📱</button>')
+        +(locked?'':'<br><button class="btn-qr" style="margin-top:4px;" data-qr-id="'+ch.id+'">📱</button>')
         +'</div>';
       if(!locked) d.onclick=()=>goToSel(ch.id);
     }
     list.appendChild(d);
+    if(!locked){
+      const qrBtn = d.querySelector('[data-qr-id]');
+      if(qrBtn) qrBtn.addEventListener('click', function(ev){
+        ev.stopPropagation(); openQR(this.dataset.qrId);
+      });
+    }
   });
 }
 
