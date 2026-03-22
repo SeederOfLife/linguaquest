@@ -12,8 +12,10 @@ const WD={hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},goodbye
   mouth:{fr:'Bouche',en:'Mouth',es:'Boca',de:'Mund',cs:'Ústa'},
   arm:{fr:'Bras',en:'Arm',es:'Brazo',de:'Arm',cs:'Paže'},
   leg:{fr:'Jambe',en:'Leg',es:'Pierna',de:'Bein',cs:'Noha'},
-  dog:{fr:'Chien',en:'Dog',es:'Perro',de:'Hund',cs:'Pes'},
-  cat:{fr:'Chat',en:'Cat',es:'Gato',de:'Katze',cs:'Kočka'},
+  dog:{fr:'Chien',en:'Dog',es:'Perro',de:'Hund',cs:'Pes',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/200px-YellowLabradorLooking_new.jpg"},
+  cat:{fr:'Chat',en:'Cat',es:'Gato',de:'Katze',cs:'Kočka',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/200px-Cat_November_2010-1a.jpg"},
   bird:{fr:'Oiseau',en:'Bird',es:'Pájaro',de:'Vogel',cs:'Pták'},
   horse:{fr:'Cheval',en:'Horse',es:'Caballo',de:'Pferd',cs:'Kůň'},
   cow:{fr:'Vache',en:'Cow',es:'Vaca',de:'Kuh',cs:'Kráva'},
@@ -1362,6 +1364,7 @@ const UI_STRINGS = {
     forgot_success_sub:'Tu peux maintenant te connecter avec ton nouveau mot de passe.',
     forgot_login:'Se connecter →',
     forgot_link:'Mot de passe oublié ?',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/200px-YellowLabradorLooking_new.jpg"
   },
   en:{
     nav_learn:'Learn', nav_portfolio:'Portfolio', nav_shop:'Shop', nav_profile:'Profile',
@@ -2092,4 +2095,228 @@ const UI_STRINGS = {
     forgot_link:'Zapomenuté heslo?',
   },
 
+  // === NEW VOCAB WITH IMAGES ===
+  banana:   {fr:'Banane',    en:'Banana',    es:'Plátano',  de:'Banane',    cs:'Banán',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Banana-Chocolate-Chip-Cookies-Recipe.jpg/200px-Banana-Chocolate-Chip-Cookies-Recipe.jpg"},
+  orange_fr:{fr:'Orange',    en:'Orange',    es:'Naranja',  de:'Orange',    cs:'Pomeranč',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Oranges_and_orange_juice.jpg/200px-Oranges_and_orange_juice.jpg"},
+  strawberry:{fr:'Fraise',   en:'Strawberry',es:'Fresa',    de:'Erdbeere',  cs:'Jahoda',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/PerfectStrawberry.jpg/200px-PerfectStrawberry.jpg"},
+  tomato:   {fr:'Tomate',    en:'Tomato',    es:'Tomate',   de:'Tomate',    cs:'Rajče',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Tomato_je.jpg/200px-Tomato_je.jpg"},
+  potato:   {fr:'Pomme de terre',en:'Potato',es:'Papa',     de:'Kartoffel', cs:'Brambor',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Potato_and_cross_section.jpg/200px-Potato_and_cross_section.jpg"},
+  rice:     {fr:'Riz',       en:'Rice',      es:'Arroz',    de:'Reis',      cs:'Rýže',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Weizenkeimling.jpg/200px-Weizenkeimling.jpg"},
+  egg:      {fr:'Œuf',       en:'Egg',       es:'Huevo',    de:'Ei',        cs:'Vejce',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Eggs_by_Judite.jpg/200px-Eggs_by_Judite.jpg"},
+  butter:   {fr:'Beurre',    en:'Butter',    es:'Mantequilla',de:'Butter',  cs:'Máslo',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Shake_camping_butter.jpg/200px-Shake_camping_butter.jpg"},
+  sugar:    {fr:'Sucre',     en:'Sugar',     es:'Azúcar',   de:'Zucker',    cs:'Cukr'},
+  salt:     {fr:'Sel',       en:'Salt',      es:'Sal',      de:'Salz',      cs:'Sůl'},
+  soup:     {fr:'Soupe',     en:'Soup',      es:'Sopa',     de:'Suppe',     cs:'Polévka',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Tomato_soup.jpg/200px-Tomato_soup.jpg"},
+  pizza:    {fr:'Pizza',     en:'Pizza',     es:'Pizza',    de:'Pizza',     cs:'Pizza',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg/200px-Eq_it-na_pizza-margherita_sep2005_sml.jpg"},
+  pasta:    {fr:'Pâtes',     en:'Pasta',     es:'Pasta',    de:'Pasta',     cs:'Těstoviny',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Above_Gotham.jpg/200px-Above_Gotham.jpg"},
+  chocolate:{fr:'Chocolat',  en:'Chocolate', es:'Chocolate',de:'Schokolade',cs:'Čokoláda',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Chocolate_%28blue_back%29.jpg/200px-Chocolate_%28blue_back%29.jpg"},
+  cake:     {fr:'Gâteau',    en:'Cake',      es:'Pastel',   de:'Kuchen',    cs:'Dort',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Farts_2.jpg/200px-Farts_2.jpg"},
+  // Clothes with images
+  shirt:    {fr:'Chemise',   en:'Shirt',     es:'Camisa',   de:'Hemd',      cs:'Košile',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Ironicshirt.jpg/200px-Ironicshirt.jpg"},
+  shoes:    {fr:'Chaussures',en:'Shoes',     es:'Zapatos',  de:'Schuhe',    cs:'Boty',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Running_shoe.jpg/200px-Running_shoe.jpg"},
+  hat:      {fr:'Chapeau',   en:'Hat',       es:'Sombrero', de:'Hut',       cs:'Klobouk',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Wiki_shirt_front.jpg/200px-Wiki_shirt_front.jpg"},
+  glasses:  {fr:'Lunettes',  en:'Glasses',   es:'Gafas',    de:'Brille',    cs:'Brýle'},
+  bag:      {fr:'Sac',       en:'Bag',       es:'Bolsa',    de:'Tasche',    cs:'Taška'},
+  // City / Transport with images  
+  bus:      {fr:'Bus',       en:'Bus',       es:'Autobús',  de:'Bus',       cs:'Autobus',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Fleet_Bus%2C_Dublin_Bus.jpg/200px-Fleet_Bus%2C_Dublin_Bus.jpg"},
+  bicycle:  {fr:'Vélo',      en:'Bicycle',   es:'Bicicleta',de:'Fahrrad',   cs:'Kolo',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/2_speed_Saftey_Bicycle.jpg/200px-2_speed_Saftey_Bicycle.jpg"},
+  airport:  {fr:'Aéroport',  en:'Airport',   es:'Aeropuerto',de:'Flughafen',cs:'Letiště'},
+  hotel:    {fr:'Hôtel',     en:'Hotel',     es:'Hotel',    de:'Hotel',     cs:'Hotel'},
+  restaurant:{fr:'Restaurant',en:'Restaurant',es:'Restaurante',de:'Restaurant',cs:'Restaurace',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat_03.jpg/200px-Cat_03.jpg"},
+  hospital: {fr:'Hôpital',   en:'Hospital',  es:'Hospital', de:'Krankenhaus',cs:'Nemocnice'},
+  pharmacy: {fr:'Pharmacie', en:'Pharmacy',  es:'Farmacia', de:'Apotheke',  cs:'Lékárna'},
+  // Nature
+  mountain: {fr:'Montagne',  en:'Mountain',  es:'Montaña',  de:'Berg',      cs:'Hora',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg/200px-Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg"},
+  sea:      {fr:'Mer',       en:'Sea',       es:'Mar',      de:'Meer',      cs:'Moře',
+    _img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/24701-nature-natural-beauty.jpg/200px-24701-nature-natural-beauty.jpg"},
+  river:    {fr:'Rivière',   en:'River',     es:'Río',      de:'Fluss',     cs:'Řeka'},
+  rain:     {fr:'Pluie',     en:'Rain',      es:'Lluvia',   de:'Regen',     cs:'Déšť'},
+  snow:     {fr:'Neige',     en:'Snow',      es:'Nieve',    de:'Schnee',    cs:'Sníh'},
+  wind:     {fr:'Vent',      en:'Wind',      es:'Viento',   de:'Wind',      cs:'Vítr'},
+  // Grammar words
+  always:   {fr:'Toujours',  en:'Always',    es:'Siempre',  de:'Immer',     cs:'Vždy'},
+  never:    {fr:'Jamais',    en:'Never',     es:'Nunca',    de:'Nie',       cs:'Nikdy'},
+  sometimes:{fr:'Parfois',   en:'Sometimes', es:'A veces',  de:'Manchmal',  cs:'Někdy'},
+  because:  {fr:'Parce que', en:'Because',   es:'Porque',   de:'Weil',      cs:'Protože'},
+  although: {fr:'Bien que',  en:'Although',  es:'Aunque',   de:'Obwohl',    cs:'Ačkoli'},
+  however:  {fr:'Cependant', en:'However',   es:'Sin embargo',de:'Jedoch',  cs:'Nicméně'},
+  before:   {fr:'Avant',     en:'Before',    es:'Antes',    de:'Vor',       cs:'Před'},
+  after:    {fr:'Après',     en:'After',     es:'Después',  de:'Nach',      cs:'Po'},
+  during:   {fr:'Pendant',   en:'During',    es:'Durante',  de:'Während',   cs:'Během'},
+  // Emotions
+  happy:    {fr:'Heureux',   en:'Happy',     es:'Feliz',    de:'Glücklich',  cs:'Šťastný'},
+  sad:      {fr:'Triste',    en:'Sad',       es:'Triste',   de:'Traurig',    cs:'Smutný'},
+  angry:    {fr:'En colère', en:'Angry',     es:'Enfadado', de:'Wütend',     cs:'Naštvaný'},
+  scared:   {fr:'Effrayé',   en:'Scared',    es:'Asustado', de:'Verängstigt',cs:'Vystrašený'},
+  surprised:{fr:'Surpris',   en:'Surprised', es:'Sorprendido',de:'Überrascht',cs:'Překvapený'},
+  tired:    {fr:'Fatigué',   en:'Tired',     es:'Cansado',  de:'Müde',       cs:'Unavený'},
+  bored:    {fr:'Ennuyé',    en:'Bored',     es:'Aburrido', de:'Gelangweilt',cs:'Znuděný'},
+  excited:  {fr:'Excité',    en:'Excited',   es:'Emocionado',de:'Aufgeregt', cs:'Nadšený'},
+
 };
+
+
+// =============================================
+// NEW CHAPTERS — GRAMMAR + EXPANDED VOCAB
+// =============================================
+
+// Append to existing level arrays
+(function(){
+
+  // === A1 — New chapters ===
+  CHAPTERS.A1.push(
+    {id:'A1-9', topic:'vocab', 
+     title:{fr:'Les Fruits & Légumes',en:'Fruits & Vegetables',es:'Frutas y Verduras',de:'Obst & Gemüse',cs:'Ovoce a zelenina'},
+     subtitle:{fr:'Vocabulaire illustré',en:'Illustrated vocabulary',es:'Vocabulario ilustrado',de:'Illustrierter Wortschatz',cs:'Ilustrovaná slovní zásoba'},
+     wids:['apple','banana','orange_fr','strawberry','tomato','potato','bread','egg','sugar','salt'],
+     sents:{
+       fr:['Une banane est jaune','Une pomme est rouge','Le sel est dans la cuisine'],
+       en:['A banana is yellow','An apple is red','The salt is in the kitchen'],
+       es:['Una banana es amarilla','Una manzana es roja','La sal está en la cocina'],
+       de:['Eine Banane ist gelb','Ein Apfel ist rot','Das Salz ist in der Küche'],
+       cs:['Banán je žlutý','Jablko je červené','Sůl je v kuchyni'],
+     }
+    },
+    {id:'A1-10', topic:'gram',
+     title:{fr:'Le Genre: Masculin & Féminin',en:'Gender: Masculine & Feminine',es:'Género: masculino y femenino',de:'Genus: Maskulinum & Femininum',cs:'Rod: mužský a ženský'},
+     subtitle:{fr:'Règles de base',en:'Basic rules',es:'Reglas básicas',de:'Grundregeln',cs:'Základní pravidla'},
+     wids:['boy','girl','man','woman','father','mother','brother','sister','son','daughter'],
+     sents:{
+       fr:['Le garçon est grand','La fille est petite','Le père et la mère sont là'],
+       en:['The boy is tall','The girl is short','The father and mother are here'],
+       es:['El chico es alto','La chica es baja','El padre y la madre están aquí'],
+       de:['Der Junge ist groß','Das Mädchen ist klein','Vater und Mutter sind hier'],
+       cs:['Chlapec je vysoký','Dívka je malá','Otec a matka jsou zde'],
+     }
+    },
+    {id:'A1-11', topic:'gram',
+     title:{fr:'Les Articles: le, la, les',en:'Articles: a, the',es:'Artículos: el, la, los',de:'Artikel: der, die, das',cs:'Členy'},
+     subtitle:{fr:'Définis et indéfinis',en:'Definite and indefinite',es:'Definidos e indefinidos',de:'Bestimmte und unbestimmte',cs:'Určité a neurčité'},
+     wids:['book','school','friend','house','car','dog','cat','table','chair','door'],
+     sents:{
+       fr:['Le livre est sur la table','Un chien est dans la maison','Les chats aiment dormir'],
+       en:['The book is on the table','A dog is in the house','The cats like to sleep'],
+       es:['El libro está sobre la mesa','Un perro está en la casa','Los gatos aman dormir'],
+       de:['Das Buch liegt auf dem Tisch','Ein Hund ist im Haus','Die Katzen schlafen gern'],
+       cs:['Kniha je na stole','Pes je v domě','Kočky rády spí'],
+     }
+    }
+  );
+
+  // === A2 — New chapters ===
+  CHAPTERS.A2.push(
+    {id:'A2-9', topic:'gram',
+     title:{fr:'Le Présent: verbes réguliers',en:'Present tense: regular verbs',es:'Presente: verbos regulares',de:'Präsens: regelmäßige Verben',cs:'Přítomný čas: pravidelná slovesa'},
+     subtitle:{fr:'Conjugaisons essentielles',en:'Essential conjugations',es:'Conjugaciones esenciales',de:'Wesentliche Konjugationen',cs:'Základní časování'},
+     wids:['speak','eat','drink','work','study','play','run','walk','read','write'],
+     sents:{
+       fr:['Je parle français tous les jours','Tu manges une pomme','Il travaille beaucoup'],
+       en:['I speak French every day','You eat an apple','He works a lot'],
+       es:['Hablo francés todos los días','Comes una manzana','Él trabaja mucho'],
+       de:['Ich spreche jeden Tag Französisch','Du isst einen Apfel','Er arbeitet viel'],
+       cs:['Každý den mluvím francouzsky','Jíš jablko','On hodně pracuje'],
+     }
+    },
+    {id:'A2-10', topic:'vocab',
+     title:{fr:'Les Émotions',en:'Emotions',es:'Las Emociones',de:'Gefühle',cs:'Emoce'},
+     subtitle:{fr:'Exprimer ce que tu ressens',en:'Express how you feel',es:'Expresar cómo te sientes',de:'Ausdrücken wie du dich fühlst',cs:'Vyjádři jak se cítíš'},
+     wids:['happy','sad','angry','scared','surprised','tired','bored','excited','love','hate'],
+     sents:{
+       fr:['Je suis très heureux aujourd hui','Elle est triste parce qu elle est fatiguée','Nous sommes excités pour la fête'],
+       en:['I am very happy today','She is sad because she is tired','We are excited for the party'],
+       es:['Estoy muy feliz hoy','Ella está triste porque está cansada','Estamos emocionados por la fiesta'],
+       de:['Ich bin heute sehr glücklich','Sie ist traurig weil sie müde ist','Wir sind aufgeregt für das Fest'],
+       cs:['Dnes jsem velmi šťastný','Je smutná protože je unavená','Jsme nadšeni na party'],
+     }
+    },
+    {id:'A2-11', topic:'gram',
+     title:{fr:'Le Passé Composé',en:'Past simple',es:'Pretérito perfecto',de:'Perfekt',cs:'Minulý čas'},
+     subtitle:{fr:'Raconter ce qui s est passé',en:'Tell what happened',es:'Contar lo que pasó',de:'Erzählen was passiert ist',cs:'Vyprávět co se stalo'},
+     wids:['yesterday','before','after','always','never','sometimes','because','already','just','yet'],
+     sents:{
+       fr:['Hier j ai mangé une pizza','Elle est partie avant moi','Nous avons déjà vu ce film'],
+       en:['Yesterday I ate a pizza','She left before me','We have already seen this film'],
+       es:['Ayer comí una pizza','Ella se fue antes que yo','Ya hemos visto esta película'],
+       de:['Gestern habe ich eine Pizza gegessen','Sie ist vor mir gegangen','Wir haben diesen Film schon gesehen'],
+       cs:['Včera jsem jedl pizzu','Odešla přede mnou','Tento film jsme už viděli'],
+     }
+    }
+  );
+
+  // === B1 — New chapters ===
+  CHAPTERS.B1.push(
+    {id:'B1-9', topic:'gram',
+     title:{fr:'L Imparfait vs Passé Composé',en:'Past continuous vs simple',es:'Imperfecto vs pretérito',de:'Imperfekt vs Perfekt',cs:'Imperfektum vs perfektum'},
+     subtitle:{fr:'Choisir le bon temps du passé',en:'Choose the right past tense',es:'Elegir el tiempo correcto',de:'Die richtige Vergangenheit wählen',cs:'Zvolit správný minulý čas'},
+     wids:['although','however','because','during','while','when','suddenly','often','rarely','usually'],
+     sents:{
+       fr:['Quand j étais enfant je jouais dehors','Soudain il a commencé à pleuvoir','Je lisais souvent pendant qu il travaillait'],
+       en:['When I was a child I played outside','Suddenly it started to rain','I often read while he was working'],
+       es:['Cuando era niño jugaba afuera','De repente empezó a llover','A menudo leía mientras él trabajaba'],
+       de:['Als ich Kind war spielte ich draußen','Plötzlich begann es zu regnen','Ich las oft während er arbeitete'],
+       cs:['Když jsem byl dítě hrál jsem venku','Najednou začalo pršet','Často jsem četl zatímco on pracoval'],
+     }
+    },
+    {id:'B1-10', topic:'vocab',
+     title:{fr:'La Ville & Les Transports',en:'The City & Transport',es:'La Ciudad y el Transporte',de:'Die Stadt & Verkehr',cs:'Město a doprava'},
+     subtitle:{fr:'Se déplacer en ville',en:'Getting around the city',es:'Moverse por la ciudad',de:'In der Stadt unterwegs',cs:'Pohybovat se po městě'},
+     wids:['bus','bicycle','airport','hotel','restaurant','hospital','pharmacy','mountain','sea','river'],
+     sents:{
+       fr:['Le bus arrive dans cinq minutes','L aéroport est loin du centre','Je cherche une pharmacie près d ici'],
+       en:['The bus arrives in five minutes','The airport is far from the center','I am looking for a pharmacy near here'],
+       es:['El autobús llega en cinco minutos','El aeropuerto está lejos del centro','Busco una farmacia cerca de aquí'],
+       de:['Der Bus kommt in fünf Minuten','Der Flughafen ist weit vom Zentrum','Ich suche eine Apotheke in der Nähe'],
+       cs:['Autobus přijede za pět minut','Letiště je daleko od centra','Hledám lékárnu tady v blízkosti'],
+     }
+    }
+  );
+
+  // === B2 — New chapters ===
+  CHAPTERS.B2.push(
+    {id:'B2-7', topic:'gram',
+     title:{fr:'Les Connecteurs Logiques',en:'Logical Connectors',es:'Conectores lógicos',de:'Logische Konnektoren',cs:'Logické konektory'},
+     subtitle:{fr:'Structurer un discours',en:'Structure a speech',es:'Estructurar un discurso',de:'Eine Rede strukturieren',cs:'Strukturovat projev'},
+     wids:['although','however','because','during','before','after','always','never','sometimes','usually'],
+     sents:{
+       fr:['Bien qu il soit tard je continue à travailler','Cependant il faut rester prudent','Avant de partir vérifie que tu as tout'],
+       en:['Although it is late I continue working','However we must stay careful','Before leaving check that you have everything'],
+       es:['Aunque es tarde sigo trabajando','Sin embargo hay que mantenerse prudente','Antes de salir comprueba que tienes todo'],
+       de:['Obwohl es spät ist arbeite ich weiter','Jedoch müssen wir vorsichtig bleiben','Bevor du gehst prüfe ob du alles hast'],
+       cs:['Ačkoli je pozdě pokračuji v práci','Nicméně musíme zůstat opatrní','Před odchodem zkontroluj že máš vše'],
+     }
+    },
+    {id:'B2-8', topic:'vocab',
+     title:{fr:'Les Sentiments Complexes',en:'Complex Feelings',es:'Sentimientos complejos',de:'Komplexe Gefühle',cs:'Složité pocity'},
+     subtitle:{fr:'Au-delà du bonheur et tristesse',en:'Beyond happy and sad',es:'Más allá de feliz y triste',de:'Jenseits von glücklich und traurig',cs:'Nad rámec šťastný a smutný'},
+     wids:['excited','bored','scared','surprised','happy','sad','angry','tired','love','hate'],
+     sents:{
+       fr:['Je suis à la fois excité et stressé','Cette situation me met vraiment en colère','On peut être fatigué sans être triste'],
+       en:['I am both excited and stressed','This situation really makes me angry','You can be tired without being sad'],
+       es:['Estoy a la vez emocionado y estresado','Esta situación me pone realmente furioso','Puedes estar cansado sin estar triste'],
+       de:['Ich bin sowohl aufgeregt als auch gestresst','Diese Situation macht mich wirklich wütend','Man kann müde sein ohne traurig zu sein'],
+       cs:['Jsem zároveň nadšený i ve stresu','Tato situace mě skutečně rozčiluje','Můžeš být unavený aniž bys byl smutný'],
+     }
+    }
+  );
+
+})();

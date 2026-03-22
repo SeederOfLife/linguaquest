@@ -150,7 +150,9 @@ function startGame(type){
   S.qi=0;goTo('game');renderQ();
   if(U){U.sessions=(U.sessions||0)+1;saveU();}
 }
-function buildMixed(ch){const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','quiz','fill','match4','photo','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
+function buildMixed(ch){
+  const gramIntro = buildGramIntro(ch);
+  const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','quiz','fill','match4','photo','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
 function buildQuizOnly(ch){return shuf([...ch.wids]).slice(0,8).map(id=>mkQQ(id,ch.wids));}
 function buildFillOnly(ch){return shuf([...ch.wids]).slice(0,6).map(id=>mkFQ(id));}
 function mkQQ(id,all){const q=wt(id,S.nL),cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));const imgUrl=WD[id]?._img||undefined;return{type:'quiz',q,correct:cor,choices:shuf([cor,...wr]),imgUrl};}
@@ -164,7 +166,7 @@ function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi
 // Show image if available (DIY lessons with imgUrl)
 const imgWrap=$('g-img-wrap'),imgEl=$('g-img');
 if(imgWrap&&imgEl){if(q.imgUrl){imgEl.src=q.imgUrl;imgWrap.style.display='block';imgEl.onerror=()=>{imgWrap.style.display='none';};}else{imgWrap.style.display='none';imgEl.src='';}}
-if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
+if(q.type==='gram_tip')renderGramTip(q);else if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
 function renderQuiz(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
 function renderFill(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
 function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text',t('game_match_title'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
@@ -218,6 +220,41 @@ function hideBtn(id){const e=$(id);if(e)e.style.display='none';}
 // ==============================================
 // RESULTS + COIN REWARD
 // ==============================================
+function renderGramTip(q) {
+  sT('g-text', '');
+  sT('g-dir', '');
+  sT('g-hint', '');
+  hideFB(); hideAllBtns();
+  setTypePill('fill');
+  $('g-type-pill').textContent = '📖 Grammaire';
+  $('g-type-pill').style.cssText = 'background:rgba(6,182,212,.13);color:var(--accent3);border:1px solid rgba(6,182,212,.2);display:inline-flex;';
+
+  // Show gram tip zone, hide others
+  document.querySelectorAll('[id^="zone-"]').forEach(z => z.style.display='none');
+  const tipZone = $('zone-gram-tip');
+  if(tipZone) tipZone.style.display='block';
+
+  // Render rule — bold **text** → <strong>
+  const ruleEl = $('gram-rule-text');
+  if(ruleEl) {
+    ruleEl.innerHTML = q.rule.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:var(--accent3)">$1</strong>');
+  }
+
+  // Examples
+  const exEl = $('gram-examples');
+  if(exEl) {
+    exEl.innerHTML = (q.examples||[]).map(ex =>
+      '<div style="background:rgba(255,255,255,.06);border-radius:10px;padding:8px 12px;' +
+      'font-size:.82rem;font-family:monospace;color:var(--accent4);">→ ' + ex + '</div>'
+    ).join('');
+  }
+
+  // Show "Compris !" button
+  showBtn('btn-next');
+  const nb = $('btn-next');
+  if(nb) { nb.textContent = 'Compris ! →'; nb.disabled = false; }
+}
+
 function showResults(){
   clearInterval(S.timer);
   const tot=S.cor+S.wr||1,pct=Math.round(S.cor/tot*100);
@@ -517,4 +554,70 @@ function renderPhotoQ(q) {
     grid.appendChild(btn);
   });
   startTimer(18);
+}
+
+
+// =============================================
+//  GRAMMAR TIP CARDS
+// =============================================
+const GRAM_TIPS = {
+  'A1-10': {
+    fr: {
+      rule: "En français, chaque nom a un genre : **masculin** (le, un) ou **féminin** (la, une). Il n'y a pas de règle universelle — il faut apprendre le genre avec le mot !",
+      examples: ["le livre ✅", "la maison ✅", "le soleil ✅", "la lune ✅"]
+    },
+    en: { rule: "In French, every noun has a gender: masculine (le/un) or feminine (la/une). Learn the article with the word!", examples:["le livre (the book)","la maison (the house)"] }
+  },
+  'A1-11': {
+    fr: {
+      rule: "**Articles définis** : le (masc.), la (fém.), les (pluriel). **Articles indéfinis** : un (masc.), une (fém.), des (pluriel). Devant voyelle : l'.",
+      examples: ["le chien → l'ami", "la fille → l'école", "un livre, une table, des livres"]
+    },
+    en: { rule: "French articles agree with the noun's gender and number. Definite: le/la/les. Indefinite: un/une/des.", examples:["le chien, la fille, les enfants"] }
+  },
+  'A2-9': {
+    fr: {
+      rule: "Au **présent**, les verbes en -ER : je parl**e**, tu parl**es**, il parl**e**, nous parlons, vous parlez, ils parl**ent**. Les terminaisons -e, -es, -e, -ons, -ez, -ent.",
+      examples: ["je parle", "tu manges", "il travaille", "nous étudions"]
+    },
+    en: { rule: "French -ER verbs in present tense: je parle, tu parles, il parle, nous parlons, vous parlez, ils parlent.", examples:["parler → je parle","manger → je mange"] }
+  },
+  'A2-11': {
+    fr: {
+      rule: "Le **passé composé** = avoir/être + participe passé. Verbes de mouvement avec ÊTRE (aller, venir, partir...). Tous les autres avec AVOIR.",
+      examples: ["j'ai mangé (manger)", "je suis allé (aller)", "tu as fini (finir)"]
+    },
+    en: { rule: "French passé composé = avoir/être + past participle. Motion verbs use être. Others use avoir.", examples:["j'ai mangé = I ate","je suis allé = I went"] }
+  },
+  'B1-9': {
+    fr: {
+      rule: "**Imparfait** = habitude ou état passé (je mangeais). **Passé composé** = action terminée à un moment précis (j'ai mangé). Ensemble : imparfait = décor, passé composé = action.",
+      examples: ["Je lisais quand il est entré", "Pendant qu'il dormait, le téléphone a sonné"]
+    },
+    en: { rule: "Imparfait = ongoing/habitual past. Passé composé = completed action. Think: imparfait is the background, passé composé is the event.", examples:["I was reading (imparfait) when he arrived (PC)"] }
+  },
+  'B2-7': {
+    fr: {
+      rule: "**Connecteurs logiques** : Cause (parce que, car, puisque), Conséquence (donc, ainsi, par conséquent), Opposition (mais, cependant, bien que + subjonctif), Concession (bien que, même si, quoique).",
+      examples: ["Il est parti parce qu'il était fatigué", "Bien qu'il soit tard, je reste", "Elle travaille, cependant elle se repose le week-end"]
+    },
+    en: { rule: "Logical connectors: Cause (because, since), Consequence (so, therefore), Opposition (but, however, although + subjunctive), Concession (even if, although).", examples:["Because he was tired → parce qu'il était fatigué"] }
+  },
+};
+
+function getGramTip(chapId, lang) {
+  const tip = GRAM_TIPS[chapId];
+  if(!tip) return null;
+  return tip[lang] || tip.fr || tip.en;
+}
+
+function buildGramIntro(ch) {
+  // Returns a grammar tip question if available
+  const tip = getGramTip(ch.id, S.nL);
+  if(!tip) return null;
+  return {
+    type: 'gram_tip',
+    rule: tip.rule,
+    examples: tip.examples || [],
+  };
 }
