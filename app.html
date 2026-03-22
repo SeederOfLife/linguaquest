@@ -211,17 +211,15 @@
     <span class="crumb" onclick="navTo('learn')">🏠</span>
     <span class="sep">›</span>
     <span class="crumb" id="bc-pair" onclick="navTo('learn')" title="Changer de langue" style="cursor:pointer;">Lang</span>
-    <span class="sep">›</span>
-    <span style="font-size:.72rem;color:var(--muted);" id="bc-level-label">Niveaux</span>
   </div>
   <div class="xp-mini">
     <span style="font-size:.72rem;color:var(--accent4);font-weight:800;">⭐ XP</span>
     <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
     <span id="xp-count" style="font-size:.76rem;color:var(--accent4);font-weight:800;"></span>
   </div>
-  <div class="section-title" id="levels-title">Niveaux</div>
-  <div class="section-sub" id="lbl-levels-sub">Chaque niveau réutilise le vocabulaire précédent</div>
-  <div class="levels-grid" id="levels-grid"></div>
+  <div style="font-size:1.5rem;font-weight:900;margin-bottom:2px;text-align:center;width:100%;max-width:700px;" id="levels-title">⚔️ Choisis ton Donjon</div>
+  <div class="section-sub" id="lbl-levels-sub">Affronte les monstres, bats le boss, maîtrise la langue</div>
+  <div id="dungeon-zones" style="width:100%;max-width:700px;"></div>
 </div>
 
 <!-- ══════════════════ CHAPTERS ══════════════════ -->
@@ -229,13 +227,23 @@
   <div class="breadcrumb">
     <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span>
     <span class="crumb" onclick="goTo('levels')" id="bc-pair2"></span><span class="sep">›</span>
-    <span id="bc-level2"></span>
+    <span id="bc-level2" style="font-weight:900;"></span>
   </div>
-  <div class="section-title" id="chapters-title">Chapitres</div>
+  <!-- Zone header -->
+  <div id="dungeon-zone-header" style="width:100%;max-width:700px;border-radius:18px;
+    overflow:hidden;margin-bottom:16px;position:relative;">
+    <div id="dungeon-zone-banner-inner" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div id="dungeon-zone-emoji2" style="font-size:3rem;"></div>
+      <div>
+        <div id="dungeon-zone-name2" style="font-size:1.2rem;font-weight:900;"></div>
+        <div id="dungeon-zone-desc2" style="font-size:.75rem;opacity:.75;margin-top:2px;"></div>
+      </div>
+    </div>
+  </div>
   <!-- Topic tabs -->
   <div class="topic-tabs" id="topic-tabs"></div>
-  <div class="chapters-list" id="chapters-list"></div>
-
+  <!-- Dungeon path rooms -->
+  <div class="dungeon-path" id="chapters-list"></div>
   <!-- DIY button -->
   <button class="diy-add-btn" onclick="openDIY()">＋ Créer ma propre leçon</button>
 </div>

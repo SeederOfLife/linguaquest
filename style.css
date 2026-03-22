@@ -971,3 +971,71 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 #g-img-wrap{text-align:center;animation:fadeIn .3s ease;}
 #g-img{max-height:140px;max-width:100%;border-radius:12px;object-fit:contain;
   box-shadow:0 4px 20px rgba(0,0,0,.4);}
+
+/* ═══════════════════════════════════════════════════
+   DUNGEON / QUEST SYSTEM
+═══════════════════════════════════════════════════ */
+
+/* Dungeon zone cards (replace level cards) */
+.dungeon-zone{width:100%;max-width:700px;border-radius:20px;overflow:hidden;
+  margin-bottom:16px;position:relative;cursor:pointer;transition:transform .2s;
+  border:2px solid rgba(255,255,255,.1);}
+.dungeon-zone:hover:not(.locked){transform:translateY(-3px);}
+.dungeon-zone.locked{opacity:.45;cursor:not-allowed;}
+.dungeon-zone-banner{height:90px;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;position:relative;overflow:hidden;}
+.dungeon-zone-banner::before{content:'';position:absolute;inset:0;opacity:.15;}
+.dungeon-zone-emoji{font-size:3rem;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));}
+.dungeon-zone-info{flex:1;padding:0 16px;}
+.dungeon-zone-name{font-size:1.1rem;font-weight:900;margin-bottom:3px;}
+.dungeon-zone-sub{font-size:.74rem;color:rgba(255,255,255,.7);}
+.dungeon-zone-badge{padding:4px 12px;border-radius:20px;font-size:.7rem;font-weight:900;
+  letter-spacing:1px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.2);}
+.dungeon-zone-footer{background:rgba(0,0,0,.4);padding:10px 20px;
+  display:flex;align-items:center;justify-content:space-between;}
+.dungeon-prog-bar{flex:1;height:5px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden;margin:0 12px;}
+.dungeon-prog-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+
+/* Dungeon room list (chapters) */
+.dungeon-path{width:100%;max-width:700px;display:flex;flex-direction:column;gap:0;}
+.dungeon-room{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:var(--card);border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;margin-bottom:8px;cursor:pointer;transition:all .2s;position:relative;}
+.dungeon-room:hover:not(.locked){border-color:var(--accent);background:rgba(124,58,237,.08);transform:translateX(4px);}
+.dungeon-room.locked{opacity:.38;cursor:not-allowed;}
+.dungeon-room.done{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.04);}
+.dungeon-room.boss{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.05);}
+.dungeon-room.boss:hover:not(.locked){border-color:#ef4444;background:rgba(239,68,68,.1);}
+.room-monster{font-size:2rem;width:48px;height:48px;display:flex;align-items:center;
+  justify-content:center;border-radius:12px;flex-shrink:0;background:rgba(255,255,255,.05);}
+.room-connector{width:2px;height:14px;background:rgba(255,255,255,.1);margin:0 23px;}
+.room-connector.done{background:var(--green);}
+.boss-label{position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-size:.6rem;
+  font-weight:900;padding:2px 10px;border-radius:10px;letter-spacing:1.5px;
+  text-transform:uppercase;white-space:nowrap;}
+
+/* Boss fight screen */
+#screen-boss{background:radial-gradient(ellipse at 50% 30%,#1a0a0a 0%,#0a0005 100%);}
+.boss-arena{width:100%;max-width:560px;padding:20px;}
+.boss-hp-bar{height:14px;border-radius:7px;background:rgba(255,255,255,.1);overflow:hidden;
+  margin:8px 0;transition:background .3s;}
+.boss-hp-fill{height:100%;border-radius:7px;transition:width .4s ease;
+  background:linear-gradient(90deg,#dc2626,#f97316);}
+.player-hp-fill{background:linear-gradient(90deg,#10b981,#22d3ee);}
+.boss-sprite{font-size:5rem;text-align:center;margin:16px 0;
+  animation:boss-float 2s ease-in-out infinite;}
+@keyframes boss-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.boss-shake{animation:bossHit .3s ease!important;}
+@keyframes bossHit{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+.boss-attack{animation:playerHit .4s ease!important;}
+@keyframes playerHit{0%{filter:none;}50%{filter:brightness(3) saturate(0);}100%{filter:none;}}
+.boss-status{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;width:100%;}
+.boss-stat-block{flex:1;text-align:center;}
+.boss-stat-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.boss-stat-val{font-size:1.4rem;font-weight:900;}
+
+/* Photo question */
+.photo-q-img{width:100%;max-height:160px;object-fit:cover;border-radius:14px;
+  margin-bottom:12px;display:block;}

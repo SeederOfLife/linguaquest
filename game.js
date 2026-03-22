@@ -1,7 +1,7 @@
 
-// ══════════════════════════════════════════════════════════════
+// ==============================================================
 // TTS ENGINE — multi-language, robust voice loading
-// ══════════════════════════════════════════════════════════════
+// ==============================================================
 
 const _LANG_BCP = {fr:'fr-FR', en:'en-US', es:'es-ES', de:'de-DE', cs:'cs-CZ'};
 
@@ -119,9 +119,9 @@ function _speakClick(text, lang) {
   _speak(text, lang, 0.85, null);
 }
 
-// ══════════════════════════════════════════════
+// ==============================================
 // GAME ENGINE
-// ══════════════════════════════════════════════
+// ==============================================
 function wt(id,lang){return WD[id]?.[lang]||id;}
 function getCh(){
   // DIY lesson path
@@ -150,7 +150,7 @@ function startGame(type){
   S.qi=0;goTo('game');renderQ();
   if(U){U.sessions=(U.sessions||0)+1;saveU();}
 }
-function buildMixed(ch){const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','fill','sort','quiz','fill','match4','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
+function buildMixed(ch){const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','quiz','fill','match4','photo','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
 function buildQuizOnly(ch){return shuf([...ch.wids]).slice(0,8).map(id=>mkQQ(id,ch.wids));}
 function buildFillOnly(ch){return shuf([...ch.wids]).slice(0,6).map(id=>mkFQ(id));}
 function mkQQ(id,all){const q=wt(id,S.nL),cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));const imgUrl=WD[id]?._img||undefined;return{type:'quiz',q,correct:cor,choices:shuf([cor,...wr]),imgUrl};}
@@ -164,7 +164,7 @@ function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi
 // Show image if available (DIY lessons with imgUrl)
 const imgWrap=$('g-img-wrap'),imgEl=$('g-img');
 if(imgWrap&&imgEl){if(q.imgUrl){imgEl.src=q.imgUrl;imgWrap.style.display='block';imgEl.onerror=()=>{imgWrap.style.display='none';};}else{imgWrap.style.display='none';imgEl.src='';}}
-if(q.type==='quiz')renderQuiz(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
+if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
 function renderQuiz(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
 function renderFill(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
 function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text',t('game_match_title'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
@@ -215,9 +215,9 @@ function hideAllBtns(){['btn-check','btn-reset','btn-next','btn-skip'].forEach(i
 function showBtn(id){const e=$(id);if(e)e.style.display='inline-flex';}
 function hideBtn(id){const e=$(id);if(e)e.style.display='none';}
 
-// ══════════════════════════════════════════════
+// ==============================================
 // RESULTS + COIN REWARD
-// ══════════════════════════════════════════════
+// ==============================================
 function showResults(){
   clearInterval(S.timer);
   const tot=S.cor+S.wr||1,pct=Math.round(S.cor/tot*100);
@@ -272,3 +272,249 @@ function showResults(){
 }
 function playAgain(){startGame(S.gType);}
 
+
+
+// ===========================================================
+//  BOSS FIGHT
+// ===========================================================
+let _bossState = null;
+
+function startBossFight(chapId, bossConfig) {
+  const ch = getCh() || (CHAPTERS[S.level]||[]).find(c=>c.id===chapId);
+  if(!ch) { goToSel(chapId); return; } // fallback to normal game
+  const allWids = ch.wids || [];
+  if(allWids.length < 4) { goToSel(chapId); return; }
+
+  const boss = bossConfig || (DUNGEON&&DUNGEON[S.level]&&DUNGEON[S.level].boss) || {sprite:'👹',name:'Boss',color:'#991b1b'};
+  const maxBossHP = Math.min(30, allWids.length * 3);
+
+  _bossState = {
+    chapId, boss,
+    bossHP: maxBossHP, maxBossHP,
+    playerHP: 5, maxPlayerHP: 5,
+    questions: buildBossQuestions(ch),
+    qi: 0,
+    won: false, over: false
+  };
+
+  // Setup UI
+  $('boss-name').textContent = boss.sprite + ' ' + boss.name;
+  $('boss-sprite').textContent = boss.sprite;
+  $('boss-sprite').style.textShadow = '0 0 40px ' + (boss.color||'#ef4444');
+  document.getElementById('screen-boss').style.background =
+    'radial-gradient(ellipse at 50% 30%,' + (boss.color||'#1a0a0a') + '99 0%,#080008 100%)';
+  updateBossHUD();
+  showBossQuestion();
+  goTo('boss');
+}
+
+function buildBossQuestions(ch) {
+  const ids = shuf([...ch.wids]);
+  return ids.slice(0, Math.min(15, ids.length)).map(id => mkQQ(id, ch.wids));
+}
+
+function updateBossHUD() {
+  const b = _bossState;
+  const bPct = Math.max(0, (b.bossHP / b.maxBossHP) * 100);
+  const pPct = Math.max(0, (b.playerHP / b.maxPlayerHP) * 100);
+  $('boss-hp-fill').style.width = bPct + '%';
+  $('player-hp-fill').style.width = pPct + '%';
+  $('boss-hp-text').textContent = b.bossHP + ' HP';
+  $('player-hp-text').textContent = b.playerHP + ' ❤️';
+  // Color warning
+  $('boss-hp-fill').style.background = bPct < 30
+    ? 'linear-gradient(90deg,#dc2626,#f97316)'
+    : 'linear-gradient(90deg,#dc2626,#f97316)';
+  $('player-hp-fill').style.background = pPct < 40
+    ? 'linear-gradient(90deg,#ef4444,#f97316)'
+    : 'linear-gradient(90deg,#10b981,#22d3ee)';
+}
+
+function showBossQuestion() {
+  const b = _bossState;
+  if(b.qi >= b.questions.length) { b.questions = buildBossQuestions(getCh()||(CHAPTERS[S.level]||[]).find(c=>c.id===b.chapId)||{wids:[]}); b.qi=0; }
+  const q = b.questions[b.qi];
+  sT('boss-q-text', q.q);
+  sT('boss-q-dir', dirLbl());
+
+  // Photo
+  const imgWrap = $('boss-q-img-wrap'), imgEl = $('boss-q-img');
+  if(imgWrap && imgEl) {
+    if(q.imgUrl){ imgEl.src=q.imgUrl; imgWrap.style.display='block'; imgEl.onerror=()=>{imgWrap.style.display='none';}; }
+    else imgWrap.style.display='none';
+  }
+
+  // Answers
+  const grid = $('boss-answers');
+  grid.innerHTML = '';
+  q.choices.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = ch;
+    btn.onclick = () => bossAnswer(ch, q.correct, btn, q);
+    grid.appendChild(btn);
+  });
+  sT('boss-msg', '');
+  if(typeof speakQuestion==='function') setTimeout(()=>_speakClick(q.q,S.nL), 150);
+}
+
+function bossAnswer(chosen, correct, btn, q) {
+  const b = _bossState;
+  if(b.over) return;
+
+  // Disable all
+  $('boss-answers').querySelectorAll('button').forEach(b=>b.disabled=true);
+
+  if(chosen === correct) {
+    btn.classList.add('correct');
+    b.bossHP -= 3;
+    sT('boss-msg', '⚔️ +3 dégâts !');
+    // Shake boss
+    const sp = $('boss-sprite');
+    sp.classList.add('boss-shake');
+    setTimeout(()=>sp.classList.remove('boss-shake'), 350);
+    if(typeof speakAnswer==='function') speakAnswer(correct, S.tL);
+  } else {
+    btn.classList.add('wrong');
+    // Highlight correct
+    $('boss-answers').querySelectorAll('button').forEach(b=>{ if(b.innerHTML===correct) b.classList.add('correct'); });
+    b.playerHP -= 1;
+    sT('boss-msg', "💢 Le boss t'attaque !");
+    document.querySelector('.boss-arena').classList.add('boss-attack');
+    setTimeout(()=>document.querySelector('.boss-arena').classList.remove('boss-attack'), 450);
+  }
+
+  updateBossHUD();
+  b.qi++;
+
+  setTimeout(() => {
+    if(b.bossHP <= 0) { bossVictory(); return; }
+    if(b.playerHP <= 0) { bossDefeat(); return; }
+    showBossQuestion();
+  }, 900);
+}
+
+function bossVictory() {
+  const b = _bossState;
+  b.over = true; b.won = true;
+  confetti();
+  $('boss-sprite').textContent = '💀';
+  sT('boss-msg', '🏆 Boss vaincu ! Niveau maîtrisé !');
+  // Mark chapter complete
+  const progKey = pk(b.chapId);
+  if(!U.progress[progKey]) U.progress[progKey]={};
+  U.progress[progKey].completed = true;
+  U.progress[progKey].stars = 3;
+  U.coins = (U.coins||0) + 150;
+  saveU(); updateTopBar();
+  setTimeout(()=>{
+    showBossResult(true);
+  }, 1500);
+}
+
+function bossDefeat() {
+  const b = _bossState;
+  b.over = true;
+  $('boss-sprite').textContent = '😈';
+  sT('boss-msg', '💀 Tu as été vaincu... Réessaie !');
+  setTimeout(()=>showBossResult(false), 1500);
+}
+
+function showBossResult(won) {
+  const b = _bossState;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;text-align:center;';
+
+  const title = document.createElement('div');
+  title.textContent = won ? '🏆' : '💀';
+  title.style.fontSize = '4rem';
+
+  const msg = document.createElement('div');
+  msg.innerHTML = won
+    ? '<strong style="font-size:1.5rem;color:#fbbf24;">Boss vaincu !<br>' + b.boss.name + ' est tombé !</strong><br><span style="color:#22c55e;font-weight:800;">+150 🪙</span>'
+    : '<strong style="font-size:1.5rem;color:#f87171;">Défaite...<br>Tu peux réessayer !</strong>';
+
+  const continueBtn = document.createElement('button');
+  continueBtn.textContent = 'Continuer';
+  continueBtn.style.cssText = 'background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;border-radius:14px;padding:14px 28px;font-family:inherit;font-weight:900;font-size:1rem;cursor:pointer;margin-top:8px;';
+  continueBtn.onclick = function(){ overlay.remove(); goTo('chapters'); };
+
+  overlay.appendChild(title);
+  overlay.appendChild(msg);
+  overlay.appendChild(continueBtn);
+
+  if(!won) {
+    const retryBtn = document.createElement('button');
+    retryBtn.textContent = 'Réessayer';
+    retryBtn.style.cssText = 'background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 24px;font-family:inherit;font-weight:900;font-size:.9rem;cursor:pointer;';
+    retryBtn.onclick = function(){ overlay.remove(); startBossFight(b.chapId, b.boss); };
+    overlay.appendChild(retryBtn);
+  }
+
+  document.body.appendChild(overlay);
+}
+
+
+// ===========================================================
+//  PHOTO QUIZ — mkPQ()
+// ===========================================================
+// Fetches image from Wikimedia for the word, shows it, user picks translation
+const _imgCache = {};
+
+async function fetchWikiImg(word) {
+  if(_imgCache[word]) return _imgCache[word];
+  try{
+    const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(word));
+    const d = await r.json();
+    const url = d?.thumbnail?.source || null;
+    _imgCache[word] = url;
+    return url;
+  }catch(e){ return null; }
+}
+
+function mkPQ(id, all) {
+  // Photo quiz: show image, pick correct translation
+  const q = wt(id, S.nL);
+  const cor = wt(id, S.tL);
+  const wr = shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));
+  // Try to get image from WD first, then fetch async
+  const imgUrl = WD[id]?._img || null;
+  const obj = {type:'photo', q, correct:cor, choices:shuf([cor,...wr]), wordId:id, imgUrl};
+  // Async fetch if no cached image
+  if(!imgUrl && !WD[id]?._imgFetched) {
+    WD[id] = WD[id]||{};
+    WD[id]._imgFetched = true;
+    fetchWikiImg(q).then(url=>{
+      if(url){ WD[id]._img=url; obj.imgUrl=url; }
+    });
+  }
+  return obj;
+}
+
+function renderPhotoQ(q) {
+  sT('g-text', q.q);
+  setTimeout(()=>_speakClick(q.q, S.nL), 200);
+  const imgWrap=$('g-img-wrap'), imgEl=$('g-img');
+  if(imgWrap && imgEl) {
+    if(q.imgUrl){
+      imgEl.src=q.imgUrl; imgWrap.style.display='block';
+      imgEl.onerror=()=>imgWrap.style.display='none';
+    } else {
+      // Try to load async
+      imgWrap.style.display='none';
+      fetchWikiImg(q.q).then(url=>{
+        if(url&&imgEl&&imgWrap){ imgEl.src=url; imgWrap.style.display='block'; }
+      });
+    }
+  }
+  const grid=$('answers-grid');grid.innerHTML='';
+  ['A','B','C','D'].forEach((l,i)=>{
+    if(!q.choices[i])return;
+    const btn=document.createElement('button');
+    btn.className='answer-btn';
+    btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;
+    btn.onclick=()=>pickQ(q.choices[i],btn,q);
+    grid.appendChild(btn);
+  });
+  startTimer(18);
+}

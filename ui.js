@@ -188,73 +188,69 @@ function goToLevels(){
   goTo('levels');
 }
 function renderLevels(){
-  const g=$('levels-grid');g.innerHTML='';
+  const g=$('dungeon-zones')||$('levels-grid');
+  if(!g)return;
+  g.innerHTML='';
   if(!U.unlockedLevels) U.unlockedLevels=['A1'];
-  LEVELS.forEach((lv,i)=>{
+  LEVELS.forEach((lv,li)=>{
+    const dz=DUNGEON[lv.id];if(!dz)return;
     const has=!!CHAPTERS[lv.id];
-    const unlocked=U.unlockedLevels.includes(lv.id)||(i===0);
-    const done=lvDone(lv.id),stars=lvStars(lv.id);
+    const unlocked=U.unlockedLevels.includes(lv.id)||(li===0);
+    const done=lvDone(lv.id);
+    const chaps=CHAPTERS[lv.id]||[];
+    const total=chaps.length;
+    const completed=chaps.filter(ch=>U?.progress[pk(ch.id)]?.completed).length;
+    const pct=total?Math.round((completed/total)*100):0;
     const canAfford=Math.floor(U.coins)>=(lv.price||0);
-    const d=document.createElement('div');
-    d.className=`level-card ${lv.id} ${!unlocked?'locked':done?'completed':'available'}`;
-    if(!unlocked){
-      d.innerHTML=`
-        <span class="level-badge">${lv.id}</span>
-        <div class="level-title">${lv.label.split('—')[1].trim()}</div>
-        <div class="level-desc">${lv.desc}</div>
-        <button class="btn-unlock-level ${canAfford?'can-afford':'cant-afford'}"
-          onclick="event.stopPropagation();buyLevel('${lv.id}')">
-          ${canAfford?'🔓':'🔒'} ${lv.price} 🪙
-        </button>`;
-    } else {
-      d.innerHTML=`
-        <span class="level-badge">${lv.id}</span>
-        <div class="level-title">${lv.label.split('—')[1].trim()}</div>
-        <div class="level-desc">${lv.desc}</div>
-        <div class="level-stars">${stHTML(stars)}</div>`;
-      d.onclick=()=>goToChaps(lv.id);
-    }
-    g.appendChild(d);
-  });
-}
-function buyLevel(lvId){
-  if(!U.unlockedLevels) U.unlockedLevels=['A1'];
-  if(U.unlockedLevels.includes(lvId)) return;
-  const lv=LEVELS.find(l=>l.id===lvId);
-  if(!lv) return;
-  if(Math.floor(U.coins)<lv.price){ toast('❌ Pas assez de pièces !'); return; }
-  if(!confirm(t('level_unlock_confirm').replace('{id}',lvId).replace('{n}',lv.price))) return;
-  U.coins-=lv.price;
-  U.unlockedLevels.push(lvId);
-  saveU();
-  toast(t('level_unlocked').replace('{id}',lvId));
-  renderLevels();
-  updateTopBar();
-}
-function lvDone(id){const cs=CHAPTERS[id]||[];return cs.length>0&&cs.every(c=>U?.progress[pk(c.id)]?.completed);}
-function lvStars(id){const cs=CHAPTERS[id]||[];if(!cs.length)return 0;return Math.round(cs.reduce((a,c)=>a+(U?.progress[pk(c.id)]?.stars||0),0)/cs.length);}
-function pk(cid){return`${S.nL}-${S.tL}-${cid}`;}
-function stHTML(n){return[0,1,2].map(i=>`<span style="color:${i<n?'var(--accent4)':'rgba(255,255,255,.1)'}">★</span>`).join('');}
 
-function goToChaps(lvId){S.level=lvId;S._activeTopic='conv';const T=LANGS[S.tL],lv=LEVELS.find(l=>l.id===lvId);sT('bc-level2',lvId);sT('chapters-title',`${T.flag} ${lvId}`);renderTopicTabs();renderChaps();goTo('chapters');}
-function renderTopicTabs(){
-  const wrap=$('topic-tabs'); if(!wrap) return;
-  const lang=S.nL||'fr';
-  // Count chapters per topic (include DIY)
-  const allCs=CHAPTERS[S.level]||[];
-  const diyCs=(U.diyLessons||[]).filter(d=>d.level===S.level);
-  const counts={};
-  allCs.forEach(c=>{ counts[c.topic]=(counts[c.topic]||0)+1; });
-  if(diyCs.length) counts['diy']=diyCs.length;
-  wrap.innerHTML='';
-  (typeof TOPIC_DEFS!=='undefined'?TOPIC_DEFS:[]).forEach(t=>{
-    const n=counts[t.id]||0;
-    const btn=document.createElement('button');
-    btn.className='topic-tab'+(S._activeTopic===t.id?' active':'')+(n===0?' empty':'');
-    btn.innerHTML=`${t.icon} ${t.label[lang]||t.label.fr}${n?` <span class="topic-count">${n}</span>`:''}`;
-    btn.onclick=()=>{ S._activeTopic=t.id; renderTopicTabs(); renderChaps(); };
-    wrap.appendChild(btn);
+    const el=document.createElement('div');
+    el.className='dungeon-zone'+(unlocked?'':' locked');
+    el.style.cssText='border-color:'+(done?'rgba(16,185,129,.4)':'rgba(255,255,255,.1)');
+
+    const starsHtml=done?'<span style="font-size:.8rem;">'+stHTML(lvStars(lv.id))+'</span>':'';
+
+    if(!unlocked){
+      el.innerHTML=
+        '<div class="dungeon-zone-banner" style="background:'+dz.color+';opacity:.5;">'
+        +'<div class="dungeon-zone-emoji">'+dz.emoji+'</div>'
+        +'<div class="dungeon-zone-info">'
+        +'<div class="dungeon-zone-name">'+dz.name+'</div>'
+        +'<div class="dungeon-zone-sub">'+dz.desc+'</div></div>'
+        +'<div class="dungeon-zone-badge">🔒 '+lv.id+'</div></div>'
+        +'<div class="dungeon-zone-footer">'
+        +'<button class="btn-unlock-level '+(canAfford?'can-afford':'cant-afford')+'" onclick="event.stopPropagation();buyLevel(''+lv.id+'')" style="width:100%;">'
+        +(canAfford?'🔓 Débloquer — ':'🔒 ')+(lv.price||0)+' 🪙'
+        +'</button></div>';
+    } else {
+      el.innerHTML=
+        '<div class="dungeon-zone-banner" style="background:'+dz.color+'">'
+        +'<div class="dungeon-zone-emoji">'+dz.emoji+'</div>'
+        +'<div class="dungeon-zone-info">'
+        +'<div class="dungeon-zone-name">'+dz.name+'</div>'
+        +'<div class="dungeon-zone-sub">'+lv.id+' · '+dz.desc+'</div></div>'
+        +'<div>'+(done?'<div style="font-size:1.6rem;">🏆</div>':'<div class="dungeon-zone-badge" style="color:'+dz.accent+';">'+pct+'% clair</div>')+'</div></div>'
+        +'<div class="dungeon-zone-footer">'
+        +'<span style="font-size:.75rem;color:rgba(255,255,255,.6);">'+completed+'/'+total+' salles</span>'
+        +'<div class="dungeon-prog-bar"><div class="dungeon-prog-fill" style="width:'+pct+'%;background:'+dz.accent+';"></div></div>'
+        +starsHtml+'</div>';
+      el.onclick=()=>goToChaps(lv.id);
+    }
+    g.appendChild(el);
   });
+}
+function goToChaps(lvId){
+  S.level=lvId;S._activeTopic='conv';
+  const T=LANGS[S.tL];
+  const dz=DUNGEON&&DUNGEON[lvId];
+  sT('bc-level2',lvId);
+  if(dz){
+    const banner=$('dungeon-zone-banner-inner');
+    if(banner)banner.style.background=dz.color;
+    sT('dungeon-zone-emoji2',dz.emoji);
+    sT('dungeon-zone-name2',dz.name);
+    sT('dungeon-zone-desc2',T.flag+' '+lvId+' · '+dz.desc);
+  }
+  renderTopicTabs();renderChaps();goTo('chapters');
 }
 
 function renderChaps(){
@@ -291,25 +287,51 @@ function renderChaps(){
     list.innerHTML=`<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">${t('content_coming')}</div>`;
     return;
   }
+  const dz=DUNGEON&&DUNGEON[S.level];
+  const monsters=(dz&&dz.monsters)||['⚔️','🛡','🧙','🗡','🪄','💀','🏹','🔮','🗝','👑'];
+  const boss=dz&&dz.boss;
+
   cs.forEach((ch,i)=>{
     const p=U?.progress[pk(ch.id)],done=p?.completed;
-    // unlock: first of topic always open, then sequential within topic
     const locked=i>0&&!U?.progress[pk(cs[i-1].id)]?.completed;
-    const title=ch.title[lang]||ch.title.fr,sub=ch.subtitle[lang]||ch.subtitle.fr;
-    const d=document.createElement('div');d.className=`chapter-item ${locked?'locked':done?'done':'available'}`;
-    d.innerHTML=`<div class="chapter-num">${locked?'🔒':done?'✓':(i+1)}</div>
-      <div style="flex:1">
-        <div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${title}</div>
-        <div style="font-size:.74rem;color:var(--muted);">${sub}</div>
-        <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;">
-          <span class="game-chip">🎲 Mixte</span><span class="game-chip">⚡ Quiz</span><span class="game-chip">✏️ Fill</span><span class="game-chip">🔗 Match</span>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-        <div>${stHTML(p?.stars||0)}</div>
-        ${!locked?`<button class="btn-qr" onclick="event.stopPropagation();openQR('${ch.id}')">📱 QR</button>`:''}
-      </div>`;
-    if(!locked) d.onclick=()=>goToSel(ch.id);
+    const isLast=i===cs.length-1;
+    const title=ch.title[lang]||ch.title.fr;
+    const sub=ch.subtitle[lang]||ch.subtitle.fr;
+    const monster=monsters[i%monsters.length];
+    const stars=stHTML(p?.stars||0);
+
+    // Connector dot
+    if(i>0){
+      const conn=document.createElement('div');
+      conn.className='room-connector'+(done?' done':'');
+      list.appendChild(conn);
+    }
+
+    const d=document.createElement('div');
+    d.className='dungeon-room'+(locked?' locked':done?' done':isLast?' boss':' available');
+
+    if(isLast && boss){
+      // Boss room
+      d.innerHTML='<div class="boss-label">BOSS</div>'
+        +'<div class="room-monster" style="background:rgba(239,68,68,.15);font-size:2rem;">'+boss.sprite+'</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:900;font-size:.95rem;color:#f87171;">'+boss.name+'</div>'
+        +'<div style="font-size:.73rem;color:var(--muted);margin-top:2px;">Affronte le boss du niveau '+S.level+'</div>'
+        +'</div>'
+        +(done?'<span style="font-size:1.2rem;">🏆</span>':'<span style="color:#ef4444;font-size:1.2rem;">⚔️</span>');
+      if(!locked) d.onclick=()=>startBossFight(ch.id, boss);
+    } else {
+      d.innerHTML='<div class="room-monster">'+monster+'</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:800;font-size:.9rem;">Salle '+(i+1)+' · '+title+'</div>'
+        +'<div style="font-size:.72rem;color:var(--muted);margin-top:2px;">'+sub+'</div>'
+        +'</div>'
+        +'<div style="text-align:right;flex-shrink:0;">'
+        +(done?stars:'<span style="font-size:.7rem;color:var(--muted);">Non clair</span>')
+        +(locked?'':'<br><button class="btn-qr" style="margin-top:4px;" onclick="event.stopPropagation();openQR(''+ch.id+'')">📱</button>')
+        +'</div>';
+      if(!locked) d.onclick=()=>goToSel(ch.id);
+    }
     list.appendChild(d);
   });
 }

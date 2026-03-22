@@ -1,3 +1,33 @@
+
+// ═══════════════════════════════════════════════════
+// DUNGEON ZONE CONFIG
+// ═══════════════════════════════════════════════════
+const DUNGEON = {
+  A1:{id:"A1", name:"Cavernes de l'Aurore",   emoji:"🌿", color:"linear-gradient(135deg,#064e3b,#065f46)",
+    accent:"#10b981", desc:"Premiers mots, premiers pas",
+    monsters:["🐛","🦎","🍄","🌿","🐢","🦗","🌱","🦔","🐝","🦋"],
+    boss:{sprite:"🐲", name:"Dragon des Cavernes", color:"#065f46"}},
+  A2:{id:"A2", name:"Forêt des Fantômes",      emoji:"🌲", color:"linear-gradient(135deg,#1a4731,#166534)",
+    accent:"#22c55e", desc:"Approfondis ton vocabulaire dans l'obscurité",
+    monsters:["👻","🕷","🦉","🌑","🦇","🌙","🍂","🕯","🌿","🦄"],
+    boss:{sprite:"🧟", name:"Fantôme de la Forêt", color:"#166534"}},
+  B1:{id:"B1", name:"Château des Épreuves",     emoji:"🏰", color:"linear-gradient(135deg,#3b0764,#4c1d95)",
+    accent:"#a78bfa", desc:"Construis des phrases, déjoue les pièges",
+    monsters:["⚔️","🛡","🧙","🗡","🪄","💀","🏹","🔮","🗝","👑"],
+    boss:{sprite:"🧙", name:"Sorcier du Château", color:"#4c1d95"}},
+  B2:{id:"B2", name:"Volcan de la Grammaire",   emoji:"🌋", color:"linear-gradient(135deg,#7f1d1d,#991b1b)",
+    accent:"#f87171", desc:"Maîtrise la syntaxe dans la lave bouillante",
+    monsters:["🔥","💥","🌋","☄️","⚡","🌪","🔴","🧨","💢","🌡"],
+    boss:{sprite:"😈", name:"Démon du Volcan", color:"#991b1b"}},
+  C1:{id:"C1", name:"Palais du Ciel",            emoji:"☁️", color:"linear-gradient(135deg,#1e3a5f,#1e40af)",
+    accent:"#60a5fa", desc:"Les nuances et la maîtrise parfaite",
+    monsters:["🦅","⭐","🌟","🌠","🌊","🌈","🦋","🔵","🎯","🏆"],
+    boss:{sprite:"🧝", name:"Sage du Palais", color:"#1e40af"}},
+  C2:{id:"C2", name:"Nexus de l'Omniscience",  emoji:"🌌", color:"linear-gradient(135deg,#0f0f1a,#1a0a2e)",
+    accent:"#c4b5fd", desc:"Langue vivante comme un locuteur natif",
+    monsters:["🌌","🔭","🌀","💫","🎆","🌙","⚡","🔮","👁","♾"],
+    boss:{sprite:"🤖", name:"Maitre de l'Omniscience", color:"#1a0a2e"}},
+};
 // ══════════════════════════════════════════════
 // STATE & STORAGE
 // ══════════════════════════════════════════════
