@@ -766,3 +766,190 @@ function closeMiniGame() {
     window._minigameListener=null;
   }
 }
+
+
+// ══════════════════════════════════════════════════════
+//  WORD TRANSLATION TOOLTIP (right-click / long-press)
+// ══════════════════════════════════════════════════════
+
+let _tooltipTarget = null;
+
+function showWordTooltip(word, x, y) {
+  const tooltip = document.getElementById('word-tooltip');
+  if(!tooltip || !word) return;
+
+  // Find the word in WD (case-insensitive, strip punctuation)
+  const clean = word.toLowerCase().replace(/[.,!?;:'"()]/g,'').trim();
+  const nL = S.nL || 'fr';
+  const tL = S.tL || 'en';
+
+  // Find matching word entry
+  let found = null, foundId = null;
+  for(const [id, entry] of Object.entries(WD)) {
+    const nativeVal = (entry[nL]||'').toLowerCase();
+    const targetVal = (entry[tL]||'').toLowerCase();
+    if(nativeVal === clean || targetVal === clean ||
+       nativeVal.includes(clean) || targetVal.includes(clean)) {
+      found = entry;
+      foundId = id;
+      break;
+    }
+  }
+
+  if(!found) {
+    // Try partial match
+    for(const [id, entry] of Object.entries(WD)) {
+      for(const lang of ['fr','en','es','de','cs']) {
+        const val = (entry[lang]||'').toLowerCase();
+        if(val && val.includes(clean) && clean.length >= 3) {
+          found = entry; foundId = id; break;
+        }
+      }
+      if(found) break;
+    }
+  }
+
+  if(!found) return; // Word not in our dictionary
+
+  const LANGS_CFG = {
+    fr:{flag:'🇫🇷',name:'Français'},
+    en:{flag:'🇬🇧',name:'Anglais'},
+    es:{flag:'🇪🇸',name:'Espagnol'},
+    de:{flag:'🇩🇪',name:'Allemand'},
+    cs:{flag:'🇨🇿',name:'Tchèque'},
+  };
+
+  // Fill tooltip content
+  const native = found[nL] || word;
+  const trans  = found[tL] || '?';
+
+  document.getElementById('wt-word').textContent = native;
+  document.getElementById('wt-trans').textContent = trans;
+
+  // Other languages
+  const langsEl = document.getElementById('wt-langs');
+  if(langsEl) {
+    langsEl.innerHTML = Object.entries(LANGS_CFG)
+      .filter(([l]) => l !== nL && l !== tL && found[l])
+      .map(([l,cfg]) => `<span class="wt-lang-pill">${cfg.flag} ${found[l]}</span>`)
+      .join('');
+  }
+
+  // Find a context sentence containing this word
+  const ctxEl = document.getElementById('wt-context');
+  const ctxText = document.getElementById('wt-context-text');
+  let contextFound = false;
+
+  if(ctxEl && ctxText) {
+    // Search chapters for a sentence containing this word
+    for(const lvChaps of Object.values(CHAPTERS||{})) {
+      for(const ch of lvChaps) {
+        const sents = ch.sents?.[nL] || [];
+        for(const sent of sents) {
+          const sentLower = sent.toLowerCase();
+          const wordVariants = [native.toLowerCase(), clean];
+          if(wordVariants.some(v => sentLower.includes(v))) {
+            // Highlight the word in the sentence
+            // Simple word highlighting - bold the match
+            const re = new RegExp('\\b(' + native.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&') + ')\\b', 'gi');
+            const highlighted = sent.replace(re, '<span class="wt-highlight">$1</span>');
+            // Also show translation
+            const transSents = ch.sents?.[tL] || [];
+            const sentIdx = sents.indexOf(sent);
+            const transSent = transSents[sentIdx] || '';
+            ctxText.innerHTML = highlighted
+              + (transSent ? '<br><span style="color:#64748b;font-style:italic;">' + transSent + '</span>' : '');
+            ctxEl.style.display = 'block';
+            contextFound = true;
+            break;
+          }
+        }
+        if(contextFound) break;
+      }
+      if(contextFound) break;
+    }
+    if(!contextFound) ctxEl.style.display = 'none';
+  }
+
+  // Position tooltip
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const TW = 280, TH = 200;
+  let tx = x + 14, ty = y + 14;
+  if(tx + TW > vw - 10) tx = x - TW - 8;
+  if(ty + TH > vh - 10) ty = y - TH - 8;
+  tooltip.style.left = Math.max(8, tx) + 'px';
+  tooltip.style.top  = Math.max(8, ty) + 'px';
+  tooltip.style.display = 'block';
+}
+
+function hideWordTooltip() {
+  const t = document.getElementById('word-tooltip');
+  if(t) t.style.display = 'none';
+  if(_tooltipTarget) { _tooltipTarget.classList.remove('active-lookup'); _tooltipTarget = null; }
+}
+
+// ── Make text selectable for word lookup ────────────────
+function wrapWordsForLookup(el) {
+  if(!el || el.dataset.wrapped) return;
+  el.dataset.wrapped = '1';
+  const text = el.textContent;
+  if(!text.trim() || text.length < 2) return;
+
+  // Wrap each word in a span
+  el.innerHTML = text.split(/(\s+)/).map(part => {
+    if(/^\s+$/.test(part) || !part.trim()) return part;
+    const clean = part.replace(/[.,!?;:'"()]/g,'');
+    if(clean.length < 2) return part;
+    return `<span class="word-lookup" data-word="${clean}">${part}</span>`;
+  }).join('');
+}
+
+// ── Install context menu listeners ──────────────────────
+(function installWordLookup(){
+  // Right-click / contextmenu on word spans
+  document.addEventListener('contextmenu', function(e) {
+    const span = e.target.closest('.word-lookup');
+    if(!span) { hideWordTooltip(); return; }
+    e.preventDefault();
+    if(_tooltipTarget) _tooltipTarget.classList.remove('active-lookup');
+    _tooltipTarget = span;
+    span.classList.add('active-lookup');
+    showWordTooltip(span.dataset.word || span.textContent, e.clientX, e.clientY);
+  });
+
+  // Long-press on touch devices
+  let _lpTimer = null;
+  document.addEventListener('touchstart', function(e) {
+    const span = e.target.closest('.word-lookup');
+    if(!span) return;
+    _lpTimer = setTimeout(()=>{
+      if(_tooltipTarget) _tooltipTarget.classList.remove('active-lookup');
+      _tooltipTarget = span;
+      span.classList.add('active-lookup');
+      const t = e.touches[0];
+      showWordTooltip(span.dataset.word || span.textContent, t.clientX, t.clientY);
+    }, 500);
+  }, {passive:true});
+  document.addEventListener('touchend', ()=>clearTimeout(_lpTimer), {passive:true});
+  document.addEventListener('touchmove', ()=>clearTimeout(_lpTimer), {passive:true});
+
+  // Click elsewhere = hide
+  document.addEventListener('click', function(e) {
+    if(!e.target.closest('#word-tooltip') && !e.target.closest('.word-lookup')) {
+      hideWordTooltip();
+    }
+  });
+})();
+
+// ── Wrap words whenever a question is rendered ──────────
+const _origRenderQ = typeof renderQ !== 'undefined' ? renderQ : null;
+function patchWordLookup() {
+  // Called after each question render — wrap the question text
+  setTimeout(()=>{
+    const el = document.getElementById('g-text');
+    if(el) wrapWordsForLookup(el);
+    document.querySelectorAll('.answer-btn span:last-child, .word-token, .match-item').forEach(wrapWordsForLookup);
+    const speakPhrase = document.getElementById('speak-phrase');
+    if(speakPhrase) wrapWordsForLookup(speakPhrase);
+  }, 50);
+}

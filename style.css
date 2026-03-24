@@ -1039,3 +1039,42 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* Photo question */
 .photo-q-img{width:100%;max-height:160px;object-fit:cover;border-radius:14px;
   margin-bottom:12px;display:block;}
+
+/* ══ WORD TOOLTIP ══════════════════════════════ */
+#word-tooltip{animation:fadeIn .15s ease;}
+#word-tooltip.visible{display:block!important;}
+
+/* Clickable/right-clickable word spans in exercises */
+.word-lookup{
+  cursor:context-menu;
+  border-bottom:1px dashed rgba(124,58,237,.4);
+  transition:background .15s, border-color .15s;
+  border-radius:3px;
+  padding:0 1px;
+}
+.word-lookup:hover{
+  background:rgba(124,58,237,.12);
+  border-bottom-color:rgba(124,58,237,.8);
+}
+.word-lookup.active-lookup{
+  background:rgba(124,58,237,.2);
+  border-bottom-color:#7c3aed;
+}
+
+/* Context highlight in tooltip */
+.wt-highlight{
+  background:rgba(124,58,237,.25);
+  border-radius:4px;
+  padding:0 3px;
+  color:#c4b5fd;
+  font-weight:900;
+}
+
+/* Other language pills */
+.wt-lang-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:3px 10px;
+  font-size:.7rem;font-weight:700;color:#94a3b8;
+}

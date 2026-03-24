@@ -1143,5 +1143,29 @@
 
   <!-- ── FLOATING EVENT BANNER ── -->
   <div id="event-float"></div>
+
+<!-- ══ WORD TRANSLATION TOOLTIP ══ -->
+<div id="word-tooltip" style="
+  display:none;position:fixed;z-index:9999;
+  background:var(--card,#141428);
+  border:1px solid rgba(124,58,237,.35);
+  border-radius:14px;padding:14px 16px;
+  max-width:280px;min-width:180px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+  font-family:'Nunito',sans-serif;
+  pointer-events:none;
+">
+  <div id="wt-word" style="font-size:1.1rem;font-weight:900;color:#c4b5fd;margin-bottom:4px;"></div>
+  <div id="wt-trans" style="font-size:.88rem;font-weight:800;color:#f1f5f9;margin-bottom:8px;"></div>
+  <div id="wt-context" style="font-size:.76rem;color:#94a3b8;line-height:1.6;
+    border-top:1px solid rgba(255,255,255,.08);padding-top:8px;display:none;">
+    <span style="font-size:.65rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;
+      color:#7c3aed;display:block;margin-bottom:4px;">En contexte</span>
+    <div id="wt-context-text"></div>
+  </div>
+  <div id="wt-langs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;
+    border-top:1px solid rgba(255,255,255,.06);"></div>
+</div>
+
 </body>
 </html>
