@@ -342,6 +342,31 @@
     </div>
   </div>
   <div id="zone-quiz" style="width:100%;max-width:700px;"><div class="answers-grid" id="answers-grid"></div></div>
+  <!-- Writing exercise zone -->
+  <div id="zone-write" style="display:none;width:100%;max-width:700px;">
+    <div style="font-size:.74rem;color:var(--muted);font-weight:800;text-transform:uppercase;
+      letter-spacing:1px;margin-bottom:8px;">✍️ Écris une phrase complète</div>
+    <textarea id="write-input" class="fill-input"
+      style="min-height:80px;resize:none;padding:14px;font-size:.95rem;line-height:1.6;"
+      placeholder="Écris ta réponse ici..."></textarea>
+    <div id="write-hint" class="fuzzy-note" style="display:none;"></div>
+  </div>
+  <!-- Speaking exercise zone -->
+  <div id="zone-speak" style="display:none;width:100%;max-width:700px;text-align:center;">
+    <div style="font-size:.74rem;color:var(--muted);font-weight:800;text-transform:uppercase;
+      letter-spacing:1px;margin-bottom:14px;">🎤 Répète cette phrase à voix haute</div>
+    <div id="speak-phrase" style="font-size:1.2rem;font-weight:900;color:var(--accent3);
+      background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:14px;
+      padding:16px;margin-bottom:18px;line-height:1.5;"></div>
+    <button id="speak-mic-btn" onclick="startSpeaking()"
+      style="width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      font-size:1.8rem;transition:all .2s;box-shadow:0 0 0 0 rgba(124,58,237,.4);"
+      class="speak-pulse">🎤</button>
+    <div id="speak-status" style="margin-top:12px;font-size:.82rem;color:var(--muted);
+      font-weight:700;min-height:24px;"></div>
+    <div id="speak-result" style="margin-top:8px;font-size:.85rem;display:none;"></div>
+  </div>
   <div id="zone-fill" style="display:none;width:100%;max-width:700px;">
     <input class="fill-input" type="text" id="fill-input" placeholder="Écris ta réponse…" id="fill-input" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkCurrentQ()">
     <div class="fuzzy-note" id="fuzzy-note" style="display:none;"></div>

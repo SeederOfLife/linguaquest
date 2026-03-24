@@ -166,7 +166,7 @@ function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi
 // Show image if available (DIY lessons with imgUrl)
 const imgWrap=$('g-img-wrap'),imgEl=$('g-img');
 if(imgWrap&&imgEl){if(q.imgUrl){imgEl.src=q.imgUrl;imgWrap.style.display='block';imgEl.onerror=()=>{imgWrap.style.display='none';};}else{imgWrap.style.display='none';imgEl.src='';}}
-if(q.type==='gram_tip')renderGramTip(q);else if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
+if(q.type==='gram_tip')renderGramTip(q);else if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='write')renderWriteQ(q);else if(q.type==='speak')renderSpeakQ(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);}
 function renderQuiz(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
 function renderFill(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
 function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text',t('game_match_title'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
@@ -186,7 +186,7 @@ function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;
   const _nw=wt(Object.keys(WD).find(id=>WD[id][S.tL]===q.correct)||'',S.nL)||'';
   if(_nw) { setTimeout(()=>_speakClick(_nw,S.nL),150); setTimeout(()=>_speakThenUnlock(q.correct,S.tL),800); }
   else { setTimeout(()=>_speakThenUnlock(q.correct,S.tL),200); }}
-function checkCurrentQ(){const q=S.curQ;if(q.type==='fill')doFill(q);else if(q.type==='sort')doSort(q);}
+function checkCurrentQ(){const q=S.curQ;if(q.type==='fill')doFill(q);else if(q.type==='write')checkWriteQ();else if(q.type==='sort')doSort(q);}
 
 // Fuzzy
 function deacc(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
@@ -620,4 +620,165 @@ function buildGramIntro(ch) {
     rule: tip.rule,
     examples: tip.examples || [],
   };
+}
+
+// =====================================================
+//  WRITING EXERCISE (type: write)
+// =====================================================
+function mkWQ(id, prompt_override) {
+  // Writing exercise: show an image + prompt, type a sentence
+  const word = wt(id, S.nL);
+  const target = wt(id, S.tL);
+  const imgUrl = WD[id]?._img || null;
+  return {
+    type: 'write',
+    q: word,
+    correct: target,
+    prompt: prompt_override || null,
+    imgUrl,
+    wordId: id
+  };
+}
+
+function renderWriteQ(q) {
+  sT('g-text', q.prompt || q.q);
+  setTimeout(()=>_speakClick(q.q, S.nL), 200);
+
+  // Image
+  const imgWrap=$('g-img-wrap'), imgEl=$('g-img');
+  if(imgWrap && imgEl) {
+    if(q.imgUrl){ imgEl.src=q.imgUrl; imgWrap.style.display='block'; imgEl.onerror=()=>{imgWrap.style.display='none';}; }
+    else imgWrap.style.display='none';
+  }
+
+  const ta = $('write-input');
+  if(ta){ ta.value=''; ta.className='fill-input'; ta.disabled=false; }
+  const hint = $('write-hint');
+  if(hint){ hint.style.display='none'; hint.textContent=''; }
+
+  showZone('write');
+  showBtn('btn-check');
+  startTimer(30);
+  setTimeout(()=>ta?.focus(), 100);
+}
+
+function checkWriteQ() {
+  const q = S.curQ;
+  if(!q || q.type !== 'write') return;
+  clearInterval(S.timer);
+  const ta = $('write-input');
+  if(!ta) return;
+  const inp = ta.value.trim();
+  ta.disabled = true;
+
+  const res = fuzzy(inp, q.correct);
+  if(res === 'exact' || res === 'close') {
+    ta.className = 'fill-input correct';
+    S.cor++; S.score += res==='exact' ? 12 : 8;
+    S.ts.fill = S.ts.fill || {c:0,w:0};
+    S.ts.fill.c++;
+    showFB(res==='close'?'close':true,
+      res==='exact' ? t('correct') : t('fb_close_title'),
+      res==='exact' ? q.correct : t('fb_close_detail').replace('{a}',q.correct));
+    if(typeof speakAnswer==='function') speakAnswer(q.correct, S.tL);
+  } else {
+    ta.className = 'fill-input wrong';
+    S.wr++; S.ts.fill = S.ts.fill || {c:0,w:0};
+    S.ts.fill.w++;
+    showFB(false, t('wrong'), q.correct);
+    const hint = $('write-hint');
+    if(hint){ hint.textContent = '→ ' + q.correct; hint.style.display='block'; }
+  }
+  hideAllBtns(); showBtn('btn-next');
+}
+
+// =====================================================
+//  SPEAKING EXERCISE (type: speak)
+// =====================================================
+let _speechRec = null;
+
+function mkSpeakQ(id) {
+  const word = wt(id, S.nL);
+  const target = wt(id, S.tL);
+  const imgUrl = WD[id]?._img || null;
+  return { type:'speak', q:word, correct:target, wordId:id, imgUrl };
+}
+
+function renderSpeakQ(q) {
+  const phrase = $('speak-phrase');
+  if(phrase) phrase.textContent = q.correct;
+  sT('speak-status', 'Appuie sur le micro et repete');
+  const res = $('speak-result');
+  if(res) res.style.display = 'none';
+  const btn = $('speak-mic-btn');
+  if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); btn.disabled=false; }
+
+  // Show image
+  const imgWrap=$('g-img-wrap'), imgEl=$('g-img');
+  if(imgWrap && imgEl) {
+    if(q.imgUrl){ imgEl.src=q.imgUrl; imgWrap.style.display='block'; imgEl.onerror=()=>{imgWrap.style.display='none';}; }
+    else imgWrap.style.display='none';
+  }
+
+  sT('g-text', q.q);
+  showZone('speak');
+  hideAllBtns(); showBtn('btn-skip');
+  startTimer(20);
+  // Auto-speak the target phrase
+  setTimeout(()=>_speakClick(q.correct, S.tL), 300);
+}
+
+function startSpeaking() {
+  const q = S.curQ;
+  if(!q || !('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+    // No speech recognition — mark as done and move on
+    sT('speak-status', '🎤 Non disponible — cliquer Suivant');
+    showBtn('btn-next');
+    return;
+  }
+
+  const btn = $('speak-mic-btn');
+  if(btn){ btn.textContent='⏹'; btn.classList.add('listening'); }
+  sT('speak-status', '🔴 Je t écoute...');
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  _speechRec = new SR();
+  _speechRec.lang = ({fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'})[S.tL] || 'fr-FR';
+  _speechRec.interimResults = false;
+  _speechRec.maxAlternatives = 3;
+
+  _speechRec.onresult = function(event) {
+    const heard = Array.from(event.results[0]).map(r=>r.transcript).join(' ');
+    const target = q.correct || '';
+    const ok = fuzzy(heard.trim(), target.trim());
+    const res = $('speak-result');
+    const btn = $('speak-mic-btn');
+
+    if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); btn.disabled=false; }
+
+    if(ok !== 'wrong') {
+      sT('speak-status', '✅ Excellent !');
+      if(res){ res.innerHTML='<span style="color:var(--green);font-weight:800;">'+heard+'</span>'; res.style.display='block'; }
+      S.cor++; S.score += 10;
+      showFB(true, t('correct'), '');
+    } else {
+      sT('speak-status', '❌ Essaie encore');
+      if(res){ res.innerHTML='J ai entendu: <em>'+heard+'</em><br>Attendu: <strong style="color:var(--accent3)">'+target+'</strong>'; res.style.display='block'; }
+      S.wr++;
+      showFB(false, t('wrong'), target);
+    }
+    hideAllBtns(); showBtn('btn-next');
+  };
+
+  _speechRec.onerror = function(e) {
+    if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); }
+    sT('speak-status', 'Erreur micro — cliquer Suivant');
+    showBtn('btn-next');
+  };
+
+  _speechRec.onend = function() {
+    if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); }
+  };
+
+  _speechRec.start();
 }
