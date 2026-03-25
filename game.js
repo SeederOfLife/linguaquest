@@ -183,10 +183,12 @@ function clickMatch(el){if(el.classList.contains('matched'))return;const sel=S.m
 function skipMatch(){S.mEmbed?nextQ():showResults();}
 
 function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>{b.disabled=true;if(b.querySelector('span:last-child').textContent===q.correct)b.classList.add('correct');});if(!ok)btn.classList.add('wrong');ok?(S.score+=10,S.cor++,S.ts.quiz.c++,showFB(true,t('game_perfect'),q.correct)):(S.wr++,S.ts.quiz.w++,showFB(false,t('game_wrong'),t('game_answer')+q.correct));sT('g-score',S.score);showBtn('btn-next');
-  // Speak: native word first (short), then TARGET word with gating
-  const _nw=wt(Object.keys(WD).find(id=>WD[id][S.tL]===q.correct)||'',S.nL)||'';
-  if(_nw) { setTimeout(()=>_speakClick(_nw,S.nL),150); setTimeout(()=>_speakThenUnlock(q.correct,S.tL),800); }
-  else { setTimeout(()=>_speakThenUnlock(q.correct,S.tL),200); }}
+  // Speak the correct answer once immediately
+  setTimeout(()=>_speakThenUnlock(q.correct,S.tL),150);
+  S._lastAnswerWord = q.correct;
+  S._lastAnswerLang = S.tL;
+  if(typeof renderRepeatBtn==='function') renderRepeatBtn();
+}
 function checkCurrentQ(){const q=S.curQ;if(q.type==='fill')doFill(q);else if(q.type==='write')checkWriteQ();else if(q.type==='sort')doSort(q);}
 
 // Fuzzy
@@ -195,10 +197,13 @@ function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;cons
 function fuzzy(inp,cor){const clean=s=>deacc(s.replace(/[^\w\s]/gi,''));const a=clean(inp),b=clean(cor);if(a===b||deacc(inp)===deacc(cor))return'exact';const dist=lev(a,b);return dist<=(b.length<=3?1:b.length<=7?2:3)?'close':'wrong';}
 
 function doFill(q){clearInterval(S.timer);const inp=$('fill-input'),res=fuzzy(inp.value,q.correct);inp.disabled=true;if(res==='exact'){inp.className='fill-input correct';S.score+=10;S.cor++;S.ts.fill.c++;showFB(true,t('game_perfect'),q.correct);}else if(res==='close'){inp.className='fill-input close';S.score+=5;S.cor++;S.ts.fill.c++;const fn=$('fuzzy-note');fn.textContent=t('game_close')+' '+t('game_exact_answer')+q.correct;fn.style.display='block';showFB('close',t('game_close'),t('game_exact_answer')+q.correct);}else{inp.className='fill-input wrong';S.wr++;S.ts.fill.w++;showFB(false,t('game_wrong'),t('game_answer')+q.correct);}sT('g-score',S.score);hideBtn('btn-check');showBtn('btn-next');
-  const _nwf=wt(Object.keys(WD).find(id=>WD[id][S.tL]===q.correct)||'',S.nL)||'';
-  if(_nwf) { setTimeout(()=>_speakClick(_nwf,S.nL),150); setTimeout(()=>_speakThenUnlock(q.correct,S.tL),800); }
-  else { setTimeout(()=>_speakThenUnlock(q.correct,S.tL),200); } }
-function doSort(q){clearInterval(S.timer);const built=S.sortArr.join(' '),res=fuzzy(built,q.correct);if(res==='exact'){S.score+=10;S.cor++;S.ts.sort.c++;showFB(true,t('game_perfect'),q.correct);}else if(res==='close'){S.score+=5;S.cor++;S.ts.sort.c++;showFB('close',t('game_close'),q.correct);}else{S.wr++;S.ts.sort.w++;showFB(false,t('game_wrong'),t('game_answer')+q.correct);}sT('g-score',S.score);hideBtn('btn-check');hideBtn('btn-reset');showBtn('btn-next');setTimeout(()=>_speakThenUnlock(q.correct,S.tL),300);}
+  // Speak the answer once
+  setTimeout(()=>_speakThenUnlock(q.correct,S.tL),150);
+  S._lastAnswerWord = q.correct;
+  S._lastAnswerLang = S.tL;
+  if(typeof renderRepeatBtn==='function') renderRepeatBtn();
+}
+function doSort(q){clearInterval(S.timer);const built=S.sortArr.join(' '),res=fuzzy(built,q.correct);if(res==='exact'){S.score+=10;S.cor++;S.ts.sort.c++;showFB(true,t('game_perfect'),q.correct);}else if(res==='close'){S.score+=5;S.cor++;S.ts.sort.c++;showFB('close',t('game_close'),q.correct);}else{S.wr++;S.ts.sort.w++;showFB(false,t('game_wrong'),t('game_answer')+q.correct);}sT('g-score',S.score);hideBtn('btn-check');hideBtn('btn-reset');showBtn('btn-next');setTimeout(()=>_speakThenUnlock(q.correct,S.tL),150);S._lastAnswerWord=q.correct;S._lastAnswerLang=S.tL;if(typeof renderRepeatBtn==='function')renderRepeatBtn();}
 
 function addSort(word,el){if(el.style.opacity==='0.3')return;S.sortArr.push(word);el.style.opacity='0.3';el.style.pointerEvents='none';renderSlots();}
 function renderSlots(){const slots=$('sentence-slots');if(!S.sortArr.length){slots.innerHTML='<span class="slot-placeholder">'+t('slot_placeholder')+'</span>';return;}slots.innerHTML='';S.sortArr.forEach((w,i)=>{const t=document.createElement('div');t.className='word-token in-sentence';t.textContent=w;t.onclick=()=>{S.sortArr.splice(i,1);reEnable(w);renderSlots();};slots.appendChild(t);});}
@@ -782,4 +787,32 @@ function startSpeaking() {
   };
 
   _speechRec.start();
+}
+
+
+// ── REPEAT ANSWER BUTTON ─────────────────────────────
+function renderRepeatBtn(){
+  // Remove existing repeat btn if any
+  const old = document.getElementById('btn-repeat-answer');
+  if(old) old.remove();
+  if(!S._lastAnswerWord) return;
+
+  const fb = $('g-fb');
+  if(!fb || !fb.classList.contains('show')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'btn-repeat-answer';
+  btn.innerHTML = '🔊 Réécouter';
+  btn.style.cssText = 'background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);'
+    +'border-radius:10px;padding:7px 14px;font-family:inherit;font-weight:800;'
+    +'font-size:.78rem;color:#22d3ee;cursor:pointer;transition:all .15s;'
+    +'margin-left:8px;vertical-align:middle;flex-shrink:0;';
+  btn.onclick = function(e) {
+    e.stopPropagation();
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    setTimeout(()=>_speakClick(S._lastAnswerWord, S._lastAnswerLang||S.tL), 50);
+  };
+
+  // Insert inside the feedback banner
+  fb.appendChild(btn);
 }

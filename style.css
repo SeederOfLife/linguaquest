@@ -1078,3 +1078,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   border-radius:20px;padding:3px 10px;
   font-size:.7rem;font-weight:700;color:#94a3b8;
 }
+
+/* ── HIDE BLINKING CURSOR everywhere except inputs ── */
+body, .screen, .answer-btn, .word-token, .match-item,
+.chapter-item, .level-card, .dungeon-zone, .dungeon-room,
+.feature-card, .card, button, [onclick]{
+  caret-color: transparent;
+}
+/* Only show caret in actual text inputs */
+input, textarea, [contenteditable="true"] {
+  caret-color: var(--accent);
+}
+/* Kill outline on focused buttons */
+button:focus, button:focus-visible { outline: none; }
