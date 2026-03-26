@@ -26,7 +26,7 @@ canvas{display:block;max-width:100%;}
 .car-btn.sel{border-color:var(--c,#ef4444);background:rgba(239,68,68,.15);}
 #hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;
   align-items:center;padding:8px 14px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);}
-#hud-q{font-weight:900;font-size:1rem;color:#fbbf24;text-align:center;flex:1;padding:0 8px;}
+#hud-q{font-weight:900;font-size:1rem;color:#fbbf24;text-align:center;flex:1;padding:0 8px;cursor:pointer;}
 #btn-close{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;
   border-radius:8px;padding:5px 12px;font-family:inherit;font-weight:800;cursor:pointer;font-size:.78rem;}
 /* D-pad */
@@ -47,7 +47,7 @@ canvas{display:block;max-width:100%;}
 <div id="ui" style="position:absolute;inset:0;pointer-events:none;">
   <div id="hud" style="display:none;pointer-events:all;">
     <div id="score-disp" style="font-weight:900;font-size:.9rem;min-width:60px;">⭐ 0</div>
-    <div id="hud-q">—</div>
+    <div id="hud-q" onclick="speak(currentQ.native,nL)">—</div>
     <button id="btn-close" onclick="window.parent.postMessage('close','*')">✕</button>
   </div>
   <div id="dpad" style="pointer-events:all;">
@@ -147,10 +147,10 @@ const LANES=4, ROAD_W=280;
 let roadOffset=0,roadSpeed=4;
 
 // Player car
-let car={lane:1,x:0,y:0,targetX:0,score:0,alive:true,invincible:0};
+let car={lane:1,x:0,y:0,targetX:0,score:0,alive:true,invincible:0,tilt:0};
 
 // Word targets (cars on road)
-let targets=[],wordList=[],currentQ=null,totalAnswered=0;
+let targets=[],wordList=[],currentQ=null,totalAnswered=0,combo=0;
 let particles=[];
 
 // Keys
@@ -172,10 +172,16 @@ function pickQuestion(){
 }
 
 function spawnTarget(){
-  const lane=Math.floor(Math.random()*LANES);
+  const usedLanes = targets.map(t=>t.lane);
+  let lane;
+  do { lane = Math.floor(Math.random()*LANES) } while(usedLanes.includes(lane) && usedLanes.length < LANES);
+
   const others=wordList.filter(w=>w.id!==currentQ?.id);
   const wrong=others[Math.floor(Math.random()*others.length)];
-  const isCorrect=Math.random()>0.45;
+
+  const hasCorrect = targets.some(t=>t.correct && !t.passed);
+  const isCorrect = !hasCorrect && Math.random()>0.45;
+
   targets.push({
     lane, x:laneX(lane), y:-60,
     label:isCorrect?currentQ?.target:wrong?.target,
@@ -187,11 +193,14 @@ function spawnTarget(){
 }
 
 function startGame(){
+  // Fix speech synthesis on iOS
+  speak('', nL);
+
   wordList=getWords().sort(()=>Math.random()-.5).slice(0,15);
   if(!wordList.length){alert('Pas de mots !');return;}
-  car={lane:Math.floor(LANES/2),score:0,alive:true,invincible:0};
+  car={lane:Math.floor(LANES/2),score:0,alive:true,invincible:0,tilt:0};
   car.x=laneX(car.lane);car.targetX=car.x;car.y=H*0.75;
-  targets=[];particles=[];totalAnswered=0;roadSpeed=4;frameN=0;
+  targets=[];particles=[];totalAnswered=0;combo=0;roadSpeed=4;frameN=0;
   running=true;
   document.getElementById('start-scr').classList.remove('on');
   document.getElementById('hud').style.display='flex';
@@ -208,9 +217,11 @@ function startGame(){
 }
 
 function onKey(e){
-  const now=Date.now();if(now-lastKey<100)return;lastKey=now;
+  const now=Date.now();if(now-lastKey<85)return;lastKey=now;
   if(e.key==='ArrowLeft'||e.key==='a'){moveLeft();e.preventDefault();}
   if(e.key==='ArrowRight'||e.key==='d'){moveRight();e.preventDefault();}
+  if(e.key==='ArrowUp'||e.key==='w'){roadSpeed=Math.min(8,roadSpeed+1);e.preventDefault();}
+  if(e.key==='ArrowDown'||e.key==='s'){roadSpeed=Math.max(2,roadSpeed-1);e.preventDefault();}
 }
 function bindDpad(){
   [['left',moveLeft],['right',moveRight]].forEach(([id,fn])=>{
@@ -218,15 +229,14 @@ function bindDpad(){
     if(el){el.addEventListener('touchstart',e=>{fn();e.preventDefault();},{passive:false});
       el.addEventListener('mousedown',fn);}
   });
-  // Up/down for speed (optional)
   const u=document.getElementById('up'),dn=document.getElementById('down');
   if(u){u.addEventListener('touchstart',e=>{roadSpeed=Math.min(8,roadSpeed+1);e.preventDefault();},{passive:false});
     u.addEventListener('mousedown',()=>roadSpeed=Math.min(8,roadSpeed+1));}
   if(dn){dn.addEventListener('touchstart',e=>{roadSpeed=Math.max(2,roadSpeed-1);e.preventDefault();},{passive:false});
     dn.addEventListener('mousedown',()=>roadSpeed=Math.max(2,roadSpeed-1));}
 }
-function moveLeft(){if(car.lane>0){car.lane--;car.targetX=laneX(car.lane);}}
-function moveRight(){if(car.lane<LANES-1){car.lane++;car.targetX=laneX(car.lane);}}
+function moveLeft(){if(car.lane>0){car.lane--;car.targetX=laneX(car.lane);car.tilt=-0.12;}}
+function moveRight(){if(car.lane<LANES-1){car.lane++;car.targetX=laneX(car.lane);car.tilt=0.12;}}
 
 function loop(){
   frameN++;
@@ -238,11 +248,12 @@ function update(){
   if(!car.alive)return;
   if(car.invincible>0)car.invincible--;
 
-  // Smooth lane change
+  // Smooth lane change and tilt
   car.x+=(car.targetX-car.x)*0.18;
+  car.tilt += (0 - car.tilt) * 0.12;
 
   // Road scroll
-  roadOffset=(roadOffset+roadSpeed)%(H/5);
+  roadOffset=(roadOffset+roadSpeed*1.8)%120;
   roadSpeed=Math.min(8,4+totalAnswered*0.2);
 
   // Move targets
@@ -250,6 +261,15 @@ function update(){
     t.y+=t.speed+(roadSpeed-4)*0.5;
     t.x+=(laneX(t.lane)-t.x)*0.1;
   });
+
+  // Check if correct answer was missed
+  const missed = targets.find(t=>t.correct && !t.passed && t.y > H + 20);
+  if(missed){
+    missed.passed = true;
+    car.score = Math.max(0, car.score -5);
+    combo = 0;
+    document.getElementById('score-disp').textContent='⭐ '+car.score;
+  }
 
   // Spawn
   if(targets.filter(t=>t.y<H).length<3) spawnTarget();
@@ -261,17 +281,22 @@ function update(){
     if(dx<32&&dy<50){
       t.passed=true;
       if(t.correct){
-        car.score+=10;totalAnswered++;
+        combo++;
+        car.score+=10 + Math.min(combo, 5);
+        totalAnswered++;
         document.getElementById('score-disp').textContent='⭐ '+car.score;
         speak(currentQ.target,tL);
         spawnFX(t.x,t.y,'#22c55e');
+        if(navigator.vibrate) navigator.vibrate(30);
         pickQuestion();
         if(totalAnswered>=12)endGame();
       } else {
+        combo=0;
         car.score=Math.max(0,car.score-5);
         car.invincible=60;
         document.getElementById('score-disp').textContent='⭐ '+car.score;
         spawnFX(t.x,t.y,'#ef4444');
+        if(navigator.vibrate) navigator.vibrate([100,50,100]);
       }
     }
   });
@@ -313,7 +338,7 @@ function render(){
 
   // Scenery (trees)
   const treeSpacing=120;
-  for(let y=(-roadOffset*2)%treeSpacing-treeSpacing;y<H+treeSpacing;y+=treeSpacing){
+  for(let y=(-roadOffset*0.8)%treeSpacing-treeSpacing;y<H+treeSpacing;y+=treeSpacing){
     drawTree(rx-40,y);
     drawTree(rx+ROAD_W+20,y);
   }
@@ -336,6 +361,11 @@ function render(){
   ctx.textAlign='right';
   ctx.fillText(Math.round(roadSpeed*30)+' km/h',W-8,H-10);
   ctx.textAlign='left';
+
+  if(combo > 1){
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillText('🔥 x'+combo, 8, H-10);
+  }
 }
 
 function drawTree(x,y){
@@ -347,7 +377,6 @@ function drawTree(x,y){
 
 function drawTargetCar(t){
   ctx.save();ctx.translate(t.x,t.y);
-  const fl=t.passed&&t.correct?'rgba(255,255,255,.5)':'';
   if(car.invincible>0&&!t.passed)ctx.globalAlpha=0.7;
   drawCar(0,0,{body:t.color,top:shadeColor(t.color,-30),trim:'#fff'},false);
   // Word label on car
@@ -361,7 +390,9 @@ function drawTargetCar(t){
 }
 
 function drawPlayerCar(){
-  ctx.save();ctx.translate(car.x,car.y);
+  ctx.save();
+  ctx.translate(car.x,car.y);
+  ctx.rotate(car.tilt);
   if(car.invincible>0&&Math.floor(car.invincible/6)%2===0)ctx.globalAlpha=0.4;
   drawCar(0,0,mySkin,true);
   ctx.restore();
@@ -391,12 +422,18 @@ function drawCar(x,y,sk,isPlayer){
     ctx.beginPath();ctx.ellipse(x+wx,y+wy,7,10,0,0,Math.PI*2);ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,.2)';ctx.lineWidth=1;ctx.stroke();
   });
-  // Headlights
-  if(isPlayer){ctx.fillStyle='#fef9c3';
+  // Lights
+  if(isPlayer){
+    ctx.fillStyle='#fef9c3';
     [[-w/2+4,-h/2+2],[w/2-12,-h/2+2]].forEach(([lx,ly])=>{
       ctx.shadowColor='#fef9c3';ctx.shadowBlur=8;
       ctx.fillRect(x+lx,y+ly,8,5);ctx.shadowBlur=0;
-    });}
+    });
+  } else {
+    ctx.fillStyle='#ef4444';
+    ctx.fillRect(x-w/2+6, y+h/2-7, 6,4);
+    ctx.fillRect(x+w/2-12, y+h/2-7, 6,4);
+  }
 }
 
 function shadeColor(hex,pct){
