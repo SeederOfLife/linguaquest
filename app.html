@@ -1410,22 +1410,10 @@ button:focus, button:focus-visible { outline: none; }
   </div>
 
   <!-- ── Mini-Games shortcut ── -->
+  <!-- ── 🎮 GAME LIBRARY (auto-populated from GAME_REGISTRY) ── -->
   <div style="margin-top:18px;">
-    <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">🎮 Mini-jeux sur ce vocabulaire</div>
-    <div style="display:flex;gap:10px;">
-      <div onclick="openGame('flappy')" style="flex:1;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(236,72,153,.14));border:1.5px solid rgba(124,58,237,.35);border-radius:16px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='rgba(124,58,237,.35)'">
-        <div style="font-size:1.8rem;margin-bottom:4px;">🐦</div>
-        <div style="font-size:.82rem;font-weight:900;">FlappyLingo</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">Vole vers la bonne réponse</div>
-        <div style="font-size:.7rem;color:#22d3ee;margin-top:4px;font-weight:800;">+60 🪙 si victoire</div>
-      </div>
-      <div onclick="openGame('car')" style="flex:1;background:linear-gradient(135deg,rgba(220,38,38,.15),rgba(234,88,12,.12));border:1.5px solid rgba(220,38,38,.35);border-radius:16px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;" onmouseover="this.style.borderColor='#dc2626'" onmouseout="this.style.borderColor='rgba(220,38,38,.35)'">
-        <div style="font-size:1.8rem;margin-bottom:4px;">🚗</div>
-        <div style="font-size:.82rem;font-weight:900;">Word Racer</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">Traduis pour accélérer</div>
-        <div style="font-size:.7rem;color:#22d3ee;margin-top:4px;font-weight:800;">+80 🪙 si victoire</div>
-      </div>
-    </div>
+    <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">🎮 Joue sur ce vocabulaire</div>
+    <div id="game-library-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
   </div>
 </div>
 
@@ -1542,9 +1530,9 @@ button:focus, button:focus-visible { outline: none; }
       <button class="btn btn-gold" onclick="navTo('portfolio')" id="btn-r-invest">$ Investir</button>
     </div>
     <!-- Mini-game CTAs after exercise completion -->
-    <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;">
-      <button onclick="openGame('flappy')" style="background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(236,72,153,.2));border:1.5px solid rgba(124,58,237,.5);border-radius:14px;padding:10px 16px;cursor:pointer;color:#f1f5f9;font-family:inherit;font-weight:800;font-size:.82rem;display:flex;align-items:center;gap:6px;">🐦 FlappyLingo</button>
-      <button onclick="openGame('car')" style="background:linear-gradient(135deg,rgba(220,38,38,.2),rgba(234,88,12,.15));border:1.5px solid rgba(220,38,38,.45);border-radius:14px;padding:10px 16px;cursor:pointer;color:#f1f5f9;font-family:inherit;font-weight:800;font-size:.82rem;display:flex;align-items:center;gap:6px;">🚗 Word Racer</button>
+    <div style="margin-top:14px;">
+      <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;text-align:center;">🎮 Pratique en jouant</div>
+      <div id="results-game-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;"></div>
     </div>
 
     <!-- Ad slot — résultats -->
@@ -2134,8 +2122,12 @@ button:focus, button:focus-visible { outline: none; }
 </div>
 
 <!-- ══════════════════ FLAPPY/CAR OVERLAY ══════════════════ -->
-<div id="minigame-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:#0a0a14;flex-direction:column;">
-  <iframe id="minigame-iframe" src="" style="flex:1;border:none;width:100%;height:100%;"></iframe>
+<div id="minigame-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:#0a0a14;flex-direction:column;width:100%;height:100%;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(0,0,0,.7);flex-shrink:0;min-height:44px;">
+    <span id="minigame-title" style="font-weight:900;font-size:.95rem;color:#f1f5f9;">🎮 Mini-jeu</span>
+    <button onclick="closeMiniGame()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 16px;font-family:Nunito,sans-serif;font-weight:800;cursor:pointer;font-size:.85rem;">← Retour</button>
+  </div>
+  <iframe id="minigame-iframe" src="" style="flex:1;border:none;width:100%;min-height:0;display:block;"></iframe>
 </div>
 
 <!-- ══════════════════ COMPOST GAME OVERLAY ══════════════════ -->
@@ -5442,6 +5434,13 @@ function goTo(sc){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   $('screen-'+sc).classList.add('active');
   window.scrollTo(0,0);clearInterval(S.timer);
+  // Render game library grids whenever these screens are shown
+  if(sc==='game-select'||sc==='results'){
+    if(typeof renderGameLibrary==='function'){
+      renderGameLibrary('game-library-grid');
+      renderGameLibrary('results-game-grid');
+    }
+  }
 }
 function navTo(tab){
   const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker',lesson:'lesson',rank:'rank',trophies:'trophies','compost-lobby':'compost-lobby','compost-game':'compost-game'};
@@ -6150,118 +6149,236 @@ function openCompostFromGames() {
   }
 }
 
-// ── MINI-GAME LAUNCHER ────────────────────────────────────────
-function openGame(type) {
-  const nL    = S.nL   || 'fr';
-  const tL    = S.tL   || 'en';
-  const name  = encodeURIComponent((U&&U.name) || 'Joueur');
-  const email = encodeURIComponent((U&&U.email)|| 'guest@local');
-  const fSkin = encodeURIComponent((U&&U['flappySkin'])||'bluebird');
-  const cSkin = encodeURIComponent((U&&U['carSkin'])||'red');
+// ══════════════════════════════════════════════════════════════
+//  GAME REGISTRY — add new games here, everything else is auto
+// ══════════════════════════════════════════════════════════════
+const GAME_REGISTRY = [
+  {
+    id: 'flappy',
+    icon: '🐦',
+    name: 'FlappyLingo',
+    desc: 'Vole vers la bonne réponse',
+    color: '#7c3aed',
+    gradient: 'linear-gradient(135deg,rgba(124,58,237,.22),rgba(236,72,153,.16))',
+    border: 'rgba(124,58,237,.45)',
+    coins: 60,
+    // buildUrl(params) → iframe src
+    buildUrl(p) {
+      return `flappy-game.html?nL=${p.nL}&tL=${p.tL}&name=${p.name}&email=${p.email}`
+           + `&flappySkin=${p.flappySkin}&chapId=${p.chapId}&level=${p.level}`;
+    },
+    overlay: 'minigame',
+  },
+  {
+    id: 'car',
+    icon: '🚗',
+    name: 'Word Racer',
+    desc: 'Traduis pour accélérer',
+    color: '#dc2626',
+    gradient: 'linear-gradient(135deg,rgba(220,38,38,.18),rgba(234,88,12,.14))',
+    border: 'rgba(220,38,38,.45)',
+    coins: 80,
+    buildUrl(p) {
+      return `car-game.html?nL=${p.nL}&tL=${p.tL}&name=${p.name}&email=${p.email}`
+           + `&carSkin=${p.carSkin}&chapId=${p.chapId}&level=${p.level}`;
+    },
+    overlay: 'minigame',
+  },
+  {
+    id: 'compost',
+    icon: '🪱',
+    name: 'Compost',
+    desc: 'Trie les traductions',
+    color: '#16a34a',
+    gradient: 'linear-gradient(135deg,rgba(22,163,74,.18),rgba(5,150,105,.14))',
+    border: 'rgba(22,163,74,.45)',
+    coins: 100,
+    buildUrl(p) {
+      return `compost-game.html?nL=${p.nL}&tL=${p.tL}&name=${p.name}&email=${p.email}`
+           + `&skin=${p.compostSkin}&chap=${p.chapId}&level=${p.level}&topic=${p.topic}`;
+    },
+    overlay: 'compost',
+  },
+  // ── Add future games here ──────────────────────────────────
+  // {
+  //   id: 'mygame',
+  //   icon: '🎯',
+  //   name: 'My New Game',
+  //   desc: 'Short description',
+  //   color: '#0891b2',
+  //   gradient: 'linear-gradient(135deg,rgba(8,145,178,.18),rgba(6,182,212,.14))',
+  //   border: 'rgba(8,145,178,.45)',
+  //   coins: 70,
+  //   buildUrl(p) { return `mygame.html?nL=${p.nL}&tL=${p.tL}&chap=${p.chapId}`; },
+  //   overlay: 'minigame',   // 'minigame' or 'compost'
+  // },
+];
 
-  // Pass current chapter context so games can filter vocabulary
-  const chapId  = encodeURIComponent(S.chap || '');
-  const level   = encodeURIComponent(S.level || 'A1');
+// Build the URL params object for the current chapter context
+function _gameParams() {
+  return {
+    nL:          encodeURIComponent(S.nL   || 'fr'),
+    tL:          encodeURIComponent(S.tL   || 'en'),
+    name:        encodeURIComponent((U && U.name)  || 'Joueur'),
+    email:       encodeURIComponent((U && U.email) || 'guest@local'),
+    flappySkin:  encodeURIComponent((U && U.flappySkin)  || 'bluebird'),
+    carSkin:     encodeURIComponent((U && U.carSkin)     || 'red'),
+    compostSkin: encodeURIComponent((U && U.compostSkin) || 'sprout'),
+    chapId:      encodeURIComponent(S.chap  || ''),
+    level:       encodeURIComponent(S.level || 'A1'),
+    topic:       encodeURIComponent(S._activeTopic || 'any'),
+  };
+}
 
+// ── Single launch function ─────────────────────────────────────
+function launchGame(id) {
+  const g = GAME_REGISTRY.find(x => x.id === id);
+  if (!g) { console.error('Unknown game:', id); return; }
+
+  const p   = _gameParams();
+  const src = g.buildUrl(p);
+
+  if (g.overlay === 'compost') {
+    openCompostGame({
+      level: S.level || 'any',
+      topic: S._activeTopic || 'any',
+      chap:  S.chap || '',
+    });
+    return;
+  }
+
+  // Generic minigame overlay
   const overlay = document.getElementById('minigame-overlay');
   const iframe  = document.getElementById('minigame-iframe');
-  if(!overlay||!iframe) return;
+  if (!overlay || !iframe) { console.error('minigame-overlay missing'); return; }
 
-  const src = type==='flappy'
-    ? `flappy-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&flappySkin=${fSkin}&chapId=${chapId}&level=${level}`
-    : `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}&chapId=${chapId}&level=${level}`;
+  // Update title bar
+  const titleEl = document.getElementById('minigame-title');
+  if (titleEl) titleEl.textContent = g.icon + ' ' + g.name;
 
-  iframe.src = src;
+  // Clean up any stale listener
+  if (window._minigameListener) {
+    window.removeEventListener('message', window._minigameListener);
+    window._minigameListener = null;
+  }
+
+  // Show overlay FIRST, then load iframe so it has dimensions
   overlay.style.display = 'flex';
+  iframe.src = '';
+  // Small delay ensures layout is painted before iframe loads
+  setTimeout(() => { iframe.src = src; }, 30);
 
   window._minigameListener = function(e) {
-    if(e.data==='close'||e.data?.type==='close'){closeMiniGame();return;}
-    if(!e.data||typeof e.data!=='object') return;
-    if(e.data.type==='getWordData') {
+    if (e.data === 'close' || e.data?.type === 'close') { closeMiniGame(); return; }
+    if (!e.data || typeof e.data !== 'object') return;
+
+    if (e.data.type === 'getWordData') {
       iframe.contentWindow.postMessage({
-        type:'wordData',
-        words:typeof WD!=='undefined'?WD:{},
-        chapters:typeof CHAPTERS!=='undefined'?CHAPTERS:null,
-        currentChap: S.chap||null,
-        currentLevel: S.level||null,
-      },'*');
+        type: 'wordData',
+        words:       typeof WD       !== 'undefined' ? WD       : {},
+        chapters:    typeof CHAPTERS !== 'undefined' ? CHAPTERS : null,
+        currentChap: S.chap  || null,
+        currentLevel:S.level || null,
+        currentTopic:S._activeTopic || null,
+      }, '*');
     }
-    if(e.data.type==='saveFlappySkin'&&U&&!U.isGuest){U.flappySkin=e.data.skin;saveU();}
-    if(e.data.type==='saveCarSkin'&&U&&!U.isGuest){U.carSkin=e.data.skin;saveU();}
-    if(e.data.type==='gameResult'&&U&&!U.isGuest){
-      const bonus=e.data.game==='car'?80:60;
-      if(e.data.won){ U.coins=(U.coins||0)+bonus; saveU(); updateTopBar(); }
-      if(typeof checkTrophies==='function') checkTrophies();
-      if(e.data.won) toast('🎉 Victoire ! +'+bonus+' 🪙');
+    if (e.data.type === 'saveFlappySkin' && U && !U.isGuest) { U.flappySkin = e.data.skin; saveU(); }
+    if (e.data.type === 'saveCarSkin'    && U && !U.isGuest) { U.carSkin    = e.data.skin; saveU(); }
+    if (e.data.type === 'gameResult' && U && !U.isGuest) {
+      if (e.data.won) {
+        U.coins = (U.coins || 0) + g.coins;
+        saveU(); updateTopBar();
+        toast(`🎉 Victoire ! +${g.coins} 🪙`);
+      }
+      if (typeof checkTrophies === 'function') checkTrophies();
     }
-    // Game → Exercise: player taps "Study vocabulary"
-    if(e.data.type==='goStudyChapter'){
+    if (e.data.type === 'goStudyChapter') {
       closeMiniGame();
-      const chapId=e.data.chapId;
-      if(chapId&&CHAPTERS){
-        // find the level this chapter belongs to
-        for(const [lv,chs] of Object.entries(CHAPTERS)){
-          const ch=chs.find(c=>c.id===chapId);
-          if(ch){ S.level=lv; goToSel(chapId); return; }
+      const cid = e.data.chapId;
+      if (cid && typeof CHAPTERS !== 'undefined') {
+        for (const [lv, chs] of Object.entries(CHAPTERS)) {
+          const ch = chs.find(c => c.id === cid);
+          if (ch) { S.level = lv; goToSel(cid); return; }
         }
       }
-      // Fallback: go to chapters list
       goTo('chapters');
     }
   };
   window.addEventListener('message', window._minigameListener);
 }
 
-// ── renderPracticeModes — shown in Rank > Practice tab ──────
-function renderPracticeModes() {
-  const grid = document.getElementById('practice-modes-grid');
-  if(!grid) return;
+// Backward compat aliases
+function openGame(id) { launchGame(id); }
 
-  const modes = [
-    {icon:'🎲',label:'Mode Mixte',desc:'Tout mélangé',color:'#7c3aed',fn:()=>{ if(!S.chap){ toast('Choisis un chapitre d\'abord !'); navTo('learn'); return; } startGame('mixed'); }},
-    {icon:'⚡',label:'Quiz Rapide',desc:'4 choix · Chrono',color:'#0891b2',fn:()=>{ if(!S.chap){ toast('Choisis un chapitre d\'abord !'); navTo('learn'); return; } startGame('quiz'); }},
-    {icon:'✏️',label:'Compléter',desc:'Tape le mot',color:'#059669',fn:()=>{ if(!S.chap){ toast('Choisis un chapitre d\'abord !'); navTo('learn'); return; } startGame('fill'); }},
-    {icon:'🔗',label:'Associer',desc:'Relier les paires',color:'#d97706',fn:()=>{ if(!S.chap){ toast('Choisis un chapitre d\'abord !'); navTo('learn'); return; } startGame('match'); }},
-    {icon:'🐦',label:'FlappyLingo',desc:'Mini-jeu vol',color:'#7c3aed',fn:()=>openGame('flappy')},
-    {icon:'🚗',label:'Word Racer',desc:'Mini-jeu course',color:'#dc2626',fn:()=>openGame('car')},
-  ];
-
-  grid.innerHTML = modes.map((m,i)=>`
-    <div onclick="window._pmFns[${i}]()" style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:14px;cursor:pointer;transition:all .15s;text-align:center;"
-         onmouseover="this.style.borderColor='${m.color}';this.style.background='rgba(255,255,255,.09)'"
-         onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.background='rgba(255,255,255,.05)'">
-      <div style="font-size:1.8rem;">${m.icon}</div>
-      <div style="font-size:.82rem;font-weight:900;margin-top:4px;">${m.label}</div>
-      <div style="font-size:.7rem;color:var(--muted);margin-top:2px;">${m.desc}</div>
-    </div>`).join('');
-
-  window._pmFns = modes.map(m=>m.fn);
-
-  // Level selector
-  const levelGrid = document.getElementById('practice-level-grid');
-  if(levelGrid && typeof LEVELS !== 'undefined') {
-    levelGrid.innerHTML = LEVELS.map(lv=>{
-      const locked = !(U&&U.unlockedLevels&&U.unlockedLevels.includes(lv.id)) && lv.price>0 && !(U&&U.coins>=lv.price);
-      return `<button onclick="S.level='${lv.id}';S.chap=null;goToChaps('${lv.id}')"
-        style="padding:8px 16px;border:1.5px solid rgba(255,255,255,.2);border-radius:10px;
-        background:${S.level===lv.id?'rgba(124,58,237,.35)':'rgba(255,255,255,.06)'};
-        color:${locked?'var(--muted)':'#f1f5f9'};font-weight:800;font-size:.8rem;cursor:pointer;
-        font-family:inherit;">${lv.id} ${locked?'🔒':''}</button>`;
-    }).join('');
+function closeMiniGame() {
+  const overlay = document.getElementById('minigame-overlay');
+  const iframe  = document.getElementById('minigame-iframe');
+  if (overlay) overlay.style.display = 'none';
+  if (iframe)  iframe.src = '';
+  if (window._minigameListener) {
+    window.removeEventListener('message', window._minigameListener);
+    window._minigameListener = null;
   }
 }
 
+// ── Render game cards into a container ────────────────────────
+function renderGameLibrary(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = GAME_REGISTRY.map(g => `
+    <div onclick="launchGame('${g.id}')"
+      style="background:${g.gradient};border:1.5px solid ${g.border};border-radius:14px;
+             padding:12px 8px;cursor:pointer;text-align:center;transition:all .15s;
+             display:flex;flex-direction:column;align-items:center;gap:3px;"
+      onmouseover="this.style.transform='translateY(-2px)';this.style.borderColor='${g.color}'"
+      onmouseout="this.style.transform='';this.style.borderColor='${g.border}'">
+      <div style="font-size:1.7rem;">${g.icon}</div>
+      <div style="font-size:.78rem;font-weight:900;color:#f1f5f9;">${g.name}</div>
+      <div style="font-size:.65rem;color:var(--muted);line-height:1.2;">${g.desc}</div>
+      <div style="font-size:.65rem;color:#22d3ee;font-weight:800;margin-top:2px;">+${g.coins} 🪙</div>
+    </div>`).join('');
+}
 
-
-function closeMiniGame() {
-  const overlay=document.getElementById('minigame-overlay');
-  const iframe=document.getElementById('minigame-iframe');
-  if(overlay) overlay.style.display='none';
-  if(iframe) iframe.src='';
-  if(window._minigameListener){
-    window.removeEventListener('message',window._minigameListener);
-    window._minigameListener=null;
+// ── renderPracticeModes — Rank > Practice tab ──────────────────
+function renderPracticeModes() {
+  const grid = document.getElementById('practice-modes-grid');
+  if (grid) {
+    const exerciseModes = [
+      {icon:'🎲',label:'Mode Mixte',  desc:'Tout mélangé', fn:()=>{ if(!S.chap){toast('Choisis un chapitre !');navTo('learn');return;} startGame('mixed'); }},
+      {icon:'⚡',label:'Quiz Rapide', desc:'4 choix · Chrono', fn:()=>{ if(!S.chap){toast('Choisis un chapitre !');navTo('learn');return;} startGame('quiz'); }},
+      {icon:'✏️',label:'Compléter',   desc:'Tape le mot', fn:()=>{ if(!S.chap){toast('Choisis un chapitre !');navTo('learn');return;} startGame('fill'); }},
+      {icon:'🔗',label:'Associer',    desc:'Relier les paires', fn:()=>{ if(!S.chap){toast('Choisis un chapitre !');navTo('learn');return;} startGame('match'); }},
+    ];
+    const allModes = [...exerciseModes, ...GAME_REGISTRY.map(g => ({icon:g.icon, label:g.name, desc:g.desc, fn:()=>launchGame(g.id)}))];
+    window._pmFns = allModes.map(m => m.fn);
+    grid.innerHTML = allModes.map((m,i) => `
+      <div onclick="window._pmFns[${i}]()"
+        style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);
+               border-radius:14px;padding:12px 8px;cursor:pointer;text-align:center;transition:all .15s;"
+        onmouseover="this.style.borderColor='var(--accent)';this.style.background='rgba(255,255,255,.09)'"
+        onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.background='rgba(255,255,255,.05)'">
+        <div style="font-size:1.6rem;">${m.icon}</div>
+        <div style="font-size:.78rem;font-weight:900;margin-top:4px;">${m.label}</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:2px;">${m.desc}</div>
+      </div>`).join('');
   }
+
+  const levelGrid = document.getElementById('practice-level-grid');
+  if (levelGrid && typeof LEVELS !== 'undefined') {
+    levelGrid.innerHTML = LEVELS.map(lv => `
+      <button onclick="S.level='${lv.id}';S.chap=null;goToChaps('${lv.id}')"
+        style="padding:8px 16px;border:1.5px solid rgba(255,255,255,.2);border-radius:10px;
+               background:${S.level===lv.id?'rgba(124,58,237,.35)':'rgba(255,255,255,.06)'};
+               color:#f1f5f9;font-weight:800;font-size:.8rem;cursor:pointer;font-family:inherit;">
+        ${lv.id}</button>`).join('');
+  }
+}
+
+// ── Auto-render game grids when screens become visible ─────────
+const _origGoTo = typeof goTo === 'function' ? goTo : null;
+function _renderGameGrids() {
+  renderGameLibrary('game-library-grid');
+  renderGameLibrary('results-game-grid');
 }
 
 
@@ -9882,11 +9999,14 @@ function openCompostGame(opts) {
     if (!e.data || typeof e.data !== 'object') return;
 
     if (e.data.type === 'getWordData') {
-      // Send WD + CHAPTERS to iframe
+      // Send WD + CHAPTERS + current chapter context to iframe
       iframe.contentWindow.postMessage({
         type: 'wordData',
-        words: typeof WD !== 'undefined' ? WD : {},
-        chapters: typeof CHAPTERS !== 'undefined' ? CHAPTERS : null,
+        words:        typeof WD       !== 'undefined' ? WD       : {},
+        chapters:     typeof CHAPTERS !== 'undefined' ? CHAPTERS : null,
+        currentChap:  S.chap  || null,
+        currentLevel: S.level || null,
+        currentTopic: S._activeTopic || null,
       }, '*');
     }
 
@@ -9901,6 +10021,18 @@ function openCompostGame(opts) {
       saveU(); updateTopBar();
       if (typeof checkTrophies === 'function') checkTrophies();
       toast(`🪱 Victoire ! +${bonus} 🪙`);
+    }
+
+    if (e.data.type === 'goStudyChapter') {
+      closeCompostGame();
+      const cid = e.data.chapId;
+      if (cid && typeof CHAPTERS !== 'undefined') {
+        for (const [lv, chs] of Object.entries(CHAPTERS)) {
+          const ch = chs.find(c => c.id === cid);
+          if (ch) { S.level = lv; goToSel(cid); return; }
+        }
+      }
+      goTo('chapters');
     }
   };
   window.addEventListener('message', window._compostListener);
@@ -10048,6 +10180,8 @@ function readParams(){const p=new URLSearchParams(location.search);const n=p.get
 // BOOT
 // ══════════════════════════════════════════════
 mkStars();buildGrids();readParams();
+// Render game library grids on startup
+setTimeout(()=>{ if(typeof renderGameLibrary==='function'){ renderGameLibrary('game-library-grid'); renderGameLibrary('results-game-grid'); } }, 100);
 initTheme();
 applyUILang();
 // Auto-login if session exists
