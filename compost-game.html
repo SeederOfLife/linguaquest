@@ -1,1027 +1,324 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Compost</title>
-<!-- favicon handled by parent -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#060612;color:#f1f5f9;font-family:'Nunito',sans-serif;overflow:hidden;width:100vw;height:100vh;display:flex;flex-direction:column;}
-
-/* ── SCREENS ── */
-.screen{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
-.screen.active{display:flex;}
-
-/* ── LOBBY ── */
-#lobby{background:radial-gradient(ellipse at center,#1a0a2e 0%,#060612 70%);}
-.lobby-title{font-size:2.2rem;font-weight:900;margin-bottom:4px;background:linear-gradient(135deg,#7c3aed,#ec4899 50%,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.lobby-sub{color:#94a3b8;font-size:.85rem;margin-bottom:20px;}
-.mode-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:400px;margin-bottom:16px;}
-.mode-card{background:#141428;border:2px solid transparent;border-radius:14px;padding:14px;cursor:pointer;text-align:center;transition:all .2s;}
-.mode-card:hover,.mode-card.sel{border-color:#7c3aed;background:rgba(124,58,237,.12);}
-.mode-card .icon{font-size:1.8rem;margin-bottom:6px;}
-.mode-card .name{font-weight:900;font-size:.88rem;}
-.mode-card .desc{font-size:.7rem;color:#94a3b8;margin-top:3px;}
-
-/* Skin picker */
-.skin-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;max-width:400px;}
-.skin-btn{background:#141428;border:2px solid transparent;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.75rem;font-weight:800;transition:all .18s;display:flex;align-items:center;gap:5px;}
-.skin-btn.sel{border-color:var(--c,#7c3aed);}
-.skin-dot{width:12px;height:12px;border-radius:50%;}
-
-/* Room code */
-.room-code-display{font-family:monospace;font-size:2.4rem;font-weight:900;letter-spacing:8px;color:#ffd600;background:rgba(255,214,0,.08);border-radius:14px;padding:12px 24px;margin:10px 0;}
-.players-row{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap;justify-content:center;}
-.player-chip{background:#141428;border:2px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;font-size:.82rem;font-weight:800;display:flex;align-items:center;gap:6px;}
-.player-chip.me{border-color:#7c3aed;}
-.player-chip .dot{width:10px;height:10px;border-radius:50%;}
-
-/* Join input */
-.join-input{background:#141428;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;padding:11px 14px;color:#f1f5f9;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;width:180px;outline:none;}
-
-/* Buttons */
-.btn{padding:12px 24px;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:900;font-size:.95rem;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;}
-.btn:active{transform:scale(.97);}
-.btn-primary{background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;width:100%;max-width:320px;}
-.btn-green{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;width:100%;max-width:320px;}
-.btn-gray{background:#1c1c34;color:#94a3b8;border:1px solid rgba(255,255,255,.1);width:100%;max-width:320px;}
-.btn+.btn{margin-top:8px;}
-
-/* ── GAME ── */
-#game{position:relative;padding:0;overflow:hidden;}
-#gameCanvas{position:absolute;top:0;left:0;width:100%;height:100%;}
-
-/* HUD */
-#hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:10;pointer-events:none;}
-.hud-score{font-weight:900;font-size:.85rem;}
-.hud-q{background:rgba(124,58,237,.3);border:1px solid rgba(124,58,237,.5);border-radius:10px;padding:6px 14px;display:flex;align-items:center;gap:8px;pointer-events:none;}
-.hud-word{font-size:1rem;font-weight:900;color:#fff;}
-.hud-arrow{color:#7c3aed;font-size:1rem;}
-.hud-close{pointer-events:all;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:4px 10px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;font-size:.78rem;}
-
-/* Leaderboard overlay */
-#lb-overlay{position:absolute;top:50px;right:10px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px;min-width:140px;z-index:10;pointer-events:none;}
-.lb-row{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:.75rem;font-weight:800;}
-.lb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.lb-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lb-pts{color:#ffd600;}
-
-/* Joystick */
-#joystick-wrap{position:absolute;bottom:24px;left:24px;z-index:10;width:110px;height:110px;touch-action:none;}
-#joystick-base{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);}
-#joystick-knob{position:absolute;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,.15));border:2px solid rgba(255,255,255,.3);box-shadow:0 2px 12px rgba(0,0,0,.4);top:50%;left:50%;transform:translate(-50%,-50%);transition:none;cursor:grab;}
-/* joystick always visible - hidden via JS on desktop if mouse detected */
-
-/* Result */
-#result{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:999;display:none;align-items:center;justify-content:center;pointer-events:all;}
-#result.show{display:flex;}
-.result-box{background:#141428;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px 24px;text-align:center;max-width:340px;width:90%;pointer-events:all;position:relative;z-index:1000;}
-.res-emoji{font-size:3.5rem;margin-bottom:8px;}
-.res-title{font-size:1.8rem;font-weight:900;margin-bottom:4px;}
-.podium{display:flex;flex-direction:column;gap:6px;margin:14px 0;}
-.podium-row{display:flex;align-items:center;gap:10px;background:#1c1c34;border-radius:10px;padding:8px 12px;}
-.podium-rank{font-size:1.2rem;width:28px;text-align:center;}
-.podium-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
-.podium-name{flex:1;font-weight:800;font-size:.85rem;}
-.podium-pts{color:#ffd600;font-weight:900;}
-</style>
-</head>
-<body>
-
-<!-- ══ LOBBY ══ -->
-<div class="screen active" id="lobby">
-  <div class="lobby-title" style="display:flex;align-items:center;gap:10px;justify-content:center;">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="42" height="42" style="border-radius:11px;flex-shrink:0;">
-    <rect width="100" height="100" rx="22" fill="#0a1a0a"/>
-    <circle cx="28" cy="62" r="9" fill="#ea580c"/>
-    <circle cx="40" cy="56" r="10" fill="#ea580c"/>
-    <circle cx="53" cy="52" r="11" fill="#c2410c"/>
-    <circle cx="67" cy="50" r="13" fill="#c2410c"/>
-    <circle cx="72" cy="45" r="4.5" fill="#fff"/>
-    <circle cx="73" cy="46" r="2.5" fill="#1c0700"/>
-    <circle cx="74" cy="45" r="1" fill="#fff"/>
-    <path d="M62,54 Q67,59 72,55" stroke="#7a2000" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <rect x="52" y="18" width="38" height="22" rx="8" fill="#fef9c3" stroke="#d97706" stroke-width="1.5"/>
-    <path d="M62,40 L58,48 L66,40" fill="#fef9c3" stroke="#d97706" stroke-width="1.2" stroke-linejoin="round"/>
-    <text x="71" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="11" fill="#92400e">ABC</text>
-  </svg>
-  Compost
-</div>
-  <div class="lobby-sub">Snake.io — mange les bonnes traductions !</div>
-  <div id="lobby-context" style="font-size:.75rem;color:var(--muted);margin-bottom:8px;"></div>
-
-  <!-- Skin picker -->
-  <div class="skin-row" id="skin-row"></div>
-
-  <!-- Mode selection -->
-  <div class="mode-cards">
-    <div class="mode-card sel" id="mode-solo" onclick="setMode('solo')">
-      <div class="icon">🤖</div>
-      <div class="name">Solo</div>
-      <div class="desc">vs Bot</div>
-    </div>
-    <div class="mode-card" id="mode-multi" onclick="setMode('multi')">
-      <div class="icon">🌐</div>
-      <div class="name">Multi</div>
-      <div class="desc">2–4 joueurs</div>
-    </div>
-  </div>
-
-  <!-- Solo button -->
-  <div id="solo-section">
-    <button class="btn btn-green" onclick="launchSolo()">▶ Jouer solo</button>
-  </div>
-
-  <!-- Multi section -->
-  <div id="multi-section" style="display:none;width:100%;max-width:400px;text-align:center;">
-    <button class="btn btn-primary" onclick="createRoom()" style="margin-bottom:8px;">🏠 Créer une salle</button>
-    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px;">
-      <input class="join-input" id="join-input" placeholder="CODE" maxlength="6" oninput="this.value=this.value.toUpperCase()">
-      <button class="btn" style="background:#7c3aed;color:#fff;padding:12px 16px;border-radius:12px;" onclick="joinRoom()">→</button>
-    </div>
-  </div>
-
-  <!-- Waiting room -->
-  <div id="waiting-room" style="display:none;width:100%;max-width:400px;text-align:center;">
-    <div class="room-code-display" id="room-code-display">----</div>
-    <div style="font-size:.76rem;color:#94a3b8;margin-bottom:10px;">Partage ce code à tes amis</div>
-    <div class="players-row" id="players-row"></div>
-    <button class="btn btn-green" id="start-btn" onclick="startMulti()" style="margin-bottom:6px;">▶ Lancer la partie</button>
-    <button class="btn btn-gray" onclick="leaveRoom()">← Quitter</button>
-  </div>
-
-  <button class="btn btn-gray" style="margin-top:10px;" onclick="window.parent.postMessage('close','*')">← Retour</button>
-</div>
-
-<!-- ══ GAME ══ -->
-<div class="screen" id="game">
-  <canvas id="gameCanvas"></canvas>
-  <div id="hud">
-    <span class="hud-score">👤 <span id="my-pts">0</span> pts</span>
-    <span id="hud-word" style="display:none"></span>
-    <button class="hud-close" onclick="quitGame()">✕</button>
-  </div>
-  <div id="lb-overlay">
-    <div style="font-size:.68rem;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">Scores</div>
-    <div id="lb-rows"></div>
-  </div>
-  <div id="joystick-wrap">
-    <div id="joystick-base"></div>
-    <div id="joystick-knob"></div>
-  </div>
-</div>
-
-<!-- ══ RESULT ══ -->
-<div id="result">
-  <div class="result-box">
-    <div class="res-emoji" id="res-emoji">🏆</div>
-    <div class="res-title" id="res-title">Victoire !</div>
-    <div class="podium" id="podium"></div>
-    <div id="res-coins" style="color:#ffd600;font-weight:800;margin-bottom:14px;"></div>
-    <button class="btn btn-primary" onclick="replayGame()">🔄 Rejouer</button>
-    <button class="btn btn-gray" style="margin-top:6px;" onclick="window.parent.postMessage('close','*')">← Menu</button>
-  </div>
-</div>
-
-<script>
-// ── SUPABASE ──────────────────────────────────────────────────
-const SB_URL = 'https://luufdddauoucmjiixrax.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4';
-const _SB = supabase.createClient(SB_URL, SB_KEY);
-
-// ── SPEECH ────────────────────────────────────────────────────
-const SPEECH_CODES = {fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'};
-
-function speak(text, lang) {
-  if (!text || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang  = SPEECH_CODES[lang] || lang || 'en-GB';
-  utt.rate  = 0.85;
-  utt.pitch = 1.0;
-  // Try to find a matching voice
-  const voices = window.speechSynthesis.getVoices();
-  const code   = utt.lang.split('-')[0].toLowerCase();
-  const match  = voices.find(v => v.lang.toLowerCase().startsWith(code));
-  if (match) utt.voice = match;
-  window.speechSynthesis.speak(utt);
-}
-// Pre-load voices
-if (window.speechSynthesis) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'block':'none';
 }
 
-// ── PARAMS ────────────────────────────────────────────────────
-const P = new URLSearchParams(location.search);
-const nL     = P.get('nL')    || 'fr';
-const tL     = P.get('tL')    || 'en';
-const pName  = P.get('name')  || 'Joueur';
-const pEmail = P.get('email') || 'guest@local';
-const pLevel = P.get('level') || 'any';   // A1 A2 B1 B2 C1 C2 any
-const pTopic = P.get('topic') || 'any';   // conv vocab gram culture pro diy any
-const pChap  = P.get('chap')  || '';      // specific chapter id
+async function doLogin(){
+  const email=$('login-email').value.trim().toLowerCase();
+  const pass=$('login-pass').value;
+  if(!email||!pass){showAuthErr('login','Remplis tous les champs.');return;}
 
-// ── SKINS ─────────────────────────────────────────────────────
-const SKINS = [
-  {id:'sprout',   name:'🌱', h:'#22c55e',b:'#15803d',e:'#fff'},
-  {id:'fire',     name:'🔥', h:'#f97316',b:'#dc2626',e:'#fff'},
-  {id:'crystal',  name:'💎', h:'#22d3ee',b:'#0891b2',e:'#fff'},
-  {id:'shadow',   name:'🌙', h:'#7c3aed',b:'#4c1d95',e:'#e879f9'},
-  {id:'compost',  name:'🪱', h:'#a16207',b:'#78350f',e:'#fef08a'},
-  {id:'lightning',name:'⚡', h:'#eab308',b:'#ca8a04',e:'#fff'},
-  {id:'ocean',    name:'🌊', h:'#0ea5e9',b:'#0369a1',e:'#fff'},
-  {id:'cherry',   name:'🌸', h:'#ec4899',b:'#be185d',e:'#fff'},
-];
-let mySkinId = P.get('skin') || 'sprout';
-let mySkin   = SKINS.find(s=>s.id===mySkinId)||SKINS[0];
+  // Show loading state
+  const btn=document.querySelector('#form-login .btn-primary');
+  const origText=btn.textContent; btn.textContent='Connexion...'; btn.disabled=true;
 
-function initLobbyContext() {
-  const el = document.getElementById('lobby-context');
-  if (!el) return;
-  const parts = [];
-  if (pLevel && pLevel !== 'any') parts.push('Niveau ' + pLevel);
-  if (pTopic && pTopic !== 'any') parts.push('Thème : ' + pTopic);
-  if (pChap) parts.push('Chapitre : ' + pChap);
-  el.textContent = parts.length ? '📚 ' + parts.join(' · ') : '';
-}
-initLobbyContext();
+  try {
+    const userData = await loadUserFromDB(email);
 
-function renderSkins() {
-  document.getElementById('skin-row').innerHTML = SKINS.map(s=>`
-    <div class="skin-btn ${s.id===mySkinId?'sel':''}" style="--c:${s.h}" onclick="pickSkin('${s.id}')">
-      <div class="skin-dot" style="background:${s.h}"></div>${s.name}
-    </div>`).join('');
-}
-function pickSkin(id) {
-  mySkinId=id; mySkin=SKINS.find(s=>s.id===id)||SKINS[0];
-  renderSkins();
-  window.parent.postMessage({type:'saveSkin',skin:id},'*');
-}
-renderSkins();
+    if (!userData) { showAuthErr('login', 'Compte introuvable. Inscris-toi !'); return; }
+    if (userData.pass !== btoa(pass)) { showAuthErr('login', 'Mot de passe incorrect.'); return; }
 
-// ── WORD DATA ─────────────────────────────────────────────────
-let WD = {};
-window.addEventListener('message', e => {
-  if (e.data?.type === 'wordData') {
-    WD = e.data.words;
-    CHAPTERS = e.data.chapters || null;
+    U = userData;
+    saveCurrent(U.email);
+    afterLogin();
+  } catch(e) {
+    // Full offline fallback
+    const users = loadUsers();
+    if (!users[email]) { showAuthErr('login', 'Compte introuvable.'); return; }
+    if (users[email].pass !== btoa(pass)) { showAuthErr('login', 'Mot de passe incorrect.'); return; }
+    U = users[email]; saveCurrent(U.email); afterLogin();
+  } finally {
+    btn.textContent = origText; btn.disabled = false;
   }
-});
-window.parent.postMessage({type:'getWordData'},'*');
-
-const FALLBACK_WD = {
-  hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},
-  goodbye:{fr:'Au revoir',en:'Goodbye',es:'Adiós',de:'Auf Wiedersehen',cs:'Na shledanou'},
-  thanks:{fr:'Merci',en:'Thank you',es:'Gracias',de:'Danke',cs:'Děkuji'},
-  yes:{fr:'Oui',en:'Yes',es:'Sí',de:'Ja',cs:'Ano'},
-  no:{fr:'Non',en:'No',es:'No',de:'Nein',cs:'Ne'},
-  dog:{fr:'Chien',en:'Dog',es:'Perro',de:'Hund',cs:'Pes'},
-  cat:{fr:'Chat',en:'Cat',es:'Gato',de:'Katze',cs:'Kočka'},
-  sun:{fr:'Soleil',en:'Sun',es:'Sol',de:'Sonne',cs:'Slunce'},
-  water:{fr:'Eau',en:'Water',es:'Agua',de:'Wasser',cs:'Voda'},
-  bread:{fr:'Pain',en:'Bread',es:'Pan',de:'Brot',cs:'Chléb'},
-  coffee:{fr:'Café',en:'Coffee',es:'Café',de:'Kaffee',cs:'Káva'},
-  red:{fr:'Rouge',en:'Red',es:'Rojo',de:'Rot',cs:'Červená'},
-  blue:{fr:'Bleu',en:'Blue',es:'Azul',de:'Blau',cs:'Modrá'},
-  house:{fr:'Maison',en:'House',es:'Casa',de:'Haus',cs:'Dům'},
-  book:{fr:'Livre',en:'Book',es:'Libro',de:'Buch',cs:'Kniha'},
-  friend:{fr:'Ami',en:'Friend',es:'Amigo',de:'Freund',cs:'Přítel'},
-  money:{fr:'Argent',en:'Money',es:'Dinero',de:'Geld',cs:'Peníze'},
-  food:{fr:'Nourriture',en:'Food',es:'Comida',de:'Essen',cs:'Jídlo'},
-  love:{fr:'Amour',en:'Love',es:'Amor',de:'Liebe',cs:'Láska'},
-  music:{fr:'Musique',en:'Music',es:'Música',de:'Musik',cs:'Hudba'},
-};
-
-const EMOJIS = {
-  dog:'🐕',cat:'🐈',sun:'☀️',water:'💧',bread:'🍞',coffee:'☕',
-  red:'🔴',blue:'🔵',house:'🏠',book:'📚',friend:'🤝',money:'💰',
-  food:'🍽️',love:'❤️',music:'🎵',hello:'👋',yes:'✅',no:'❌',
-  thanks:'🙏',goodbye:'👋',
-};
-
-// ── OPENMOJI IMAGE URLS ───────────────────────────────────────
-const BASE_EMOJI = 'https://cdn.jsdelivr.net/npm/openmoji@15.0.0/color/svg/';
-const EMOJI_URLS = {
-  dog:'1F436',cat:'1F408',bird:'1F426',horse:'1F434',fish:'1F41F',
-  rabbit:'1F407',lion:'1F981',cow:'1F404',
-  sun:'2600',rain:'1F327',snow:'2744',wind:'1F32C',cloud:'2601',
-  storm:'26C8',hot:'1F525',cold:'1F976',
-  bread:'1F35E',water:'1F4A7',coffee:'2615',wine:'1F377',
-  meat:'1F356',fruit:'1F34E',cheese:'1F9C0',
-  plane:'2708',train:'1F686',hotel:'1F3E8',passport:'1F4C4',
-  ticket:'1F3AB',suitcase:'1F9F3',airport:'1F6EB',
-  house:'1F3E0',kitchen:'1F373',bedroom:'1F6CF',
-  head:'1F9E0',hand:'1F44B',eye:'1F441',ear:'1F442',
-  nose:'1F443',mouth:'1F444',arm:'1F4AA',leg:'1F9B5',
-  shop:'1F6CD',market:'1F6D2',money:'1F4B0',
-  buy:'1F6D2',sell:'1F4B8',price:'1F4B2',
-  shirt:'1F455',dress:'1F457',shoes:'1F45F',hat:'1F3A9',
-  jacket:'1F9E5',sock:'1F9E6',scarf:'1F9E3',
-  doctor:'1F469',hospital:'1F3E5',medicine:'1F48A',
-  work:'1F4BC',office:'1F4C1',book:'1F4DA',
-  yes:'2705',no:'274C',hello:'1F44B',goodbye:'1F44B',
-  thanks:'1F64F',please:'1F64F',sorry:'1F972',
-  love:'2764',friend:'1F91D',party:'1F389',gift:'1F381',
-  red:'1F534',blue:'1F535',green:'1F7E2',yellow:'1F7E1',
-  black:'26AB',white:'26AA',orange:'1F7E0',pink:'1F7E3',
-  music:'1F3B5',star:'2B50',moon:'1F319',earth:'1F30D',
-  rocket:'1F680',tree:'1F333',flower:'1F33A',heart:'2764',
-  food:'1F374',news:'1F4F0',world:'1F30D',
-  one:'0031',two:'0032',three:'0033',four:'0034',five:'0035',
-  ten:'0031',twenty:'0032',hundred:'1F4AF',
-  father:'1F468',mother:'1F469',brother:'1F466',sister:'1F467',
-  grandfather:'1F474',grandmother:'1F475',child:'1F476',cousin:'1F46B',
-  reservation:'1F4C5',
-};
-function getEmojiUrl(id) {
-  const code = EMOJI_URLS[id];
-  return code ? BASE_EMOJI + code + '.svg' : null;
 }
 
-// Image cache — preload and store Image objects
-const _imgCache = {};
-function loadImg(id) {
-  if (_imgCache[id]) return _imgCache[id];
-  const url = getEmojiUrl(id);
-  if (!url) return null;
-  const img = new Image();
-  img.src = url;
-  _imgCache[id] = img;
-  return img;
+async function doRegister(){
+  const name=$('reg-name').value.trim();
+  const email=$('reg-email').value.trim().toLowerCase();
+  const pass=$('reg-pass').value;
+  if(!name){showAuthErr('reg','Entrez votre prénom.');return;}
+  if(!email.includes('@')){showAuthErr('reg','Email invalide.');return;}
+  if(pass.length<6){showAuthErr('reg',t('forgot_short'));return;}
+
+  const btn=document.querySelector('#form-register .btn-primary');
+  const origText=btn.textContent; btn.textContent='Création...'; btn.disabled=true;
+
+  try {
+    // Check if email already exists in Supabase
+    const {data:existing} = await _SB.from('users').select('email').eq('email',email).maybeSingle();
+    if(existing){showAuthErr('reg','Cet email est déjà utilisé.');return;}
+  } catch(e) {
+    // Offline — check localStorage
+    const users=loadUsers();
+    if(users[email]){showAuthErr('reg','Cet email est déjà utilisé.');return;}
+  }
+
+  U=defaultUser(name,email); U.pass=btoa(pass);
+  // Save locally immediately
+  const users=loadUsers(); users[email]=U; saveUsers(users); saveCurrent(U.email);
+  // Save to Supabase
+  await saveU();
+  afterLogin();
+  btn.textContent=origText; btn.disabled=false;
+  toast(`Bienvenue ${name} ! Tu reçois 100 <span class="coin"></span> de départ !`);
 }
-// Preload all known emojis
-Object.keys(EMOJI_URLS).forEach(id => loadImg(id));
 
+function demoLogin(){
+  const users=loadUsers();
+  const demo='demo'+'@'+'linguaquest.app';
+  if(!users[demo]){
+    U=defaultUser('Démo',demo);U.pass=btoa('demo123');U.coins=350;
+    U.xp=1200;U.sessions=14;U.streak=5;U.chaptersCompleted=4;
+    U.assets={gold:2,house:1,stock:3,crypto:4};
+    ASSET_DEFS.forEach(a=>{U.assetValues[a.id]=a.cost*U.assets[a.id]*0.05;});
+    U.totalInvested=ASSET_DEFS.reduce((s,a)=>s+a.cost*U.assets[a.id],0);
+    users[demo]=U;saveUsers(users);
+  } else {U=users[demo];}
+  saveCurrent(U.email);afterLogin();
+}
 
-// CHAPTERS data from parent
-let CHAPTERS = null;
+function doLogout(){U=null;clearCurrent();window.location.href='index.html';}
 
-function getWordList() {
-  const src = Object.keys(WD).length > 5 ? WD : FALLBACK_WD;
-  let allowedIds = null;
+function showAuthErr(prefix,msg){
+  const id=prefix==='login'?'login-err':'reg-err';
+  const el=$(id);el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),4000);
+}
 
-  // Filter by level/topic/chapter if set
-  if (CHAPTERS && (pLevel !== 'any' || pTopic !== 'any' || pChap)) {
-    const ids = new Set();
-    Object.entries(CHAPTERS).forEach(([lv, chs]) => {
-      if (pLevel !== 'any' && lv !== pLevel) return;
-      chs.forEach(ch => {
-        if (pChap && ch.id !== pChap) return;
-        if (pTopic !== 'any' && ch.topic !== pTopic) return;
-        (ch.wids || []).forEach(id => ids.add(id));
-      });
+function migrateUser(){
+  if(!U) return;
+  let changed = false;
+  const set = (key, val) => { if(U[key] === undefined){ U[key] = val; changed = true; } };
+
+  set('assets', {});
+  set('assetValues', {});
+  set('lessonsCompleted', {});
+  set('pendingDiv', 0);
+  set('lastDivTime', Date.now());
+  set('progress', {});
+  set('xp', 0);
+  set('sessions', 0);
+  set('streak', 0);
+  set('chaptersCompleted', 0);
+
+  // coins: only default to 0 if truly missing (never overwrite earned coins)
+  if(U.coins === undefined){ U.coins = 0; changed = true; }
+
+  // totalInvested: recalculate only if missing
+  if(U.totalInvested === undefined){
+    U.totalInvested = typeof ASSET_DEFS !== 'undefined'
+      ? ASSET_DEFS.reduce((s,a) => s + a.cost*(U.assets[a.id]||0), 0) : 0;
+    changed = true;
+  }
+
+  // Ensure assetValues for all known assets
+  if(typeof ASSET_DEFS !== 'undefined'){
+    ASSET_DEFS.forEach(a => {
+      if(U.assetValues[a.id] === undefined){ U.assetValues[a.id] = 0; changed = true; }
     });
-    if (ids.size >= 5) allowedIds = ids;
   }
 
-  return Object.entries(src)
-    .filter(([id,w]) => {
-      if (!w[nL] || !w[tL]) return false;
-      if (allowedIds && !allowedIds.has(id)) return false;
-      return true;
-    })
-    .map(([id,w]) => ({id, native:w[nL], target:w[tL], emoji:EMOJIS[id]||'📝'}));
-}
-
-// ── MODE ──────────────────────────────────────────────────────
-let gameMode = 'solo';
-function setMode(m) {
-  gameMode = m;
-  document.getElementById('mode-solo').classList.toggle('sel',m==='solo');
-  document.getElementById('mode-multi').classList.toggle('sel',m==='multi');
-  document.getElementById('solo-section').style.display  = m==='solo'?'':'none';
-  document.getElementById('multi-section').style.display = m==='multi'?'':'none';
-}
-
-// ── ROOM (MULTIPLAYER) ─────────────────────────────────────────
-let roomCode = null;
-let roomChannel = null;
-let roomPlayers = {};
-let isHost = false;
-
-function _randCode() {
-  return Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
-}
-
-async function createRoom() {
-  roomCode = _randCode();
-  isHost = true;
-  _joinChannel(roomCode);
-  showWaitingRoom();
-}
-
-async function joinRoom() {
-  const code = (document.getElementById('join-input').value||'').trim().toUpperCase();
-  if (code.length < 4) { alert('Entre un code valide'); return; }
-  roomCode = code;
-  isHost = false;
-  _joinChannel(code);
-  showWaitingRoom();
-}
-
-function _joinChannel(code) {
-  if (roomChannel) _SB.removeChannel(roomChannel);
-  roomPlayers = {};
-  roomPlayers[pEmail] = {name:pName, skin:mySkinId, email:pEmail, ready:false};
-
-  roomChannel = _SB.channel(`compost-room-${code}`, {config:{broadcast:{self:true}}})
-    .on('broadcast',{event:'join'},({payload})=>{
-      roomPlayers[payload.email]={...payload};
-      renderWaitingPlayers();
-    })
-    .on('broadcast',{event:'leave'},({payload})=>{
-      delete roomPlayers[payload.email];
-      renderWaitingPlayers();
-    })
-    .on('broadcast',{event:'start'},({payload})=>{
-      startMultiGame(payload.words, payload.seed);
-    })
-    .subscribe(status=>{
-      if(status==='SUBSCRIBED'){
-        roomChannel.send({type:'broadcast',event:'join',payload:{
-          name:pName,skin:mySkinId,email:pEmail,ready:false
-        }});
-      }
-    });
-}
-
-function leaveRoom() {
-  if (roomChannel) {
-    roomChannel.send({type:'broadcast',event:'leave',payload:{email:pEmail}});
-    _SB.removeChannel(roomChannel); roomChannel=null;
-  }
-  roomCode=null; isHost=false;
-  document.getElementById('waiting-room').style.display='none';
-  document.getElementById('multi-section').style.display='';
-}
-
-function showWaitingRoom() {
-  document.getElementById('multi-section').style.display='none';
-  document.getElementById('waiting-room').style.display='';
-  document.getElementById('room-code-display').textContent = roomCode;
-  renderWaitingPlayers();
-}
-
-function renderWaitingPlayers() {
-  const pl = Object.values(roomPlayers);
-  document.getElementById('players-row').innerHTML = pl.map(p=>{
-    const s = SKINS.find(sk=>sk.id===p.skin)||SKINS[0];
-    return `<div class="player-chip ${p.email===pEmail?'me':''}">
-      <div class="dot" style="background:${s.h}"></div>
-      ${p.name}${p.email===pEmail?' (toi)':''}
-    </div>`;
-  }).join('');
-  document.getElementById('start-btn').textContent = isHost
-    ? `▶ Lancer (${pl.length} joueur${pl.length>1?'s':''})`
-    : '⏳ En attente du host…';
-  document.getElementById('start-btn').onclick = isHost ? startMulti : null;
-  document.getElementById('start-btn').style.opacity = isHost ? '1' : '.5';
-}
-
-function startMulti() {
-  const wordList = getWordList().sort(()=>Math.random()-.5).slice(0,20);
-  const seed = Date.now();
-  roomChannel.send({type:'broadcast',event:'start',payload:{words:wordList,seed}});
-}
-
-function startMultiGame(words, seed) {
-  const players = Object.values(roomPlayers);
-  launchGame(words, players, false);
-}
-
-// ── SOLO LAUNCH ───────────────────────────────────────────────
-function launchSolo() {
-  const words = getWordList().sort(()=>Math.random()-.5).slice(0,20);
-  if (!words.length) { alert('Pas de mots — retourne choisir une langue !'); return; }
-  const botSkin = SKINS.find(s=>s.id!==mySkinId)||SKINS[1];
-  const players = [
-    {email:pEmail,   name:pName,   skin:mySkinId, isBot:false},
-    {email:'bot1',   name:'🤖 Bot',skin:botSkin.id,isBot:true},
-  ];
-  launchGame(words, players, true);
-}
-
-// ── GAME ENGINE ───────────────────────────────────────────────
-const CELL=20;
-let COLS, ROWS, W, H;
-let ctx, animId;
-let worms={}, bubbles=[], currentQ=null, allWords=[];
-let gameOver=false, totalQ=15, answeredQ=0;
-let gameChannel=null;
-
-function launchGame(words, players, isSolo) {
-  // Switch to game screen
-  document.getElementById('lobby').classList.remove('active');
-  document.getElementById('game').classList.add('active');
-
-  const canvas = document.getElementById('gameCanvas');
-  const rect = canvas.parentElement.getBoundingClientRect();
-  W = Math.floor(rect.width  / CELL) * CELL;
-  H = Math.floor((rect.height-48) / CELL) * CELL;
-  COLS = W/CELL; ROWS = H/CELL;
-  canvas.width=W; canvas.height=H;
-  canvas.style.top='48px';
-  ctx = canvas.getContext('2d');
-
-  allWords=words; gameOver=false; answeredQ=0; worms={}; bubbles=[];
-
-  // Init worms
-  const startPositions=[
-    {x:3,y:Math.floor(ROWS/2)},
-    {x:COLS-4,y:Math.floor(ROWS/2)},
-    {x:Math.floor(COLS/2),y:3},
-    {x:Math.floor(COLS/2),y:ROWS-4},
-  ];
-  players.forEach((p,i)=>{
-    const skin=SKINS.find(s=>s.id===p.skin)||SKINS[i%SKINS.length];
-    const pos=startPositions[i%startPositions.length];
-    const dir=i%2===0?{x:1,y:0}:{x:-1,y:0};
-    worms[p.email]={
-      email:p.email,name:p.name,skin,
-      body:Array.from({length:4},(_,j)=>({x:pos.x-dir.x*j,y:pos.y})),
-      dir, nextDir:null, score:0, alive:true, grow:0,
-      isBot:p.isBot||false, isMe:p.email===pEmail,
-    };
-  });
-
-  // Realtime for multiplayer
-  if (!isSolo && roomChannel) {
-    gameChannel = _SB.channel(`compost-game-${roomCode}`)
-      .on('broadcast',{event:'worm'},({payload})=>{
-        if(payload.email!==pEmail && worms[payload.email]){
-          const w=worms[payload.email];
-          w.body=payload.body; w.dir=payload.dir;
-          w.score=payload.score; w.alive=payload.alive;
-          updateLB();
-        }
-      })
-      .on('broadcast',{event:'ate'},({payload})=>{
-        if(payload.correct) { answeredQ++; nextQuestion(); }
-      })
-      .subscribe();
-  }
-
-  initStars();
-  nextQuestion();
-  spawnBubbles();
-  bindInput();
-
-  let last=0,botLast=0;
-  const SPEED=140, BOT_SPEED=280;
-
-  function tick(ts) {
-    if(gameOver){return;}
-    if(ts-last>=SPEED){
-      moveWorm(worms[pEmail]); last=ts;
-      if(!isSolo && gameChannel){
-        const me=worms[pEmail];
-        gameChannel.send({type:'broadcast',event:'worm',payload:{
-          email:pEmail,body:me.body,dir:me.dir,score:me.score,alive:me.alive
-        }});
-      }
+  // Calculate real investor level — never reset to 1
+  if(typeof INVESTOR_LEVELS !== 'undefined' && INVESTOR_LEVELS.length){
+    let realLevel = 1;
+    const invested = U.totalInvested || 0;
+    for(const lv of INVESTOR_LEVELS){ if(invested >= lv.min) realLevel = lv.level; }
+    if(U.investorLevel === undefined || U.investorLevel < realLevel){
+      U.investorLevel = realLevel; changed = true;
     }
-    if(ts-botLast>=BOT_SPEED){
-      Object.values(worms).filter(w=>w.isBot&&w.alive).forEach(w=>botMove(w));
-      botLast=ts;
-    }
-    draw();
-    animId=requestAnimationFrame(tick);
-  }
-  animId=requestAnimationFrame(tick);
-}
-
-function nextQuestion() {
-  if(answeredQ>=totalQ){endGame();return;}
-  if(!allWords.length)return;
-  currentQ=allWords[answeredQ%allWords.length];
-  document.getElementById('hud-word').textContent=currentQ.native;
-  // Speak the native word
-  speak(currentQ.native, nL);
-}
-
-// Draw emoji + word on canvas
-function drawQuestionEmoji() {
-  if(!currentQ) return;
-  const emoji = currentQ.emoji || '📝';
-  const cx = W/2;
-
-  // Background banner
-  ctx.fillStyle = 'rgba(10,10,30,.85)';
-  ctx.beginPath();
-  if(ctx.roundRect) ctx.roundRect(cx-110, 4, 220, CELL*1.6, 10);
-  else ctx.rect(cx-110, 4, 220, CELL*1.6);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(124,58,237,.5)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Question word only — no image (would make it too easy)
-
-  // Word text centered in banner
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `bold ${CELL*.9}px Nunito,system-ui,sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(currentQ.native, cx, CELL*1.2);
-  ctx.shadowBlur = 0;
-
-  // Progress dots below banner
-  const total=Math.min(totalQ,allWords.length);
-  const dotW=6, gap=3, totalW=(total*(dotW+gap))-gap;
-  const startX=cx-totalW/2;
-  for(let i=0;i<total;i++){
-    ctx.fillStyle=i<answeredQ?'#7c3aed':'rgba(255,255,255,.12)';
-    ctx.beginPath();
-    ctx.arc(startX+i*(dotW+gap)+dotW/2, CELL*2, 2.5, 0, Math.PI*2);
-    ctx.fill();
-  }
-  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-}
-
-function spawnBubbles() {
-  if(!currentQ)return;
-  bubbles=[];
-  const others=allWords.filter(w=>w.id!==currentQ.id).map(w=>w.target);
-  const wrongs=others.sort(()=>Math.random()-.5).slice(0,7);
-  const all=[currentQ.target,...wrongs].sort(()=>Math.random()-.5);
-  const used=[];
-  all.forEach(word=>{
-    let p,t=0;
-    // Keep bubbles away from top (question zone) and bottom (joystick)
-    // Each bubble is 2x2 so leave extra margin
-    do{
-      p={
-        x:2+Math.floor(Math.random()*(COLS-6)),
-        y:4+Math.floor(Math.random()*(ROWS-8))
-      };
-      t++;
-    } while(t<60&&used.some(u=>Math.abs(u.x-p.x)<4&&Math.abs(u.y-p.y)<4));
-    used.push(p);
-    // Find word entry for image + emoji
-    const wEntry = allWords.find(w=>w.target===word);
-    const emoji  = (wEntry && wEntry.emoji) ? wEntry.emoji : '🌱';
-    const wordId = wEntry ? wEntry.id : '';
-    // Preload image
-    if (wordId) loadImg(wordId);
-    bubbles.push({word, pos:p, correct:word===currentQ?.target, emoji, wordId});
-  });
-}
-
-function moveWorm(w) {
-  if(!w||!w.alive)return;
-  if(w.nextDir)w.dir=w.nextDir,w.nextDir=null;
-  const h=w.body[0];
-  const nh={x:(h.x+w.dir.x+COLS)%COLS,y:(h.y+w.dir.y+ROWS)%ROWS};
-  // Self collision
-  if(w.body.slice(1).some(s=>s.x===nh.x&&s.y===nh.y)){w.alive=false;return;}
-  w.body.unshift(nh);
-  if(w.grow>0){w.grow--;}else w.body.pop();
-  // Eat bubble — bigger hitbox (2x2 cells)
-  const bi=bubbles.findIndex(b=>
-    nh.x>=b.pos.x && nh.x<=b.pos.x+1 &&
-    nh.y>=b.pos.y && nh.y<=b.pos.y+1
-  );
-  if(bi>=0){
-    const b=bubbles[bi];
-    bubbles.splice(bi,1);
-    if(b.correct){
-      w.score+=10; w.grow+=3;
-      // Speak the eaten word in target language
-      if(w.isMe) speak(b.word, tL);
-      answeredQ++; nextQuestion(); spawnBubbles();
-      if(w.isMe){
-        document.getElementById('my-pts').textContent=w.score;
-        updateLB();
-        if(gameChannel)gameChannel.send({type:'broadcast',event:'ate',payload:{correct:true,email:pEmail}});
-      }
-      if(answeredQ>=totalQ){gameOver=true;}
-    } else {
-      w.score=Math.max(0,w.score-5);
-      if(w.body.length>3){w.body.pop();w.body.pop();}
-      if(w.isMe) spawnParticles(b.pos.x*CELL+CELL, b.pos.y*CELL+CELL, '#ef4444');
-      if(w.isMe){document.getElementById('my-pts').textContent=w.score;updateLB();}
-    }
-  }
-}
-
-function botMove(w) {
-  if(!currentQ||!w.alive)return;
-  const target=bubbles.find(b=>b.correct);
-  if(!target)return;
-  const h=w.body[0];
-  const tx=target.pos.x+0.5, ty=target.pos.y+0.5;
-  const dirs=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
-  const valid=dirs.filter(d=>!(d.x===-w.dir.x&&d.y===-w.dir.y));
-  const scored=valid.map(d=>{
-    const nx=(h.x+d.x+COLS)%COLS, ny=(h.y+d.y+ROWS)%ROWS;
-    const selfHit=w.body.slice(1,6).some(s=>s.x===nx&&s.y===ny)?-15:0;
-    const dist=Math.abs(tx-nx)+Math.abs(ty-ny);
-    const noise=Math.random()<0.15?Math.random()*5:0;
-    return {d,score:-dist+selfHit+noise};
-  });
-  scored.sort((a,b)=>b.score-a.score);
-  if(scored[0])w.dir=scored[0].d;
-  moveWorm(w);
-}
-
-function updateLB() {
-  const sorted=Object.values(worms).filter(w=>w.alive||w.score>0).sort((a,b)=>b.score-a.score);
-  document.getElementById('lb-rows').innerHTML=sorted.slice(0,4).map((w,i)=>
-    `<div class="lb-row">
-      <div class="lb-dot" style="background:${w.skin.h}"></div>
-      <div class="lb-name">${w.isMe?'👤 Toi':w.name}</div>
-      <div class="lb-pts">${w.score}</div>
-    </div>`).join('');
-}
-
-// ── DRAWING ───────────────────────────────────────────────────
-// Particle system for eat effects
-let particles=[];
-function spawnParticles(x,y,color){
-  for(let i=0;i<10;i++){
-    const angle=Math.random()*Math.PI*2;
-    const speed=1+Math.random()*3;
-    particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
-      life:1,color,size:2+Math.random()*4});
-  }
-}
-function updateParticles(){
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=0.05;p.size*=0.95;});
-}
-function drawParticles(){
-  particles.forEach(p=>{
-    ctx.globalAlpha=p.life;
-    ctx.fillStyle=p.color;
-    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();
-  });
-  ctx.globalAlpha=1;
-}
-
-// Animated bg stars
-let bgStars=[];
-function initStars(){
-  bgStars=Array.from({length:60},()=>({
-    x:Math.random()*680,y:Math.random()*400,
-    size:Math.random()*1.5+0.3,
-    twinkle:Math.random()*Math.PI*2,
-    speed:0.02+Math.random()*0.04
-  }));
-}
-function drawStars(){
-  bgStars.forEach(s=>{
-    s.twinkle+=s.speed;
-    ctx.globalAlpha=0.15+Math.abs(Math.sin(s.twinkle))*0.25;
-    ctx.fillStyle='#c4b5fd';
-    ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();
-  });
-  ctx.globalAlpha=1;
-}
-
-function draw() {
-  // Deep space bg with gradient feel
-  ctx.fillStyle='#04040f'; ctx.fillRect(0,0,W,H);
-  // Vignette
-  const vig=ctx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.8);
-  vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,20,0.5)');
-  ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
-  // Stars
-  drawStars();
-  // Subtle grid
-  ctx.strokeStyle='rgba(100,80,200,.06)'; ctx.lineWidth=.5;
-  for(let i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,H);ctx.stroke();}
-  for(let j=0;j<=ROWS;j++){ctx.beginPath();ctx.moveTo(0,j*CELL);ctx.lineTo(W,j*CELL);ctx.stroke();}
-  // Question banner
-  drawQuestionEmoji();
-  // Bubbles
-  bubbles.forEach(drawBubble);
-  // Particles
-  updateParticles();drawParticles();
-  // Worms
-  Object.values(worms).filter(w=>w.alive).forEach(drawWorm);
-}
-
-function drawBubble(b) {
-  // 2x2 cell bubble — center at pos+1
-  const cx = b.pos.x*CELL + CELL;
-  const cy = b.pos.y*CELL + CELL;
-  const r  = CELL*0.95;
-
-  // Compost dirt background — no color hint, all identical
-  ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=6;
-  ctx.fillStyle='#2d1200';
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle='#6b3a0f'; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.arc(cx,cy,r-1,0,Math.PI*2); ctx.stroke();
-  ctx.shadowBlur=0;
-
-  // PNG image (OpenMoji) if loaded, fallback to emoji text
-  const img = b.wordId ? loadImg(b.wordId) : null;
-  const imgSize = CELL*1.5;
-  if (img && img.complete && img.naturalWidth>0) {
-    ctx.drawImage(img, cx-imgSize/2, cy-imgSize/2-2, imgSize, imgSize);
   } else {
-    // Fallback emoji text
-    ctx.font = `${CELL*1.05}px serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(b.emoji||'🌱', cx, cy-2);
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    if(U.investorLevel === undefined){ U.investorLevel = 1; changed = true; }
   }
 
-  // Word label below — muted, same style for all
-  ctx.fillStyle='rgba(255,210,140,.8)';
-  ctx.font=`bold 9px Nunito,system-ui,sans-serif`;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(b.word.length>9?b.word.slice(0,8)+'…':b.word, cx, cy+r+9);
-  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  // Only save if something was actually missing — don't overwrite fresh data
+  if(changed) saveU();
 }
 
-function drawWorm(w) {
-  w.body.forEach((seg,i)=>{
-    const x=seg.x*CELL, y=seg.y*CELL;
-    // Glow on head
-    if(i===0){ctx.shadowColor=w.skin.h;ctx.shadowBlur=10;}
-    else ctx.shadowBlur=0;
-    ctx.fillStyle=i===0?w.skin.h:w.skin.b;
-    const r=i===0?7:5;
-    ctx.beginPath();
-    ctx.arc(x+CELL/2,y+CELL/2,r,0,Math.PI*2);
-    ctx.fill();
-    ctx.shadowBlur=0;
-  });
-  // Eyes on head
-  if(w.body.length){
-    const h=w.body[0];
-    const hx=h.x*CELL+CELL/2, hy=h.y*CELL+CELL/2;
-    const ex=w.dir.x, ey=w.dir.y;
-    const perp={x:-ey,y:ex};
-    [[1.5,-1.5],[1.5,1.5]].forEach(([a,b])=>{
-      const ex2=hx+ex*4+perp.x*b;
-      const ey2=hy+ey*4+perp.y*b;
-      ctx.fillStyle=w.skin.e;
-      ctx.beginPath();ctx.arc(ex2,ey2,2.2,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#111';
-      ctx.beginPath();ctx.arc(ex2+ex*0.8,ey2+ey*0.8,1.1,0,Math.PI*2);ctx.fill();
-    });
+let _appReady = false;
+function afterLogin(){
+  migrateUser();
+  showChrome();
+  calcDividends();
+  updateTopBar();
+
+  if (U.lastNL && U.lastTL && U.lastNL !== U.lastTL) {
+    S.nL = U.lastNL; S.tL = U.lastTL;
+    setTimeout(()=>{
+      try{
+        const ng=document.querySelector(`#native-grid [data-code="${S.nL}"]`);
+        const tg=document.querySelector(`#target-grid [data-code="${S.tL}"]`);
+        if(ng) ng.classList.add('selected');
+        if(tg) tg.classList.add('selected');
+        if(typeof syncPair==='function') syncPair();
+        if(typeof syncDots==='function') syncDots();
+        const ts=$('target-section'); if(ts) ts.style.opacity='1';
+      }catch(e){}
+      try{
+        if(typeof goToLevels==='function'
+           && typeof LANGS!=='undefined'
+           && LANGS && LANGS[S.nL] && LANGS[S.tL]){
+          goToLevels();
+        } else {
+          navTo('learn');
+        }
+      }catch(e){ console.warn('afterLogin nav error:',e); navTo('learn'); }
+    }, 400);
+  } else {
+    navTo('learn');
   }
-  // Name tag
-  if(w.body.length){
-    const h=w.body[0];
-    ctx.fillStyle='rgba(0,0,0,.7)';
-    ctx.font='bold 9px Nunito,sans-serif';
-    ctx.textAlign='center';
-    const label=w.isMe?'Tu':w.name;
-    const tw2=ctx.measureText(label).width+8;
-    const tx=h.x*CELL+CELL/2, ty=h.y*CELL-4;
-    ctx.fillRect(tx-tw2/2,ty-11,tw2,13);
-    ctx.fillStyle=w.skin.h;
-    ctx.fillText(label,tx,ty-1);
-    ctx.textAlign='left';
-  }
+
+  if(typeof initSocial==='function') setTimeout(initSocial, 700);
+  setTimeout(()=>{ _appReady = true; }, 1200);
+}
+function showChrome(){$('top-bar').style.display='flex';$('nav-bar').style.display='flex';}
+function hideChrome(){$('top-bar').style.display='none';$('nav-bar').style.display='none';}
+
+
+// ══════════════════════════════════════════════
+// SHOW / HIDE PASSWORD
+// ══════════════════════════════════════════════
+function togglePass(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? '🙈' : '👁';
+  btn.classList.toggle('visible', isHidden);
 }
 
-// ── INPUT ─────────────────────────────────────────────────────
-function bindInput() {
-  // Keyboard (works on all devices)
-  const KEYS={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},
-    w:{x:0,y:-1},s:{x:0,y:1},a:{x:-1,y:0},d:{x:1,y:0}};
-  document.onkeydown=e=>{
-    const d=KEYS[e.key];if(!d)return;
-    const me=worms[pEmail];
-    if(me&&!(d.x===-me.dir.x&&d.y===-me.dir.y))me.nextDir=d;
-    e.preventDefault();
-  };
-  // Show keyboard hint on desktop, joystick on touch
-  const jw=document.getElementById('joystick-wrap');
-  const isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
-  if(jw) jw.style.display=isTouch?'block':'none';
-  // Desktop arrow hints
-  if(!isTouch){
-    const hint=document.createElement('div');
-    hint.style.cssText='position:absolute;bottom:16px;left:16px;z-index:10;font-size:.72rem;color:rgba(255,255,255,.4);font-weight:800;line-height:1.8;';
-    hint.innerHTML='⬆ W<br>⬇ S &nbsp;⬅ A &nbsp;➡ D';
-    document.getElementById('game').appendChild(hint);
-  }
+// ══════════════════════════════════════════════
+// FORGOT PASSWORD
+// ══════════════════════════════════════════════
+let _forgotEmail = null;
 
-  // Joystick
-  const wrap  = document.getElementById('joystick-wrap');
-  const knob  = document.getElementById('joystick-knob');
-  if (!wrap || !knob) return;
+function openForgot() {
+  _forgotEmail = null;
+  // Reset all steps
+  document.getElementById('forgot-step-1').style.display = 'block';
+  document.getElementById('forgot-step-2').style.display = 'none';
+  document.getElementById('forgot-step-3').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-err-1').textContent = '';
+  document.getElementById('forgot-err-1').classList.remove('show');
+  const m = document.getElementById('forgot-modal');
+  if (m) { m.style.display = 'flex'; }
+}
 
-  const R = 33; // max knob travel radius
-  let active = false;
-  let origin = {x:0, y:0};
+function closeForgot(e) {
+  if (e && e.target !== document.getElementById('forgot-modal')) return;
+  const m = document.getElementById('forgot-modal');
+  if (m) m.style.display = 'none';
+}
 
-  function getCenter() {
-    const r = wrap.getBoundingClientRect();
-    return { x: r.left + r.width/2, y: r.top + r.height/2 };
-  }
+function _forgotErr(step, msg) {
+  const id = 'forgot-err-' + step;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
 
-  function applyDir(cx, cy, ex, ey) {
-    const dx = ex - cx, dy = ey - cy;
-    const dist = Math.sqrt(dx*dx+dy*dy);
-    if (dist < 8) return; // dead zone
+async function forgotStep1() {
+  const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { _forgotErr(1, 'Entre un email valide.'); return; }
 
-    // Move knob visually
-    const clamp = Math.min(dist, R);
-    const nx = dx/dist*clamp, ny = dy/dist*clamp;
-    knob.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
+  const btn = document.getElementById('btn-forgot-1');
+  const orig = btn.textContent; btn.textContent = t('forgot_checking'); btn.disabled = true;
 
-    // Pick dominant direction
-    const me = worms[pEmail]; if (!me) return;
-    let nd;
-    if (Math.abs(dx) > Math.abs(dy)) {
-      nd = dx > 0 ? {x:1,y:0} : {x:-1,y:0};
-    } else {
-      nd = dy > 0 ? {x:0,y:1} : {x:0,y:-1};
+  try {
+    // Try Supabase first
+    let userData = null;
+    try {
+      const { data, error } = await _SB.from('users').select('data').eq('email', email).single();
+      if (data && !error) userData = data.data;
+    } catch(e) {}
+
+    // Fallback to localStorage
+    if (!userData) {
+      const users = loadUsers();
+      if (users[email]) userData = users[email];
     }
-    if (!(nd.x===-me.dir.x && nd.y===-me.dir.y)) me.nextDir = nd;
+
+    if (!userData) {
+      _forgotErr(1, t('forgot_not_found'));
+      return;
+    }
+
+    _forgotEmail = email;
+    document.getElementById('forgot-found-name').textContent =
+      (userData.name || 'Utilisateur') + ' · ' + email;
+    document.getElementById('forgot-new-pass').value = '';
+    document.getElementById('forgot-confirm-pass').value = '';
+    document.getElementById('forgot-err-2').textContent = '';
+    document.getElementById('forgot-err-2').classList.remove('show');
+    document.getElementById('forgot-step-1').style.display = 'none';
+    document.getElementById('forgot-step-2').style.display = 'block';
+    setTimeout(() => document.getElementById('forgot-new-pass').focus(), 100);
+
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
   }
+}
 
-  function resetKnob() {
-    knob.style.transform = 'translate(-50%, -50%)';
-    active = false;
+async function forgotStep2() {
+  if (!_forgotEmail) { openForgot(); return; }
+
+  const newPass    = document.getElementById('forgot-new-pass').value;
+  const confirmPass = document.getElementById('forgot-confirm-pass').value;
+
+  if (newPass.length < 6) { _forgotErr(2, t('forgot_short')); return; }
+  if (newPass !== confirmPass) { _forgotErr(2, t('forgot_mismatch')); return; }
+
+  const btn = document.getElementById('btn-forgot-2');
+  const orig = btn.textContent; btn.textContent = t('forgot_resetting'); btn.disabled = true;
+
+  try {
+    // Load full user data
+    let userData = null;
+    try {
+      const { data } = await _SB.from('users').select('data').eq('email', _forgotEmail).single();
+      if (data) userData = data.data;
+    } catch(e) {}
+    if (!userData) {
+      const users = loadUsers();
+      userData = users[_forgotEmail];
+    }
+    if (!userData) { _forgotErr(2, t('forgot_error')); return; }
+
+    // Update password
+    userData.pass = btoa(newPass);
+    userData._savedAt = Date.now();
+
+    // Save to localStorage
+    const users = loadUsers();
+    users[_forgotEmail] = userData;
+    saveUsers(users);
+    localStorage.setItem('lq_u_' + _forgotEmail, JSON.stringify(userData));
+
+    // Save to Supabase
+    try {
+      await _SB.from('users').upsert({
+        email: _forgotEmail,
+        data: userData,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'email' });
+    } catch(e) { /* offline — localStorage saved */ }
+
+    // Pre-fill login email field
+    const loginEmail = document.getElementById('login-email');
+    if (loginEmail) loginEmail.value = _forgotEmail;
+
+    document.getElementById('forgot-step-2').style.display = 'none';
+    document.getElementById('forgot-step-3').style.display = 'block';
+    _forgotEmail = null;
+
+  } finally {
+    btn.textContent = orig; btn.disabled = false;
   }
-
-  // Touch
-  wrap.addEventListener('touchstart', e=>{
-    active=true;
-    const t=e.touches[0];
-    const c=getCenter();
-    applyDir(c.x,c.y,t.clientX,t.clientY);
-    e.preventDefault();
-  },{passive:false});
-
-  wrap.addEventListener('touchmove', e=>{
-    if(!active)return;
-    const t=e.touches[0];
-    const c=getCenter();
-    applyDir(c.x,c.y,t.clientX,t.clientY);
-    e.preventDefault();
-  },{passive:false});
-
-  wrap.addEventListener('touchend', ()=>resetKnob());
-  wrap.addEventListener('touchcancel', ()=>resetKnob());
-
-  // Mouse (desktop testing)
-  wrap.addEventListener('mousedown', e=>{
-    active=true;
-    const c=getCenter();
-    applyDir(c.x,c.y,e.clientX,e.clientY);
-  });
-  document.addEventListener('mousemove', e=>{
-    if(!active)return;
-    const c=getCenter();
-    applyDir(c.x,c.y,e.clientX,e.clientY);
-  });
-  document.addEventListener('mouseup', ()=>resetKnob());
 }
-
-// ── END ───────────────────────────────────────────────────────
-function endGame() {
-  cancelAnimationFrame(animId);
-  if(gameChannel){_SB.removeChannel(gameChannel);gameChannel=null;}
-  const sorted=Object.values(worms).sort((a,b)=>b.score-a.score);
-  const me=worms[pEmail];
-  const myRank=sorted.findIndex(w=>w.email===pEmail);
-  const won=myRank===0;
-  document.getElementById('res-emoji').textContent=won?'🏆':myRank===1?'🥈':'🥉';
-  document.getElementById('res-title').textContent=won?'Victoire !':'Bien joué !';
-  document.getElementById('podium').innerHTML=sorted.map((w,i)=>`
-    <div class="podium-row">
-      <div class="podium-rank">${['🥇','🥈','🥉','4️⃣'][i]||i+1}</div>
-      <div class="podium-dot" style="background:${w.skin.h}"></div>
-      <div class="podium-name">${w.isMe?'👤 Toi':w.name}</div>
-      <div class="podium-pts">${w.score} pts</div>
-    </div>`).join('');
-  document.getElementById('res-coins').textContent=won?'+150 🪙 bonus !':'';
-  document.getElementById('result').classList.add('show');
-  window.parent.postMessage({type:'gameResult',won,myScore:me?.score||0},'*');
-}
-
-function quitGame() {
-  gameOver=true;
-  cancelAnimationFrame(animId);
-  if(gameChannel){_SB.removeChannel(gameChannel);gameChannel=null;}
-  document.getElementById('game').classList.remove('active');
-  document.getElementById('lobby').classList.add('active');
-  document.onkeydown=null;
-}
-
-function replayGame() {
-  gameOver = false;
-  document.getElementById('result').classList.remove('show');
-  // Go back to lobby
-  document.getElementById('game').classList.remove('active');
-  document.getElementById('lobby').classList.add('active');
-  if(gameChannel){_SB.removeChannel(gameChannel);gameChannel=null;}
-  document.onkeydown=null;
-  cancelAnimationFrame(animId);
-}
-</script>
-</body>
-</html>
