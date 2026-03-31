@@ -1,77 +1,87 @@
-// COMPOST.JS — Launcher for Compost snake.io game
+// ══════════════════════════════════════════════════════════════
+// LEADERBOARD.JS — Global rankings via Supabase
+// ══════════════════════════════════════════════════════════════
 
-function openCompostGame(opts) {
-  opts = opts || {};
-  const nL    = S.nL   || 'fr';
-  const tL    = S.tL   || 'en';
-  const skin  = (U && U.compostSkin) || 'sprout';
-  const name  = encodeURIComponent((U && U.name)  || 'Joueur');
-  const email = encodeURIComponent((U && U.email) || 'guest@local');
-  const level = encodeURIComponent(opts.level || 'any');
-  const topic = encodeURIComponent(opts.topic || 'any');
-  const chap  = encodeURIComponent(opts.chap  || '');
+let _lbCache = null;
+let _lbCacheTime = 0;
+let _lbTab = 'xp'; // 'xp' | 'coins' | 'streak'
 
-  const overlay = document.getElementById('compost-overlay');
-  const iframe  = document.getElementById('compost-iframe');
-  if (!overlay || !iframe) { console.error('Compost overlay missing'); return; }
+async function fetchLeaderboard(force) {
+  const now = Date.now();
+  if (!force && _lbCache && now - _lbCacheTime < 5 * 60 * 1000) return _lbCache;
 
-  iframe.src = `compost-game.html?nL=${nL}&tL=${tL}&skin=${skin}&name=${name}&email=${email}&level=${level}&topic=${topic}&chap=${chap}`;
-  overlay.style.display = 'flex';
-
-  window._compostListener = function(e) {
-    // Handle both string 'close' and {type:'close'}
-    if (e.data === 'close' || e.data?.type === 'close') { closeCompostGame(); return; }
-    if (!e.data || typeof e.data !== 'object') return;
-
-    if (e.data.type === 'getWordData') {
-      // Send WD + CHAPTERS to iframe
-      iframe.contentWindow.postMessage({
-        type: 'wordData',
-        words: typeof WD !== 'undefined' ? WD : {},
-        chapters: typeof CHAPTERS !== 'undefined' ? CHAPTERS : null,
-      }, '*');
-    }
-
-    if (e.data.type === 'saveSkin' && U && !U.isGuest) {
-      U.compostSkin = e.data.skin; saveU();
-    }
-
-    if (e.data.type === 'gameResult' && e.data.won && U && !U.isGuest) {
-      const bonus = opts.level && opts.level !== 'any' ? 100 : 50;
-      U.coins = (U.coins || 0) + bonus;
-      U.duelsWon = (U.duelsWon || 0) + 1;
-      saveU(); updateTopBar();
-      if (typeof checkTrophies === 'function') checkTrophies();
-      toast(`🪱 Victoire ! +${bonus} 🪙`);
-    }
-  };
-  window.addEventListener('message', window._compostListener);
+  try {
+    const { data, error } = await _SB.from('users').select('data').limit(200);
+    if (error || !data) return [];
+    const players = data
+      .map(r => r.data)
+      .filter(u => u && u.name && !u.isGuest)
+      .map(u => ({
+        name:     u.name,
+        pseudo:   u.pseudo || '',
+        xp:       u.xp     || 0,
+        coins:    u.coins  || 0,
+        streak:   u.streak || 0,
+        trophies: (u.trophies||[]).length,
+        level:    u.investorLevel || 1,
+        email:    u.email,
+        lastSeen: u.lastSeen || 0,
+      }));
+    _lbCache = players;
+    _lbCacheTime = now;
+    return players;
+  } catch(e) { return []; }
 }
 
-function closeCompostGame() {
-  const overlay = document.getElementById('compost-overlay');
-  const iframe  = document.getElementById('compost-iframe');
-  if (overlay) overlay.style.display = 'none';
-  if (iframe)  iframe.src = '';
-  if (window._compostListener) {
-    window.removeEventListener('message', window._compostListener);
-    window._compostListener = null;
+async function renderLeaderboard() {
+  const el = document.getElementById('lb-list');
+  const myRank = document.getElementById('lb-my-rank');
+  if (!el) return;
+
+  el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">${t('lb_loading')}</div>`;
+
+  const players = await fetchLeaderboard();
+  if (!players.length) {
+    el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">${t('lb_error')}</div>`;
+    return;
+  }
+
+  const sorted = [...players].sort((a,b) => b[_lbTab] - a[_lbTab]);
+  const myIdx  = sorted.findIndex(p => p.email === U?.email);
+
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = sorted.slice(0, 50).map((p, i) => {
+    const isMe = p.email === U?.email;
+    const medal = medals[i] || `${i+1}`;
+    const pseudoTag = p.pseudo ? `<span style="font-size:.65rem;color:var(--accent3);font-weight:700;margin-left:4px;">@${p.pseudo}</span>` : '';
+    const onlineDotHtml = typeof onlineDot === 'function' ? onlineDot(p.lastSeen) : '';
+    const inviteBtn = !isMe ? `<button class="lb-invite-btn" onclick="event.stopPropagation();sendFriendRequest('${p.email}')" title="Ajouter en ami">➕</button>` : '';
+    return `<div class="lb-row ${isMe ? 'lb-me' : ''}">
+      <div class="lb-rank">${medal}</div>
+      <div style="position:relative;flex-shrink:0;">${onlineDotHtml}<div class="lb-avatar">${p.name.charAt(0).toUpperCase()}</div></div>
+      <div class="lb-info">
+        <div class="lb-name">${isMe ? '👤 ' + p.name : p.name}${pseudoTag} ${p.trophies > 0 ? `<span style="font-size:.65rem;color:var(--gold)">🏆${p.trophies}</span>` : ''}</div>
+        <div class="lb-sub">Niv.${p.level} · Streak ${p.streak}🔥</div>
+      </div>
+      <div class="lb-score">${p[_lbTab].toLocaleString()} ${_lbTab === 'xp' ? 'XP' : _lbTab === 'coins' ? '🪙' : '🔥'}</div>
+      ${inviteBtn}
+    </div>`;
+  }).join('');
+
+  if (myRank) {
+    if (myIdx >= 0) {
+      myRank.textContent = myIdx < 50 ? t('lb_rank_top',{r:myIdx+1,t:sorted.length}) : t('lb_rank_climb',{r:myIdx+1});
+    } else {
+      myRank.textContent = t('lb_rank_play');
+    }
   }
 }
 
-// Called from game-select screen (uses current chapter context)
-function openCompostFromLesson() {
-  openCompostGame({
-    level: S.level || 'any',
-    topic: S._activeTopic || 'any',
-    chap:  S.chap  || '',
+function setLbTab(tab) {
+  _lbTab = tab;
+  ['lb-tab-xp','lb-tab-coins','lb-tab-streak'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === 'lb-tab-' + tab);
   });
-}
-
-// Called from chapters screen (uses current level + topic filter)
-function openCompostFromChapter() {
-  openCompostGame({
-    level: S.level || 'any',
-    topic: S._activeTopic || 'any',
-  });
+  renderLeaderboard();
 }

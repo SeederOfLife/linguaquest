@@ -1,102 +1,41 @@
-// ══════════════════════════════════════════════════════════════
-// SRS.JS — Spaced Repetition System (SM-2 simplified)
-// Tracks per-word performance, schedules reviews
-// ══════════════════════════════════════════════════════════════
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a0a00"/>
+      <stop offset="100%" stop-color="#0a0500"/>
+    </radialGradient>
+    <radialGradient id="gold" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fff176"/>
+      <stop offset="50%" stop-color="#ffd600"/>
+      <stop offset="100%" stop-color="#ff8f00"/>
+    </radialGradient>
+  </defs>
 
-// Review intervals in minutes: again, hard, good, easy
-const SRS_INTERVALS = [1, 10, 1440, 4320, 10080, 20160, 43200];
-// U.srs = { 'fr-en-wordId': { interval, due, fails, reviews } }
+  <!-- Dark background -->
+  <circle cx="50" cy="50" r="50" fill="url(#bg)"/>
 
-function srsKey(wid) { return `${S.nL}-${S.tL}-${wid}`; }
+  <!-- ── FLOWER OF LIFE / SEED OF LIFE ── -->
+  <!-- Center circle -->
+  <circle cx="50" cy="50" r="18" fill="none" stroke="url(#gold)" stroke-width="1.4" opacity="0.9"/>
+  <!-- 6 surrounding circles (Seed of Life) -->
+  <circle cx="50"   cy="32"   r="18" fill="none" stroke="url(#gold)" stroke-width="1.2" opacity="0.75"/>
+  <circle cx="50"   cy="68"   r="18" fill="none" stroke="url(#gold)" stroke-width="1.2" opacity="0.75"/>
+  <circle cx="65.6" cy="41"   r="18" fill="none" stroke="url(#gold)" stroke-width="1.2" opacity="0.75"/>
+  <circle cx="34.4" cy="41"   r="18" fill="none" stroke="url(#gold)" stroke-width="1.2" opacity="0.75"/>
+  <circle cx="65.6" cy="59"   r="18" fill="none" stroke="url(#gold)" stroke-width="1.2" opacity="0.75"/>
+  <circle cx="34.4" cy="59"   r="18" fill="none" stroke="url(#gold)" stroke-width="1.2" opacity="0.75"/>
+  <!-- Outer bounding circle -->
+  <circle cx="50"   cy="50"   r="36" fill="none" stroke="#ff8f00" stroke-width="1.1" opacity="0.55"/>
 
-function initSRS() {
-  if (!U.srs) U.srs = {};
-}
+  <!-- ── 6-POINTED STAR (hexagram) ── -->
+  <!-- Triangle pointing up -->
+  <polygon points="50,22 65.6,47 34.4,47"
+    fill="url(#gold)" fill-opacity="0.18" stroke="url(#gold)" stroke-width="1.3" stroke-linejoin="round"/>
+  <!-- Triangle pointing down -->
+  <polygon points="50,78 34.4,53 65.6,53"
+    fill="url(#gold)" fill-opacity="0.18" stroke="url(#gold)" stroke-width="1.3" stroke-linejoin="round"/>
 
-// Called after each quiz answer
-function srsUpdate(wid, correct) {
-  if (!U || !wid || !S.nL || !S.tL) return;
-  initSRS();
-  const k = srsKey(wid);
-  const card = U.srs[k] || { interval: 0, due: 0, fails: 0, reviews: 0 };
-  const now = Date.now();
-
-  if (correct) {
-    // Advance interval
-    const next = SRS_INTERVALS[Math.min(card.interval + 1, SRS_INTERVALS.length - 1)];
-    card.interval = Math.min(card.interval + 1, SRS_INTERVALS.length - 1);
-    card.due = now + next * 60000;
-    card.reviews = (card.reviews || 0) + 1;
-  } else {
-    // Reset to beginning, due in 1 min
-    card.interval = 0;
-    card.due = now + 60000;
-    card.fails = (card.fails || 0) + 1;
-  }
-  U.srs[k] = card;
-}
-
-// Returns word IDs due for review (up to limit)
-function srsDueWords(limit) {
-  if (!U || !U.srs || !S.nL || !S.tL) return [];
-  const now = Date.now();
-  return Object.entries(U.srs)
-    .filter(([k, v]) => k.startsWith(`${S.nL}-${S.tL}-`) && v.due <= now)
-    .sort((a, b) => a[1].due - b[1].due)
-    .slice(0, limit || 8)
-    .map(([k]) => k.replace(`${S.nL}-${S.tL}-`, ''));
-}
-
-function srsDueCount() {
-  if (!U || !U.srs || !S.nL || !S.tL) return 0;
-  const now = Date.now();
-  return Object.entries(U.srs)
-    .filter(([k, v]) => k.startsWith(`${S.nL}-${S.tL}-`) && v.due <= now).length;
-}
-
-// Build a review quiz from due words
-function startSRSReview() {
-  if (!S.nL || !S.tL) { toast(t('duel_no_lang')); navTo('learn'); return; }
-  const due = srsDueWords(10);
-  if (!due.length) { toast(t('srs_no_due')); return; }
-
-  // Build questions from due words — use all word IDs for wrong answers
-  const allWids = Object.keys(WD);
-  S.qs = due.flatMap(id => {
-    if (!WD[id]) return [];
-    return [mkQQ(id, allWids), mkFQ(id)];
-  }).slice(0, 12);
-  S.isSRSReview = true;
-  S.qi = 0; S.score = 0; S.cor = 0; S.wr = 0;
-  S.ts = { quiz:{c:0,w:0}, fill:{c:0,w:0}, sort:{c:0,w:0}, match:{c:0,w:0} };
-  S.gType = 'mixed';
-  goTo('game');
-  setTypePill(S.qs[0]?.type || 'quiz');
-  sT('g-score', 0); sT('xp-count', (U.xp||0)+' XP');
-  $('g-progress').style.width = '0%';
-  renderQ();
-  toast(t('srs_toast',{n:due.length}));
-}
-
-// Render the SRS widget (injected into learn screen)
-function renderSRSWidget() {
-  const el = document.getElementById('srs-widget');
-  if (!el || !U || !S.nL || !S.tL) return;
-  const due = srsDueCount();
-  const total = U.srs ? Object.keys(U.srs).filter(k => k.startsWith(`${S.nL}-${S.tL}-`)).length : 0;
-  const learned = U.srs ? Object.entries(U.srs)
-    .filter(([k,v]) => k.startsWith(`${S.nL}-${S.tL}-`) && v.interval >= 3).length : 0;
-
-  el.innerHTML = `
-    <div class="srs-card" onclick="startSRSReview()">
-      <div class="srs-icon">🧠</div>
-      <div class="srs-info">
-        <div class="srs-title">Révision intelligente</div>
-        <div class="srs-sub">${learned} mots maîtrisés · ${total} suivis</div>
-      </div>
-      <div class="srs-badge ${due > 0 ? 'srs-due' : 'srs-ok'}">
-        ${due > 0 ? t('srs_due',{n:due}) : t('srs_ok')}
-      </div>
-    </div>
-  `;
-}
+  <!-- ── CENTER POINT ── -->
+  <circle cx="50" cy="50" r="4" fill="#ffd600" opacity="1"/>
+  <circle cx="50" cy="50" r="2" fill="#fff176" opacity="1"/>
+</svg>

@@ -1,1195 +1,360 @@
-<!DOCTYPE html>
-<html lang="fr" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="alternate icon" href="favicon.svg">
-  <link rel="apple-touch-icon" href="favicon.svg">
-  <meta name="theme-color" content="#0a0a14">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinguaQuest</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="style.css">
-  <!-- Google AdSense — script required on all pages for domain verification -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
-</head>
-<body>
-<div class="stars" id="stars"></div>
-<div id="app">
-
-<!-- ══════════════════ THEME PICKER ══════════════════ -->
-<div class="screen" id="screen-theme-picker" style="padding-top:0;">
-  <div style="text-align:center;max-width:380px;width:100%;padding:40px 16px 0;">
-    <div style="display:flex;justify-content:center;margin-bottom:12px;">
-      <svg class="lq-logo-svg" width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <defs><radialGradient id="gtp" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-        <g class="lq-logo-ring">
-          <circle cx="50" cy="50" r="28" fill="none" stroke="url(#gtp)" stroke-width="1.2" opacity=".7"/>
-          <circle cx="50" cy="22" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="50" cy="78" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="31" cy="39" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="69" cy="39" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="31" cy="61" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="69" cy="61" r="22" fill="none" stroke="url(#gtp)" stroke-width="1" opacity=".5"/>
-          <circle cx="50" cy="50" r="44" fill="none" stroke="url(#gtp)" stroke-width=".8" stroke-dasharray="4 5" opacity=".3"/>
-        </g>
-        <g class="lq-logo-star">
-          <polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#gtp)" fill-opacity=".15" stroke="url(#gtp)" stroke-width="1"/>
-        </g>
-        <circle cx="50" cy="50" r="4" fill="url(#gtp)" opacity=".9"/>
-        <circle cx="50" cy="50" r="2" fill="#fff" opacity=".8"/>
-      </svg>
-    </div>
-    <div class="logo">LinguaQuest</div>
-    <div class="tagline" id="lbl-tagline">Apprends. Investis. Maîtrise.</div>
-    <p style="font-weight:800;font-size:1rem;margin-top:8px;" id="lbl-pick-theme">Choisis ton thème</p>
-    <div class="theme-pick-grid">
-      <button class="theme-pick-btn" onclick="pickTheme('dark')">
-        <div class="theme-pick-icon">🌙</div><div class="theme-pick-name" id="lbl-theme-dark">Sombre</div>
-      </button>
-      <button class="theme-pick-btn" onclick="pickTheme('light')">
-        <div class="theme-pick-icon">☀️</div><div class="theme-pick-name" id="lbl-theme-light">Clair</div>
-      </button>
-      <button class="theme-pick-btn" onclick="pickTheme('claude')">
-        <div class="theme-pick-icon">🤖</div><div class="theme-pick-name" id="lbl-theme-claude">Claude</div>
-      </button>
-      <button class="theme-pick-btn" onclick="pickTheme('random')">
-        <div class="theme-pick-icon">🎲</div><div class="theme-pick-name" id="lbl-theme-random">Aléatoire</div>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ AUTH SCREEN ══════════════════ -->
-<div class="screen active" id="screen-auth" style="justify-content:center;padding-top:40px;">
-  <div style="text-align:center;margin-bottom:8px;">
-    <div style="display:flex;justify-content:center;margin-bottom:8px;">
-      <svg class="lq-logo-svg" width="90" height="90" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <defs><radialGradient id="ga" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-        <g class="lq-logo-ring"><circle cx="50" cy="50" r="28" fill="none" stroke="url(#ga)" stroke-width="1.2" opacity=".7"/><circle cx="50" cy="22" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="50" cy="78" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="31" cy="39" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="69" cy="39" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="31" cy="61" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="69" cy="61" r="22" fill="none" stroke="url(#ga)" stroke-width="1" opacity=".5"/><circle cx="50" cy="50" r="44" fill="none" stroke="url(#ga)" stroke-width=".8" stroke-dasharray="4 5" opacity=".3"/></g>
-        <g class="lq-logo-star"><polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#ga)" fill-opacity=".15" stroke="url(#ga)" stroke-width="1"/></g>
-        <circle cx="50" cy="50" r="4" fill="url(#ga)" opacity=".9"/><circle cx="50" cy="50" r="2" fill="#fff" opacity=".8"/>
-      </svg>
-    </div>
-    <div class="logo">LinguaQuest</div>
-    <div class="tagline" id="lbl-tagline-auth">Apprends. Investis. Maîtrise.</div>
-  </div>
-  <div class="auth-card card-accent">
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')" data-i18n="tab_login">Se connecter</button>
-      <button class="auth-tab" id="tab-register" onclick="switchTab('register')" data-i18n="tab_register">S'inscrire</button>
-    </div>
-    <!-- LOGIN -->
-    <div id="form-login">
-      <label class="auth-label">Email</label>
-      <input class="auth-input" type="email" id="login-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-      <label class="auth-label" id="lbl-login-pass">Mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-        <button class="pass-eye" type="button" onclick="togglePass('login-pass',this)" tabindex="-1">👁</button>
-      </div>
-      <div style="text-align:right;margin:-4px 0 10px;">
-        <span class="forgot-link" onclick="openForgot()" id="lbl-forgot-link">Mot de passe oublié ?</span>
-      </div>
-      <div class="auth-error" id="login-err"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()" id="btn-do-login">Se connecter →</button>
-      <div style="text-align:center;margin-top:12px;font-size:.76rem;color:var(--muted);">Compte de démo : <span style="color:var(--accent3);cursor:pointer;font-weight:700;" id="btn-demo" onclick="demoLogin()" data-i18n="demo_link">Connexion démo →</span></div>
-    </div>
-    <!-- REGISTER -->
-    <div id="form-register" style="display:none;">
-      <label class="auth-label" id="lbl-reg-name">Prénom / Pseudo</label>
-      <input class="auth-input" type="text" id="reg-name" placeholder="Marie" onkeydown="if(event.key==='Enter')doRegister()">
-      <label class="auth-label" id="lbl-reg-email">Email</label>
-      <input class="auth-input" type="email" id="reg-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')doRegister()">
-      <label class="auth-label" id="lbl-reg-pass">Mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="reg-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')doRegister()">
-        <button class="pass-eye" type="button" onclick="togglePass('reg-pass',this)" tabindex="-1">👁</button>
-      </div>
-      <div class="auth-error" id="reg-err"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()" id="btn-do-register">Créer mon compte 🚀</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;">
-      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
-      <span style="font-size:.72rem;color:var(--muted);white-space:nowrap;" id="lbl-or-guest">ou continuer sans compte</span>
-      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
-    </div>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;gap:8px;" id="btn-guest" onclick="guestLogin()"><span id="lbl-guest-btn">👤 Continuer en invité</span></button>
-    <div style="text-align:center;margin-top:8px;font-size:.7rem;color:var(--muted);" id="lbl-guest-warn">La progression ne sera pas sauvegardée</div>
-    <div style="text-align:center;margin-top:18px;font-size:.68rem;color:var(--muted);opacity:.6;">
-      <a href="index.html" style="color:var(--muted);text-decoration:none;margin:0 8px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">À propos</a>·
-      <a href="privacy.html" style="color:var(--muted);text-decoration:none;margin:0 8px;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Confidentialité</a>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ TOP BAR (logged in) ══════════════════ -->
-<div id="top-bar" class="top-bar" style="display:none;">
-  <div style="display:flex;align-items:center;gap:7px;">
-    <svg class="lq-logo-svg" width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="animation-duration:5s;">
-      <defs><radialGradient id="gtb" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-      <g class="lq-logo-ring"><circle cx="50" cy="50" r="28" fill="none" stroke="url(#gtb)" stroke-width="1.5" opacity=".8"/><circle cx="50" cy="22" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="50" cy="78" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="39" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="39" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="61" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="61" r="22" fill="none" stroke="url(#gtb)" stroke-width="1.2" opacity=".55"/></g>
-      <g class="lq-logo-star"><polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#gtb)" fill-opacity=".2" stroke="url(#gtb)" stroke-width="1.2"/></g>
-      <circle cx="50" cy="50" r="5" fill="url(#gtb)" opacity=".95"/>
-    </svg>
-    <span class="top-bar-logo">LQ</span>
-  </div>
-  <div class="top-spacer"></div>
-  <div class="coin-display"><span class="coin-icon"><span class="coin"></span></span><span id="tb-coins">0</span></div>
-  <div class="avatar-btn" id="avatar-btn" onclick="navTo('profile')"></div>
-</div>
-
-<!-- ══════════════════ NAV BAR ══════════════════ -->
-<div id="nav-bar" class="nav-bar" style="display:none;">
-  <div class="nav-item active" id="nav-learn" onclick="navTo('learn')"><span class="ni" style="font-size:1.1rem;font-weight:900;color:inherit;">A</span><span id="lbl-nav-learn">Apprendre</span></div>
-  <div class="nav-item" id="nav-portfolio" onclick="navTo('portfolio')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">$</span><span id="lbl-nav-portfolio">Portfolio</span></div>
-  <div class="nav-item" id="nav-rank" onclick="navTo('rank')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">🎮</span><span>Games</span></div>
-  <div class="nav-item" id="nav-shop" onclick="navTo('shop')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">★</span><span id="lbl-nav-shop">Boutique</span></div>
-  <div class="nav-item" id="nav-profile" onclick="navTo('profile')"><span class="ni" style="font-size:1.2rem;font-weight:900;color:inherit;">◉</span><span id="lbl-nav-profile">Profil</span></div>
-</div>
-
-<!-- ══════════════════ LOADING SCREEN ══════════════════ -->
-<div class="screen" id="screen-loading" style="align-items:center;justify-content:center;min-height:100vh;">
-  <div style="text-align:center;">
-    <div style="font-size:3rem;margin-bottom:16px;animation:logo-breathe 2s ease-in-out infinite;">✨</div>
-    <div style="font-weight:900;font-size:1.1rem;margin-bottom:8px;">LinguaQuest</div>
-    <div style="color:var(--muted);font-size:.82rem;">Chargement…</div>
-  </div>
-</div>
-
-<!-- ══════════════════ LEARN SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-learn">
-  <div class="learn-center-wrap">
-  <div style="text-align:center;margin:4px 0 12px;">
-    <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:2px;">
-      <svg class="lq-logo-svg" width="36" height="36" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="animation-duration:5s;filter:drop-shadow(0 0 10px rgba(245,158,11,.5));">
-        <defs><radialGradient id="gls" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffe566"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient></defs>
-        <g class="lq-logo-ring"><circle cx="50" cy="50" r="28" fill="none" stroke="url(#gls)" stroke-width="1.5" opacity=".8"/><circle cx="50" cy="22" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="50" cy="78" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="39" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="39" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="31" cy="61" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/><circle cx="69" cy="61" r="22" fill="none" stroke="url(#gls)" stroke-width="1.2" opacity=".55"/></g>
-        <g class="lq-logo-star"><polygon points="50,22 55.8,38.8 74,38.8 59.6,49.2 65.4,66 50,55.6 34.6,66 40.4,49.2 26,38.8 44.2,38.8" fill="url(#gls)" fill-opacity=".2" stroke="url(#gls)" stroke-width="1.2"/></g>
-        <circle cx="50" cy="50" r="5" fill="url(#gls)" opacity=".95"/>
-      </svg>
-      <div class="logo" style="font-size:1.9rem;">LinguaQuest</div>
-    </div>
-    <div class="tagline" style="margin-bottom:0;" id="lbl-learn-tagline">Choisis ta langue</div>
-  </div>
-  <div class="steps-row">
-    <div class="step-dot active" id="dot1">1</div>
-    <div class="step-line" id="line1"></div>
-    <div class="step-dot pending" id="dot2">2</div>
-    <div class="step-line" id="line2"></div>
-    <div class="step-dot pending" id="dot3">→</div>
-  </div>
-  <div class="lang-section">
-    <div class="lang-section-title" id="lbl-i-speak">🧑 Je parle</div>
-    <div class="lang-grid" id="native-grid"></div>
-  </div>
-  <div style="text-align:center;font-size:1.4rem;color:var(--accent);margin:4px 0;animation:arrowPulse 1.5s ease infinite alternate;" id="lang-arrow" style="opacity:.28">↓</div>
-  <style>@keyframes arrowPulse{from{opacity:.3;transform:scale(1);}to{opacity:1;transform:scale(1.1);}}</style>
-  <div class="lang-section" id="target-section" style="opacity:.38;transition:opacity .3s;">
-    <div class="lang-section-title" id="lbl-i-learn">🎯 Je veux apprendre</div>
-    <div class="lang-grid" id="target-grid"></div>
-  </div>
-  <div class="selected-pair" id="pair-summary" style="display:none;">
-    <div class="pair-tag" id="pair-native"></div>
-    <div style="font-size:1.2rem;color:var(--accent2)">→</div>
-    <div class="pair-tag" id="pair-target"></div>
-    <div style="flex:1"></div>
-    <button class="pair-swap" onclick="swapLangs()">⇄</button>
-  </div>
-  <button class="btn btn-primary btn-lg" onclick="goToLevels()" id="btn-start" disabled style="margin-top:12px;justify-content:center;" id="btn-start">Commencer →</button>
-  <!-- SRS Review widget -->
-  <div id="srs-widget" style="width:100%;margin-top:14px;"></div>
-  </div><!-- /learn-center-wrap -->
-</div>
-
-<!-- ══════════════════ LEVELS ══════════════════ -->
-<div class="screen screen-padded" id="screen-levels">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('learn')">🏠</span>
-    <span class="sep">›</span>
-    <span class="crumb" id="bc-pair" onclick="navTo('learn')" title="Changer de langue" style="cursor:pointer;">Lang</span>
-  </div>
-  <div class="xp-mini">
-    <span style="font-size:.72rem;color:var(--accent4);font-weight:800;">⭐ XP</span>
-    <div class="xp-bar-wrap"><div class="xp-bar" id="xp-bar" style="width:0%"></div></div>
-    <span id="xp-count" style="font-size:.76rem;color:var(--accent4);font-weight:800;"></span>
-  </div>
-  <div style="font-size:1.5rem;font-weight:900;margin-bottom:2px;text-align:center;width:100%;max-width:700px;" id="levels-title">⚔️ Choisis ton Donjon</div>
-  <div class="section-sub" id="lbl-levels-sub">Affronte les monstres, bats le boss, maîtrise la langue</div>
-  <div id="dungeon-zones" style="width:100%;max-width:700px;"></div>
-</div>
-
-<!-- ══════════════════ CHAPTERS ══════════════════ -->
-<div class="screen screen-padded" id="screen-chapters">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span>
-    <span class="crumb" onclick="goTo('levels')" id="bc-pair2"></span><span class="sep">›</span>
-    <span id="bc-level2" style="font-weight:900;"></span>
-  </div>
-  <!-- Zone header -->
-  <div id="dungeon-zone-header" style="width:100%;max-width:700px;border-radius:18px;
-    overflow:hidden;margin-bottom:16px;position:relative;">
-    <div id="dungeon-zone-banner-inner" style="padding:18px 20px;display:flex;align-items:center;gap:14px;">
-      <div id="dungeon-zone-emoji2" style="font-size:3rem;"></div>
-      <div>
-        <div id="dungeon-zone-name2" style="font-size:1.2rem;font-weight:900;"></div>
-        <div id="dungeon-zone-desc2" style="font-size:.75rem;opacity:.75;margin-top:2px;"></div>
-      </div>
-    </div>
-  </div>
-  <!-- Topic tabs -->
-  <div class="topic-tabs" id="topic-tabs"></div>
-  <!-- Dungeon path rooms -->
-  <div class="dungeon-path" id="chapters-list"></div>
-  <!-- DIY button -->
-  <button class="diy-add-btn" onclick="openDIY()">＋ Créer ma propre leçon</button>
-</div>
-
-<!-- ══════════════════ DIY LESSON MODAL ══════════════════ -->
-<div class="modal-overlay" id="diy-modal" style="display:none;" onclick="if(event.target===this)closeDIY()">
-  <div class="modal-box" style="max-width:520px;width:96%;max-height:90vh;overflow-y:auto;">
-    <button class="modal-close" onclick="closeDIY()">✕</button>
-    <div style="font-weight:900;font-size:1.1rem;margin-bottom:14px;">✏️ Créer une leçon</div>
-    <input id="diy-title" class="diy-input" placeholder="Titre de la leçon…" style="margin-bottom:12px;">
-
-    <!-- Word pairs with image support -->
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">
-      Ajoute tes mots — image optionnelle par paire :
-    </div>
-    <div id="diy-pairs-list"></div>
-    <button class="diy-add-btn" onclick="addDIYPair()" style="margin-top:6px;">＋ Ajouter une paire</button>
-
-    <div style="display:flex;gap:8px;margin-top:16px;">
-      <button class="btn btn-secondary" onclick="closeDIY()" style="flex:1;">Annuler</button>
-      <button class="btn btn-primary" onclick="saveDIY()" style="flex:2;">Enregistrer →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ GAME SELECT ══════════════════ -->
-<div class="screen screen-padded" id="screen-game-select">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('learn')">🏠</span><span class="sep">›</span>
-    <span class="crumb" onclick="goTo('levels')" id="bc-p3"></span><span class="sep">›</span>
-    <span class="crumb" onclick="goTo('chapters')" id="bc-l3"></span><span class="sep">›</span>
-    <span id="bc-c3"></span>
-  </div>
-  <div class="section-title" id="gsel-title">Mode de jeu</div>
-  <div class="section-sub" id="gsel-sub"></div>
-  <div style="display:flex;justify-content:flex-end;width:100%;max-width:700px;margin-bottom:7px;">
-    <span class="mix-badge" id="lbl-mix-badge">🎲 Mode Mixte recommandé</span>
-  </div>
-  <div style="display:flex;gap:8px;margin-bottom:12px;width:100%;max-width:700px;">
-    <button class="btn-qr" onclick="openGame('flappy')" style="flex:1;justify-content:center;">
-      🐦 QR Flappy Bird
-    </button>
-    <button class="btn-qr" onclick="openQR(S.chap)" style="flex:1;justify-content:center;">
-      📱 QR Exercices
-    </button>
-  </div>
-  <div class="game-types">
-
-    <div class="game-type-card featured" onclick="startGame('mixed')">
-      <div class="game-icon">🎲</div><div class="game-type-name" id="lbl-gtype-mixed">Mode Mixte</div>
-      <div class="game-type-desc" id="lbl-gdesc-mixed">Tout mélangé — la meilleure façon d'apprendre</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-mixed">+30 pièces max</span></div>
-    </div>
-    <div class="game-type-card" onclick="startGame('quiz')">
-      <div class="game-icon">⚡</div><div class="game-type-name" id="lbl-gtype-quiz">Quiz Rapide</div>
-      <div class="game-type-desc" id="lbl-gdesc-quiz">4 choix · Chrono · Style Kahoot</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-quiz">+15 pièces max</span></div>
-    </div>
-    <div class="game-type-card" onclick="startGame('fill')">
-      <div class="game-icon">✏️</div><div class="game-type-name" id="lbl-gtype-fill">Compléter</div>
-      <div class="game-type-desc" id="lbl-gdesc-fill">Tape le mot · Accents tolérés ✨</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-fill">+20 pièces max</span></div>
-    </div>
-    <div class="game-type-card" onclick="startGame('match')">
-      <div class="game-icon">🔗</div><div class="game-type-name" id="lbl-gtype-match">Associer</div>
-      <div class="game-type-desc" id="lbl-gdesc-match">Relie les mots et traductions</div>
-      <div class="reward-tag"><span class="coin"></span> <span id="lbl-reward-match">+10 pièces max</span></div>
-    </div>
-  </div>
-
-  <!-- ── Mini-Games shortcut ── -->
-  <div style="margin-top:18px;">
-    <div style="font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;">🎮 Mini-jeux sur ce vocabulaire</div>
-    <div style="display:flex;gap:10px;">
-      <div onclick="openGame('flappy')" style="flex:1;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(236,72,153,.14));border:1.5px solid rgba(124,58,237,.35);border-radius:16px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='rgba(124,58,237,.35)'">
-        <div style="font-size:1.8rem;margin-bottom:4px;">🐦</div>
-        <div style="font-size:.82rem;font-weight:900;">FlappyLingo</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">Vole vers la bonne réponse</div>
-        <div style="font-size:.7rem;color:#22d3ee;margin-top:4px;font-weight:800;">+60 🪙 si victoire</div>
-      </div>
-      <div onclick="openGame('car')" style="flex:1;background:linear-gradient(135deg,rgba(220,38,38,.15),rgba(234,88,12,.12));border:1.5px solid rgba(220,38,38,.35);border-radius:16px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;" onmouseover="this.style.borderColor='#dc2626'" onmouseout="this.style.borderColor='rgba(220,38,38,.35)'">
-        <div style="font-size:1.8rem;margin-bottom:4px;">🚗</div>
-        <div style="font-size:.82rem;font-weight:900;">Word Racer</div>
-        <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">Traduis pour accélérer</div>
-        <div style="font-size:.7rem;color:#22d3ee;margin-top:4px;font-weight:800;">+80 🪙 si victoire</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ GAME ENGINE ══════════════════ -->
-<div class="screen screen-padded" id="screen-game">
-  <div class="game-header">
-    <div class="timer-badge" id="g-timer">⏱ 15</div>
-    <div class="progress-bar-wrap"><div class="progress-bar" id="g-progress"></div></div>
-    <div class="score-badge">⭐ <span id="g-score">0</span></div>
-  </div>
-  <div id="g-type-pill" class="type-pill quiz"></div>
-  <div class="question-card">
-    <div class="q-dir" id="g-dir"></div>
-    <div class="q-num" id="g-num"></div>
-    <div id="g-img-wrap" style="display:none;margin-bottom:10px;">
-      <img id="g-img" src="" style="max-height:120px;max-width:100%;border-radius:12px;object-fit:contain;">
-    </div>
-    <div class="q-text-wrap"><div class="q-text" id="g-text"></div></div>
-    <div class="q-hint" id="g-hint"></div>
-  </div>
-  <div id="zone-gram-tip" style="display:none;width:100%;max-width:700px;">
-    <div style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(6,182,212,.08));
-      border:1px solid rgba(124,58,237,.25);border-radius:18px;padding:20px;margin-bottom:14px;">
-      <div style="font-size:.72rem;font-weight:900;color:var(--accent3);text-transform:uppercase;
-        letter-spacing:1.5px;margin-bottom:10px;">📖 Règle de grammaire</div>
-      <div id="gram-rule-text" style="font-size:.9rem;line-height:1.8;color:var(--text);margin-bottom:14px;"></div>
-      <div id="gram-examples" style="display:flex;flex-direction:column;gap:6px;"></div>
-    </div>
-  </div>
-  <div id="zone-quiz" style="width:100%;max-width:700px;"><div class="answers-grid" id="answers-grid"></div></div>
-  <!-- Writing exercise zone -->
-  <div id="zone-write" style="display:none;width:100%;max-width:700px;">
-    <div style="font-size:.74rem;color:var(--muted);font-weight:800;text-transform:uppercase;
-      letter-spacing:1px;margin-bottom:8px;">✍️ Écris une phrase complète</div>
-    <textarea id="write-input" class="fill-input"
-      style="min-height:80px;resize:none;padding:14px;font-size:.95rem;line-height:1.6;"
-      placeholder="Écris ta réponse ici..."></textarea>
-    <div id="write-hint" class="fuzzy-note" style="display:none;"></div>
-  </div>
-  <!-- Speaking exercise zone -->
-  <div id="zone-speak" style="display:none;width:100%;max-width:700px;text-align:center;">
-    <div style="font-size:.74rem;color:var(--muted);font-weight:800;text-transform:uppercase;
-      letter-spacing:1px;margin-bottom:14px;">🎤 Répète cette phrase à voix haute</div>
-    <div id="speak-phrase" style="font-size:1.2rem;font-weight:900;color:var(--accent3);
-      background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:14px;
-      padding:16px;margin-bottom:18px;line-height:1.5;"></div>
-    <button id="speak-mic-btn" onclick="startSpeaking()"
-      style="width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
-      font-size:1.8rem;transition:all .2s;box-shadow:0 0 0 0 rgba(124,58,237,.4);"
-      class="speak-pulse">🎤</button>
-    <div id="speak-status" style="margin-top:12px;font-size:.82rem;color:var(--muted);
-      font-weight:700;min-height:24px;"></div>
-    <div id="speak-result" style="margin-top:8px;font-size:.85rem;display:none;"></div>
-  </div>
-  <div id="zone-fill" style="display:none;width:100%;max-width:700px;">
-    <input class="fill-input" type="text" id="fill-input" placeholder="Écris ta réponse…" id="fill-input" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkCurrentQ()">
-    <div class="fuzzy-note" id="fuzzy-note" style="display:none;"></div>
-  </div>
-  <div id="zone-match" style="display:none;width:100%;max-width:700px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px;">
-      <div class="match-col-label" id="mcl-l"></div>
-      <div class="match-col-label" id="mcl-r"></div>
-    </div>
-    <div class="match-container">
-      <div class="match-col" id="match-left"></div>
-      <div class="match-col" id="match-right"></div>
-    </div>
-    <div style="color:var(--muted);font-size:.74rem;text-align:center;margin-top:3px;"><span id="lbl-pairs-check">✅</span> <span id="match-prog-txt">0/0</span> <span id="lbl-pairs">paires</span></div>
-  </div>
-  <div id="zone-sort" style="display:none;width:100%;max-width:700px;">
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;" id="lbl-your-sent">Ta phrase :</div>
-    <div class="sentence-slots" id="sentence-slots"><span class="slot-placeholder" id="lbl-slot-placeholder">Clique sur les mots…</span></div>
-    <div style="font-size:.74rem;color:var(--muted);margin-bottom:3px;" id="lbl-words-avail">Mots disponibles :</div>
-    <div class="word-bank" id="word-bank"></div>
-  </div>
-  <div class="feedback-banner" id="g-fb">
-    <span id="g-fb-icon" style="font-size:1.2rem;"></span>
-    <div><div id="g-fb-title"></div><div id="g-fb-detail" style="font-weight:600;font-size:.76rem;opacity:.8;margin-top:1px;"></div></div>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-    <button class="btn btn-primary" onclick="checkCurrentQ()" id="btn-check" style="display:none;" data-i18n="btn_check">Vérifier ✓</button>
-    <button class="btn btn-secondary" onclick="resetSort()" id="btn-reset" style="display:none;">⟳</button>
-    <button class="btn btn-primary" onclick="nextQ()" id="btn-next" style="display:none;" data-i18n="btn_next">Suivant →</button>
-    <button class="btn btn-secondary" onclick="skipMatch()" id="btn-skip" style="display:none;" data-i18n="btn_continue">Continuer →</button>
-  </div>
-</div>
-
-<!-- ══════════════════ RESULTS ══════════════════ -->
-<div class="screen screen-padded" id="screen-results">
-  <div style="text-align:center;width:100%;max-width:520px;padding:20px 0;">
-    <div class="results-stars" id="r-stars">★★★</div>
-    <div style="font-size:1.2rem;font-weight:800;margin-bottom:4px;" id="r-title"></div>
-    <div class="results-score" id="r-score" style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></div>
-    <div style="color:var(--muted);margin-bottom:14px;" id="r-sub"></div>
-    <!-- Coin reward -->
-    <div class="coin-reward-banner" id="coin-reward-banner">
-      <div style="font-size:1.8rem;"><span class="coin"></span></div>
-      <div style="flex:1;text-align:left;">
-        <div style="font-weight:800;color:var(--gold);" id="lbl-coins-won">Pièces gagnées !</div>
-        <div style="font-size:.78rem;color:var(--muted);" id="lbl-coins-hint">Utilise-les pour investir dans le Portfolio</div>
-      </div>
-      <div class="coin-reward-amount" id="coin-reward-amount">+0</div>
-    </div>
-    <div class="results-stats">
-      <div class="stat-box"><div class="stat-val" id="r-correct" style="color:var(--green)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);" id="lbl-r-correct">Correct</div></div>
-      <div class="stat-box"><div class="stat-val" id="r-wrong" style="color:var(--red)">0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);" id="lbl-r-wrong">Erreurs</div></div>
-      <div class="stat-box"><div class="stat-val" id="r-xp" style="color:var(--accent4)">+0</div><div class="stat-label" style="font-size:.65rem;color:var(--muted);">XP</div></div>
-    </div>
-    <div id="r-breakdown" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;"></div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="playAgain()" id="btn-replay">Rejouer 🔄</button>
-      <button class="btn btn-secondary" onclick="goTo('chapters')" id="btn-r-chapters">Chapitres</button>
-      <button class="btn btn-gold" onclick="navTo('portfolio')" id="btn-r-invest">$ Investir</button>
-    </div>
-    <!-- Mini-game CTAs after exercise completion -->
-    <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;">
-      <button onclick="openGame('flappy')" style="background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(236,72,153,.2));border:1.5px solid rgba(124,58,237,.5);border-radius:14px;padding:10px 16px;cursor:pointer;color:#f1f5f9;font-family:inherit;font-weight:800;font-size:.82rem;display:flex;align-items:center;gap:6px;">🐦 FlappyLingo</button>
-      <button onclick="openGame('car')" style="background:linear-gradient(135deg,rgba(220,38,38,.2),rgba(234,88,12,.15));border:1.5px solid rgba(220,38,38,.45);border-radius:14px;padding:10px 16px;cursor:pointer;color:#f1f5f9;font-family:inherit;font-weight:800;font-size:.82rem;display:flex;align-items:center;gap:6px;">🚗 Word Racer</button>
-    </div>
-
-    <!-- Ad slot — résultats -->
-</div>
-  </div>
-</div>
-
-<!-- ══════════════════ FINANCE LESSON SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-lesson">
-  <div class="breadcrumb">
-    <span class="crumb" onclick="navTo('portfolio')">Portfolio</span><span class="sep">›</span>
-    <span id="lesson-bc">Finance Academy</span>
-  </div>
-  <div class="lesson-progress-bar"><div class="lesson-progress-fill" id="lesson-prog-fill" style="width:0%"></div></div>
-  <div id="lesson-intro-zone" class="lesson-intro-card" style="display:none;"></div>
-  <div class="lesson-question-card" id="lesson-q-card" style="display:none;">
-    <div style="font-size:.7rem;color:var(--muted);font-weight:800;margin-bottom:10px;" id="lesson-q-num"></div>
-    <div style="font-size:1rem;font-weight:800;margin-bottom:14px;line-height:1.5;" id="lesson-q-text"></div>
-    <div id="lesson-choices"></div>
-    <div class="lesson-explain-bar" id="lesson-explain"></div>
-  </div>
-  <div class="lesson-complete-card" id="lesson-complete" style="display:none;">
-    <div class="lesson-complete-stars">🏆</div>
-    <div style="font-size:1.2rem;font-weight:900;margin-bottom:6px;" id="lesson-done-title">Leçon terminée !</div>
-    <div style="color:var(--muted);font-size:.84rem;margin-bottom:16px;" id="lesson-done-sub"></div>
-    <div style="font-size:1.4rem;font-weight:900;color:var(--gold);margin-bottom:16px;" id="lesson-done-reward"></div>
-    <button class="btn btn-primary" id="lesson-done-back" onclick="navTo('portfolio')">← Retour au Portfolio</button>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:8px;" id="lesson-btn-row">
-    <button class="btn btn-primary" id="lesson-btn-next" onclick="lessonNext()" style="display:none;">Suivant →</button>
-    <button class="btn btn-secondary" id="lesson-btn-start" onclick="lessonStartQuestions()">Commencer →</button>
-  </div>
-</div>
-
-<!-- ══════════════════ PORTFOLIO SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-portfolio">
-
-  <!-- ── PORTFOLIO ── -->
-  <div class="wealth-hero">
-    <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;" id="lbl-wealth-hero">◈ Patrimoine total</div>
-    <div class="wealth-total" id="wealth-total">0 <span class="coin"></span></div>
-    <div class="wealth-sub" id="wealth-sub"></div>
-    <div style="display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
-      <div style="text-align:center;">
-        <div style="font-weight:900;font-size:1.1rem;color:var(--gold)" id="pf-coins">0</div>
-        <div style="font-size:.68rem;color:var(--muted);" id="lbl-liquid-coins">Pièces liquides</div>
-      </div>
-      <div style="width:1px;background:rgba(255,255,255,.1);"></div>
-      <div style="text-align:center;">
-        <div style="font-weight:900;font-size:1.1rem;color:var(--green)" id="pf-div-total">0 <span class="coin"></span>/j</div>
-        <div style="font-size:.68rem;color:var(--muted);" id="lbl-div-day">Dividendes / jour</div>
-      </div>
-      <div style="width:1px;background:rgba(255,255,255,.1);"></div>
-      <div style="text-align:center;">
-        <div style="font-weight:900;font-size:1.1rem;color:var(--accent3)" id="pf-invested">0</div>
-        <div style="font-size:.68rem;color:var(--muted);" id="lbl-invested">Investi</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dividend collect banner -->
-  <div class="dividend-banner" id="div-banner" style="display:none;">
-    <div class="div-icon" style="font-size:1.6rem;color:#10b981;font-weight:900;">↑</div>
-    <div class="div-info">
-      <div class="div-title" id="lbl-div-avail">Dividendes disponibles !</div>
-      <div class="div-sub" id="div-banner-sub">Tes actifs ont généré des revenus</div>
-    </div>
-    <div class="div-amount" id="div-amount">+0 <span class="coin"></span></div>
-    <button class="collect-btn" id="collect-btn" onclick="collectDividends()" data-i18n="btn_collect">Collecter</button>
-  </div>
-
-  <!-- Explanation -->
-  <div class="explain-card">
-    <div class="explain-title" id="lbl-div-explain-title">📖 Comment fonctionnent les dividendes ?</div>
-    <div class="explain-body" id="lbl-div-explain-body">
-      Dans la vraie vie, certains <strong>actifs</strong> (or, immobilier, actions) génèrent des revenus <strong>réguliers</strong> sans que tu doives les vendre. C'est ça un <span class="highlight">dividende</span>.<br><br>
-      Ici, chaque actif que tu achètes avec tes <span class="coin"></span> pièces te rapporte automatiquement un pourcentage chaque jour. Comme dans la réalité, <strong>plus tu investis tôt, plus tu reçois</strong>. Les actifs <strong>n'ont pas de valeur négative</strong> — ils peuvent stagner ou croître, jamais disparaître.
-    </div>
-  </div>
-
-  <!-- Target Widget -->
-  <div class="target-widget" id="target-widget">
-    <div class="target-title" id="lbl-target-title">🎯 Simulateur d'objectif</div>
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;" id="lbl-target-sub">Fixe un objectif en pièces et vois combien de temps il faudra pour l'atteindre avec tes dividendes actuels.</div>
-    <div class="target-slider-row">
-      <span style="font-size:.76rem;color:var(--muted);" id="lbl-target-obj">Objectif :</span>
-      <input type="range" class="target-slider" id="target-slider" min="100" max="10000" step="50" value="1000" oninput="updateTarget()">
-      <span class="target-val" id="target-val">1 000 <span class="coin"></span></span>
-    </div>
-    <div class="target-results">
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-missing">Il manque</div>
-        <div class="target-result-val" id="tr-missing" style="color:var(--accent2);">-</div>
-      </div>
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-daily">Dividendes / jour</div>
-        <div class="target-result-val" id="tr-daily" style="color:var(--green);">-</div>
-      </div>
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-time">Temps estimé</div>
-        <div class="target-result-val" id="tr-time" style="color:var(--accent3);">-</div>
-      </div>
-      <div class="target-result-card">
-        <div class="target-result-label" id="lbl-tr-progress">Progression actuelle</div>
-        <div class="target-result-val" id="tr-pct" style="color:var(--gold);">-</div>
-      </div>
-    </div>
-    <div class="target-timeline">
-      <div class="tl-bar"><div class="tl-fill" id="tl-fill" style="width:0%"></div></div>
-      <div class="tl-cursor" id="tl-cursor" style="left:0%"></div>
-      <div class="tl-now" id="tl-now" style="left:0%">Maintenant</div>
-      <div class="tl-target" id="lbl-tl-target">Objectif</div>
-    </div>
-  </div>
-
-  <!-- Assets -->
-  <div class="section-title" style="text-align:left;margin-bottom:8px;" id="lbl-assets-title">🏠 Actifs disponibles</div>
-  <!-- INVESTOR LEVEL -->
-  <div class="inv-level-bar" id="inv-level-bar"></div>
-<div class="academy-section" id="academy-section">
-    <button class="academy-toggle-btn" id="academy-toggle" onclick="toggleAcademy()">
-      🎓 <span id="lbl-academy-title">Finance Academy</span>
-      <span class="academy-toggle-arrow" id="academy-arrow">▼</span>
-    </button>
-    <div class="lesson-grid" id="lesson-grid" style="display:none;"></div>
-  </div>
-
-  <!-- Ad slot — portfolio -->
-  <div class="section-title" style="text-align:left;margin:18px 0 8px;" id="lbl-assets-title">🏠 Actifs disponibles</div>
-  <div class="assets-grid" id="assets-grid"></div>
-
-</div>
-
-<!-- ══════════════════ SHOP SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-shop">
-  <div class="section-title" id="lbl-shop-title">🛍 Boutique</div>
-  <div class="section-sub" id="lbl-shop-sub">Dépense tes pièces pour des bonus et cosmétiques</div>
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-    <div class="coin-display"><span><span class="coin"></span></span><span id="shop-coins">0</span></div>
-    <span style="font-size:.8rem;color:var(--muted);" id="lbl-shop-coins-lbl">pièces disponibles</span>
-  </div>
-  <!-- Shop category tabs -->
-  <div class="topic-tabs" id="shop-tabs" style="margin-bottom:10px;"></div>
-  <div class="shop-grid" id="shop-grid"></div>
-</div>
-
-<!-- ══════════════════ PROFILE SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-profile">
-  <div class="profile-hero" id="profile-hero">
-    <div class="profile-avatar" id="prof-avatar"></div>
-    <div>
-      <div class="profile-name" id="prof-name"></div>
-      <div id="prof-pseudo" style="font-size:.78rem;color:var(--accent3);font-weight:700;margin-top:2px;cursor:pointer;" onclick="openPseudoModal()"></div>
-      <div class="profile-email" id="prof-email"></div>
-      <div class="profile-joined" id="prof-joined"></div>
-    </div>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val" id="ps-xp" style="color:var(--accent4)">0</div><div class="stat-lbl" id="lbl-ps-xp">XP Total</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-coins" style="color:var(--gold)">0</div><div class="stat-lbl" id="lbl-ps-coins">Pièces</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-sessions" style="color:var(--accent3)">0</div><div class="stat-lbl" id="lbl-ps-sessions">Sessions</div></div>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-val" id="ps-streak" style="color:var(--accent2)">0</div><div class="stat-lbl" id="lbl-ps-streak">🔥 Jours</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-chapters" style="color:var(--green)">0</div><div class="stat-lbl" id="lbl-ps-chapters">Chapitres</div></div>
-    <div class="stat-card"><div class="stat-val" id="ps-wealth" style="color:var(--gold)">0</div><div class="stat-lbl" id="lbl-ps-wealth">💎 Patrimoine</div></div>
-  </div>
-  <div style="width:100%;max-width:700px;margin-top:14px;">
-    <!-- Trophies section -->
-    <div style="background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-weight:800;font-size:.88rem;">🏆 Trophées</div>
-        <button class="btn btn-sm btn-secondary" onclick="navTo('trophies')" style="padding:4px 10px;font-size:.72rem;">Voir tout →</button>
-      </div>
-      <div id="trophy-progress"></div>
-      <div id="trophies-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"></div>
-    </div>
-
-    <!-- Apparence / Thèmes -->
-    <div style="background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:10px;">
-      <div style="font-weight:800;font-size:.88rem;margin-bottom:10px;" id="lbl-appearance">🎨 Apparence</div>
-      <div class="theme-btns">
-        <button class="theme-btn" id="theme-btn-dark"    onclick="setTheme('dark')" data-i18n="theme_dark">🌙 Sombre</button>
-        <button class="theme-btn" id="theme-btn-light"   onclick="setTheme('light')" data-i18n="theme_light">☀️ Clair</button>
-        <button class="theme-btn" id="theme-btn-claude"  onclick="setTheme('claude')" data-i18n="theme_claude">🤖 Claude</button>
-        <button class="theme-btn" id="theme-btn-random" onclick="setTheme('random')" data-i18n="theme_random">🎲 Aléatoire</button>
-      </div>
-      <!-- UI Language -->
-      <div style="font-weight:800;font-size:.88rem;margin-bottom:8px;margin-top:12px;" id="lbl-lang-ui">🌐 Langue de l'interface</div>
-      <div class="lang-ui-btns" id="ui-lang-btns"></div>
-    </div>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="openLangModal()" id="btn-change-lang">🌍 Changer de langue</button>
-    <button class="btn btn-secondary" style="width:100%;justify-content:center;" onclick="doLogout()" id="btn-logout">🚪 Se déconnecter</button>
-  </div>
-</div>
-
-<!-- ══════════════════ QR MODAL ══════════════════ -->
-<div class="modal-overlay" id="qr-modal" style="display:none;" onclick="closeQR(event)">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeQR()">✕</button>
-    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-qr-title">📱 Partager ce chapitre</div>
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px;" id="qr-sub"></div>
-    <div id="qr-container"></div>
-    <div style="font-size:.66rem;color:var(--muted);word-break:break-all;margin:12px 0;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:7px;" id="qr-url"></div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-primary btn-sm" onclick="copyUrl()" id="btn-qr-copy">📋 Copier</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeQR()" id="btn-qr-close">Fermer</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- ══════════════════ LANG CHANGE MODAL ══════════════════ -->
-<div class="modal-overlay" id="lang-modal" style="display:none;" onclick="closeLangModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px;">
-    <button class="modal-close" onclick="closeLangModal()">&#x2715;</button>
-    <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-langmodal-title">Changer de langue</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;" id="lbl-lm-speak">Je parle :</div>
-    <div class="lang-picker-grid" id="lp-native"></div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;margin-top:8px;" id="lbl-lm-learn">J'apprends :</div>
-    <div class="lang-picker-grid" id="lp-target"></div>
-    <div id="lp-pair" style="text-align:center;font-size:.85rem;font-weight:800;color:var(--accent3);margin:10px 0;min-height:22px;"></div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-primary btn-sm" onclick="applyLangChange()" id="btn-lm-apply">Appliquer</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeLangModal()" id="btn-lm-cancel">Annuler</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ ASSET INFO MODAL ══════════════════ -->
-<div class="modal-overlay" id="asset-modal" style="display:none;" onclick="closeAssetModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:460px;text-align:left;">
-    <button class="modal-close" onclick="closeAssetModal()">&#x2715;</button>
-    <div id="amod-icon" style="font-size:2rem;margin-bottom:6px;"></div>
-    <div id="amod-name" style="font-size:1.2rem;font-weight:900;margin-bottom:2px;"></div>
-    <div id="amod-type" style="font-size:.76rem;color:var(--muted);margin-bottom:14px;"></div>
-    <!-- Live price -->
-    <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;" id="lbl-amod-market">Prix marché réel</div>
-      <div id="amod-price" style="font-size:1.4rem;font-weight:900;color:var(--accent3);">Chargement…</div>
-      <div id="amod-change" style="font-size:.8rem;margin-top:2px;"></div>
-      <div id="amod-ticker" style="font-size:.68rem;color:var(--muted);margin-top:4px;"></div>
-    </div>
-    <!-- Your position -->
-    <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.18);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;" id="lbl-amod-position">Ta position</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-units">Unités possédées</div><div id="amod-owned" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-value">Valeur actuelle</div><div id="amod-val" style="font-weight:900;font-size:1.1rem;color:var(--gold);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-daily">Dividendes / jour</div><div id="amod-daily" style="font-weight:900;font-size:1.1rem;color:var(--green);"></div></div>
-        <div><div style="font-size:.68rem;color:var(--muted);" id="lbl-amod-pv">Plus-value</div><div id="amod-pv" style="font-weight:900;font-size:1.1rem;"></div></div>
-      </div>
-    </div>
-    <!-- Explanation -->
-    <div style="font-size:.8rem;color:var(--muted);line-height:1.6;" id="amod-explain"></div>
-    <div style="display:flex;gap:8px;margin-top:14px;">
-      <button class="btn btn-primary btn-sm" id="amod-buy-btn" onclick="" data-i18n="btn_buy">Acheter</button>
-      <button class="btn btn-secondary btn-sm" id="amod-sell-btn" onclick="" data-i18n="btn_sell">Vendre</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeAssetModal()" id="btn-amod-close">Fermer</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ RANK SCREEN (Leaderboard + Duels) ══════════════════ -->
-<div class="screen screen-padded" id="screen-rank">
-  <div class="rank-tabs">
-    <button class="rank-tab active" id="rank-tab-lb"      onclick="switchRankTab('lb')">🏆 Rang</button>
-    <button class="rank-tab"        id="rank-tab-duels"   onclick="switchRankTab('duels')">⚔️ Duels</button>
-    <button class="rank-tab"        id="rank-tab-practice"onclick="switchRankTab('practice')">🎯 Pratique</button>
-    <button class="rank-tab"        id="rank-tab-friends" onclick="switchRankTab('friends')">👥 Amis</button>
-    <button class="rank-tab"        id="rank-tab-flappy"  onclick="switchRankTab('flappy')">🐦 Flappy</button>
-    <button class="rank-tab"        id="rank-tab-car"     onclick="switchRankTab('car')">🏎️ Race</button>
-    <button class="rank-tab"        id="rank-tab-compost" onclick="switchRankTab('compost')">🪱 Compost</button>
-  </div>
-
-  <!-- LEADERBOARD -->
-  <div id="rank-lb-zone" style="width:100%;max-width:700px;">
-    <div class="lb-tabs">
-      <button class="lb-tab active" id="lb-tab-xp" onclick="setLbTab('xp')">⭐ XP</button>
-      <button class="lb-tab" id="lb-tab-coins" onclick="setLbTab('coins')">🪙 Pièces</button>
-      <button class="lb-tab" id="lb-tab-streak" onclick="setLbTab('streak')">🔥 Streak</button>
-    </div>
-    <div id="lb-my-rank" style="font-size:.75rem;color:var(--muted);text-align:center;margin:6px 0 10px;"></div>
-    <div id="lb-list"></div>
-  </div>
-
-  <!-- DUELS TAB -->
-  <div id="rank-duels-zone" style="display:none;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <button class="btn btn-primary" onclick="openCreateDuel()">⚔️ Créer un duel</button>
-      <button class="btn btn-secondary" onclick="showJoinDuel()">🔗 Rejoindre</button>
-    </div>
-    <div id="duel-join-zone" style="display:none;margin-bottom:12px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input id="duel-code-input" placeholder="Code à 6 lettres" maxlength="6"
-          style="flex:1;padding:10px 14px;border-radius:10px;background:var(--card2);border:1px solid rgba(255,255,255,.12);color:var(--text);font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;"
-          oninput="this.value=this.value.toUpperCase()">
-        <button class="btn btn-primary" onclick="joinDuel()">→</button>
-      </div>
-    </div>
-    <div id="duel-lobby-content"></div>
-    <div id="open-duels-list"></div>
-  </div>
-
-  <!-- PRACTICE TAB -->
-  <div id="rank-practice-zone" style="display:none;">
-    <div class="section-title" style="margin-bottom:10px;">🎯 Mode de pratique</div>
-    <div class="duel-mode-grid" id="practice-modes-grid"></div>
-    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Niveau</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;" id="practice-level-grid">
-      <button class="duel-type-btn active" onclick="selectPracticeLevel(this,'any')">🔀 Tout</button>
-      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A1')">A1</button>
-      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'A2')">A2</button>
-      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B1')">B1</button>
-      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'B2')">B2</button>
-      <button class="duel-type-btn" onclick="selectPracticeLevel(this,'C1')">C1</button>
-    </div>
-    <button class="btn btn-primary" onclick="startPractice()" style="width:100%;margin-top:16px;font-size:1rem;">▶ Commencer la pratique →</button>
-  </div>
-
-  <!-- FLAPPY TAB -->
-  <div id="rank-flappy-zone" style="display:none;">
-    <div style="text-align:center;padding:8px 0 10px;">
-      <div style="font-size:2.5rem;margin-bottom:6px;">🐦</div>
-      <div style="font-weight:900;font-size:1.1rem;margin-bottom:4px;">FlappyLingo</div>
-      <div style="color:var(--muted);font-size:.8rem;margin-bottom:20px;">Vole vers la bonne traduction !</div>
-      <button class="btn btn-primary" onclick="openGame('flappy')" style="width:100%;font-size:1rem;">▶ Jouer</button>
-    </div>
-  </div>
-
-  <!-- CAR TAB -->
-  <div id="rank-car-zone" style="display:none;">
-    <div style="text-align:center;padding:8px 0 10px;">
-      <div style="font-size:2.5rem;margin-bottom:6px;">🏎️</div>
-      <div style="font-weight:900;font-size:1.1rem;margin-bottom:4px;">LinguaRace</div>
-      <div style="color:var(--muted);font-size:.8rem;margin-bottom:20px;">Conduis vers la bonne traduction !</div>
-      <button class="btn btn-primary" onclick="openGame('car')" style="background:linear-gradient(135deg,#dc2626,#ea580c);width:100%;font-size:1rem;">▶ Démarrer</button>
-    </div>
-  </div>
-
-  <!-- COMPOST TAB -->
-  <div id="rank-compost-zone" style="display:none;">
-    <div style="text-align:center;padding:8px 0 10px;">
-      <div style="margin-bottom:10px;">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="72" height="72" style="border-radius:18px;">
-    <rect width="100" height="100" rx="22" fill="#0a1a0a"/>
-    <circle cx="28" cy="62" r="9" fill="#ea580c"/>
-    <circle cx="40" cy="56" r="10" fill="#ea580c"/>
-    <circle cx="53" cy="52" r="11" fill="#c2410c"/>
-    <circle cx="67" cy="50" r="13" fill="#c2410c"/>
-    <ellipse cx="79" cy="58" rx="9" ry="6" fill="#fb923c" opacity="0.5"/>
-    <circle cx="72" cy="45" r="4.5" fill="#fff"/>
-    <circle cx="73" cy="46" r="2.5" fill="#1c0700"/>
-    <circle cx="74" cy="45" r="1" fill="#fff"/>
-    <path d="M62,54 Q67,59 72,55" stroke="#7a2000" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    <rect x="52" y="18" width="38" height="22" rx="8" fill="#fef9c3" stroke="#d97706" stroke-width="1.5"/>
-    <path d="M62,40 L58,48 L66,40" fill="#fef9c3" stroke="#d97706" stroke-width="1.2" stroke-linejoin="round"/>
-    <text x="71" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="11" fill="#92400e">ABC</text>
-    <path d="M44,48 Q47,56 44,63" stroke="#9a3412" stroke-width="1.2" fill="none" opacity="0.6"/>
-    <path d="M32,56 Q35,63 32,70" stroke="#9a3412" stroke-width="1.2" fill="none" opacity="0.6"/>
-    <circle cx="20" cy="78" r="3" fill="#3d1f00"/>
-    <circle cx="38" cy="75" r="2.5" fill="#3d1f00"/>
-    <circle cx="58" cy="76" r="3.5" fill="#3d1f00"/>
-    <circle cx="78" cy="74" r="2.5" fill="#3d1f00"/>
-  </svg>
-</div>
-      <div style="font-weight:900;font-size:1.1rem;margin-bottom:4px;">Compost</div>
-      <div style="color:var(--muted);font-size:.8rem;margin-bottom:14px;">Snake.io — mange les bonnes traductions !</div>
-    </div>
-
-    <!-- Level selector -->
-    <div style="font-size:.73rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Niveau</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;" id="compost-level-btns">
-      <button class="duel-type-btn active" onclick="selectCompostLevel(this,'any')">🔀 Tout</button>
-      <button class="duel-type-btn" onclick="selectCompostLevel(this,'A1')">A1</button>
-      <button class="duel-type-btn" onclick="selectCompostLevel(this,'A2')">A2</button>
-      <button class="duel-type-btn" onclick="selectCompostLevel(this,'B1')">B1</button>
-      <button class="duel-type-btn" onclick="selectCompostLevel(this,'B2')">B2</button>
-      <button class="duel-type-btn" onclick="selectCompostLevel(this,'C1')">C1</button>
-      <button class="duel-type-btn" onclick="selectCompostLevel(this,'C2')">C2</button>
-    </div>
-
-    <!-- Topic selector -->
-    <div style="font-size:.73rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Thème</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;" id="compost-topic-btns">
-      <button class="duel-type-btn active" onclick="selectCompostTopic(this,'any')">🔀 Tout</button>
-      <button class="duel-type-btn" onclick="selectCompostTopic(this,'conv')">💬 Convers.</button>
-      <button class="duel-type-btn" onclick="selectCompostTopic(this,'vocab')">📚 Vocab</button>
-      <button class="duel-type-btn" onclick="selectCompostTopic(this,'gram')">✏️ Gram.</button>
-      <button class="duel-type-btn" onclick="selectCompostTopic(this,'culture')">🌍 Culture</button>
-      <button class="duel-type-btn" onclick="selectCompostTopic(this,'pro')">💼 Pro</button>
-    </div>
-
-    <button class="btn btn-primary" onclick="openCompostFromGames()" style="background:linear-gradient(135deg,#16a34a,#15803d);border:none;width:100%;font-size:1rem;">▶ Jouer</button>
-  </div>
-
-  <!-- FRIENDS TAB -->
-  <div id="rank-friends-zone" style="display:none;">
-    <!-- Sub-tabs -->
-    <div class="duel-subtabs" style="margin-bottom:14px;">
-      <button class="duel-subtab active" id="social-tab-friends" onclick="switchSocialTab('friends')">👥 Amis</button>
-      <button class="duel-subtab" id="social-tab-rooms" onclick="switchSocialTab('rooms')">🏠 Salons</button>
-    </div>
-
-    <!-- FRIENDS SUB -->
-    <div id="social-sub-friends">
-      <div class="friends-search-wrap">
-        <input id="friends-search-input" class="friends-search-input" placeholder="Chercher par email ou @pseudo…" oninput="friendsSearchDebounce()">
-        <button class="btn btn-primary btn-sm" onclick="friendsSearch()">Chercher</button>
-      </div>
-      <div id="friends-search-result"></div>
-      <div id="friends-pending-wrap" style="display:none;">
-        <div class="friends-section-title">📬 Demandes reçues</div>
-        <div id="friends-pending-list"></div>
-      </div>
-      <div class="friends-section-title">👥 Mes amis</div>
-      <div id="friends-list"><div style="color:var(--muted);text-align:center;padding:24px;font-size:.85rem;">Charge…</div></div>
-    </div>
-
-    <!-- ROOMS SUB -->
-    <div id="social-sub-rooms" style="display:none;">
-      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Créer un salon</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="room-topic-select">
-          <button class="duel-type-btn active" data-topic="general" onclick="selectRoomTopic(this)">💬 Libre</button>
-          <button class="duel-type-btn" data-topic="vocab" onclick="selectRoomTopic(this)">📚 Vocab</button>
-          <button class="duel-type-btn" data-topic="grammar" onclick="selectRoomTopic(this)">✏️ Gram.</button>
-          <button class="duel-type-btn" data-topic="beginner" onclick="selectRoomTopic(this)">🌱 Déb.</button>
-          <button class="duel-type-btn" data-topic="advanced" onclick="selectRoomTopic(this)">🚀 Av.</button>
-        </div>
-        <button class="btn btn-primary" style="width:100%;" onclick="createPracticeRoom()">🏠 Ouvrir un salon →</button>
-      </div>
-      <div style="background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Rejoindre un salon</div>
-        <div style="display:flex;gap:8px;">
-          <input id="room-code-input" class="friends-search-input" placeholder="Code du salon (5 lettres)" maxlength="5" oninput="this.value=this.value.toUpperCase()" style="flex:1;">
-          <button class="btn btn-primary" onclick="joinPracticeRoom()">→</button>
-        </div
-      </div>
-      <div id="my-room-zone" style="display:none;margin-bottom:10px;"></div>
-      <div class="friends-section-title">Salons ouverts</div>
-      <div id="rooms-list"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ CREATE DUEL MODAL ══════════════════ -->
-<div class="modal-overlay" id="duel-create-modal" style="display:none;" onclick="if(event.target===this)closeCreateDuel()">
-  <div class="modal-box" style="max-width:500px;width:96%;max-height:92vh;overflow-y:auto;" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeCreateDuel()">✕</button>
-    <div style="font-weight:900;font-size:1.1rem;margin-bottom:16px;">⚔️ Créer un duel</div>
-
-    <!-- Mode cards -->
-    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Mode de jeu</div>
-    <div class="duel-mode-grid" id="duel-mode-grid"></div>
-
-    <!-- Exercise type -->
-    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Type d'exercice</div>
-    <div class="duel-type-grid" id="duel-type-grid">
-      <button class="duel-type-btn active" onclick="selectDuelType(this,'mixed')">🎲 Mixte</button>
-      <button class="duel-type-btn" onclick="selectDuelType(this,'quiz')">⚡ Quiz</button>
-      <button class="duel-type-btn" onclick="selectDuelType(this,'fill')">✏️ Fill</button>
-      <button class="duel-type-btn" onclick="selectDuelType(this,'match')">🔗 Match</button>
-    </div>
-
-    <!-- Level -->
-    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Niveau</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;" id="duel-level-grid">
-      <button class="duel-type-btn active" onclick="selectDuelLevel(this,'any')">🔀 Aléatoire</button>
-      <button class="duel-type-btn" onclick="selectDuelLevel(this,'A1')">A1</button>
-      <button class="duel-type-btn" onclick="selectDuelLevel(this,'A2')">A2</button>
-      <button class="duel-type-btn" onclick="selectDuelLevel(this,'B1')">B1</button>
-      <button class="duel-type-btn" onclick="selectDuelLevel(this,'B2')">B2</button>
-      <button class="duel-type-btn" onclick="selectDuelLevel(this,'C1')">C1</button>
-    </div>
-
-    <!-- Bet -->
-    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px;">Mise (optionnel)</div>
-    <div style="background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <span class="coin" style="font-size:1rem;"></span>
-        <input type="number" id="duel-bet-input" min="0" max="9999" value="0"
-          style="flex:1;background:transparent;border:none;color:var(--gold);font-size:1.4rem;font-weight:900;font-family:'Nunito',sans-serif;outline:none;width:80px;">
-        <span style="font-size:.78rem;color:var(--muted);">pièces</span>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="bet-quick-btn" onclick="setBet(0)">Gratuit</button>
-        <button class="bet-quick-btn" onclick="setBet(50)">50</button>
-        <button class="bet-quick-btn" onclick="setBet(100)">100</button>
-        <button class="bet-quick-btn" onclick="setBet(200)">200</button>
-        <button class="bet-quick-btn" onclick="setBet(500)">500</button>
-      </div>
-      <div style="font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.5;">Le gagnant remporte les deux mises. L'adversaire peut choisir de jouer sans mise.</div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin-top:16px;">
-      <button class="btn btn-secondary" onclick="closeCreateDuel()" style="flex:1;">Annuler</button>
-      <button class="btn btn-primary" onclick="confirmCreateDuel()" style="flex:2;">Créer le duel →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ CUSTOM PRACTICE MODAL ══════════════════ -->
-<div class="modal-overlay" id="custom-practice-modal" style="display:none;" onclick="if(event.target===this)closeCustomPracticeModal()">
-  <div class="modal-box" style="max-width:460px;width:96%;max-height:88vh;overflow-y:auto;" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeCustomPracticeModal()">✕</button>
-    <div style="font-weight:900;font-size:1.05rem;margin-bottom:14px;">✏️ Pratique personnalisée</div>
-    <div id="saved-practices-list" style="margin-bottom:16px;"></div>
-    <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Créer une nouvelle session</div>
-    <input id="cp-title" class="diy-input" placeholder="Nom de la session…" style="margin-bottom:10px;">
-    <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px;">Paires — une par ligne : <strong>mot natif = traduction</strong></div>
-    <textarea id="cp-words" class="diy-textarea" placeholder="chien = dog&#10;chat = cat&#10;maison = house"></textarea>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="btn btn-secondary" onclick="closeCustomPracticeModal()" style="flex:1;">Fermer</button>
-      <button class="btn btn-primary" onclick="saveCustomPractice()" style="flex:2;">Sauvegarder →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ TROPHIES SCREEN ══════════════════ -->
-<div class="screen screen-padded" id="screen-trophies">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-    <button class="btn btn-secondary btn-sm" onclick="navTo('profile')" style="padding:6px 12px;">← Retour</button>
-    <div style="font-size:1.2rem;font-weight:900;">🏆 Trophées</div>
-  </div>
-  <div id="trophy-progress" style="margin-bottom:14px;"></div>
-  <div id="trophies-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%;max-width:700px;"></div>
-</div>
-
-<!-- ══════════════════ DUEL RESULT MODAL ══════════════════ -->
-<div id="duel-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;"></div>
-
-<!-- ══════════════════ TROPHY POPUPS (injected by JS) ══════════════════ -->
-
-<!-- ══════════════════ COMPOST LOBBY ══════════════════ -->
-<div class="screen screen-padded" id="screen-compost-lobby">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-    <button class="btn btn-secondary btn-sm" onclick="navTo('learn')">← Retour</button>
-    <div style="font-size:1.3rem;font-weight:900;">🪱 Compost</div>
-  </div>
-
-  <!-- Skin picker -->
-  <div style="font-size:.75rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Choisis ton ver</div>
-  <div class="skin-grid" id="compost-skin-grid"></div>
-
-  <!-- Solo or Multi -->
-  <button class="btn btn-primary" onclick="startCompostSolo()" style="width:100%;margin:16px 0 10px;font-size:1rem;background:linear-gradient(135deg,#16a34a,#15803d);border:none;">
-    ▶ Jouer solo (vs Bot)
-  </button>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-    <button class="btn btn-secondary" onclick="createCompostRoom()">🏠 Créer un salon multi</button>
-    <button class="btn btn-secondary" onclick="$('compost-join-wrap').style.display=''">🔗 Rejoindre</button>
-  </div>
-  <div id="compost-join-wrap" style="display:none;margin-bottom:12px;">
-    <div style="display:flex;gap:8px;">
-      <input id="compost-join-input" class="friends-search-input" placeholder="Code du salon (COMP1234)" style="flex:1;text-transform:uppercase;" maxlength="8" oninput="this.value=this.value.toUpperCase()">
-      <button class="btn btn-primary" onclick="joinCompostRoom()">→</button>
-    </div>
-  </div>
-
-  <!-- Lobby content (players, code, start) -->
-  <div id="compost-lobby-content"></div>
-</div>
-
-<!-- ══════════════════ COMPOST GAME ══════════════════ -->
-<div class="screen" id="screen-compost-game" style="padding:0;background:#0a0a14;flex-direction:column;align-items:center;justify-content:flex-start;">
-  <!-- Score bar -->
-  <div style="width:100%;max-width:480px;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(0,0,0,.6);">
-    <div style="font-size:.85rem;font-weight:900;">👤 Toi : <span id="compost-my-score" style="color:var(--green);">0</span></div>
-    <button class="btn btn-secondary btn-sm" onclick="closeCompostGame()" style="font-size:.7rem;padding:4px 10px;">✕ Quitter</button>
-    <div style="font-size:.85rem;font-weight:900;">Adversaire : <span id="compost-op-score" style="color:var(--accent2);">0</span></div>
-  </div>
-  <!-- Canvas -->
-  <div style="width:100%;overflow:auto;display:flex;justify-content:center;">
-    <canvas id="compost-canvas" style="display:block;max-width:100%;image-rendering:pixelated;"></canvas>
-  </div>
-  <!-- D-pad controls (mobile) -->
-  <div class="dpad-wrap">
-    <div class="dpad-row"><button id="btn-up" class="dpad-btn">▲</button></div>
-    <div class="dpad-row">
-      <button id="btn-left" class="dpad-btn">◀</button>
-      <div style="width:44px;"></div>
-      <button id="btn-right" class="dpad-btn">▶</button>
-    </div>
-    <div class="dpad-row"><button id="btn-down" class="dpad-btn">▼</button></div>
-  </div>
-</div>
-
-<!-- ══════════════════ FLAPPY/CAR OVERLAY ══════════════════ -->
-<div id="minigame-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:#0a0a14;flex-direction:column;">
-  <iframe id="minigame-iframe" src="" style="flex:1;border:none;width:100%;height:100%;"></iframe>
-</div>
-
-<!-- ══════════════════ COMPOST GAME OVERLAY ══════════════════ -->
-<div id="compost-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:#0a0a14;flex-direction:column;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(0,0,0,.7);flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50" fill="#0a0a14"/>
-        <circle cx="50" cy="50" r="18" fill="none" stroke="#ffd600" stroke-width="1.4"/>
-        <circle cx="50" cy="32" r="18" fill="none" stroke="#ffd600" stroke-width="1.2" opacity=".75"/>
-        <circle cx="50" cy="68" r="18" fill="none" stroke="#ffd600" stroke-width="1.2" opacity=".75"/>
-        <circle cx="65.6" cy="41" r="18" fill="none" stroke="#ffd600" stroke-width="1.2" opacity=".75"/>
-        <circle cx="34.4" cy="41" r="18" fill="none" stroke="#ffd600" stroke-width="1.2" opacity=".75"/>
-        <circle cx="65.6" cy="59" r="18" fill="none" stroke="#ffd600" stroke-width="1.2" opacity=".75"/>
-        <circle cx="34.4" cy="59" r="18" fill="none" stroke="#ffd600" stroke-width="1.2" opacity=".75"/>
-        <polygon points="50,22 65.6,47 34.4,47" fill="#ffd600" fill-opacity=".2" stroke="#ffd600" stroke-width="1.3"/>
-        <polygon points="50,78 34.4,53 65.6,53" fill="#ffd600" fill-opacity=".2" stroke="#ffd600" stroke-width="1.3"/>
-        <circle cx="50" cy="50" r="4" fill="#ffd600"/>
-      </svg>
-      <span style="font-weight:900;font-size:.95rem;">🪱 Compost</span>
-    </div>
-    <button onclick="closeCompostGame()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 14px;font-family:Nunito,sans-serif;font-weight:800;cursor:pointer;font-size:.85rem;">← Retour</button>
-  </div>
-  <iframe id="compost-iframe" src="" style="flex:1;border:none;width:100%;height:100%;"></iframe>
-</div>
-</div><!-- #app -->
-
-<!-- ══════════════════ CHAT MODAL ══════════════════ -->
-<div class="modal-overlay" id="chat-modal" style="display:none;" onclick="if(event.target===this)closeChat()">
-  <div class="modal-box chat-modal-box" onclick="event.stopPropagation()">
-    <div class="chat-header">
-      <div id="chat-friend-name" style="font-weight:900;font-size:1rem;">💬 Message</div>
-      <button onclick="closeChat()" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;">✕</button>
-    </div>
-    <div id="chat-messages" class="chat-messages"></div>
-    <div class="chat-input-row">
-      <input id="chat-input" class="chat-input-field" placeholder="Écris un message…" onkeydown="chatKeyDown(event)" maxlength="500">
-      <button class="btn btn-primary btn-sm" onclick="sendMessage()">Envoyer</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ PSEUDO MODAL ══════════════════ -->
-<div class="modal-overlay" id="pseudo-modal" style="display:none;" onclick="if(event.target===this)closePseudoModal()">
-  <div class="modal-box" style="max-width:380px;width:94%;" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closePseudoModal()">✕</button>
-    <div style="font-weight:900;font-size:1.05rem;margin-bottom:6px;">@ Choisir un pseudo</div>
-    <div style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">Unique, rechercheable par tes amis. Lettres, chiffres et _ uniquement.</div>
-    <div style="position:relative;margin-bottom:8px;">
-      <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--accent3);font-weight:800;font-size:.95rem;">@</span>
-      <input id="pseudo-input" class="friends-search-input" style="padding-left:28px;" placeholder="monpseudo" maxlength="20" oninput="pseudoCheckDebounce()">
-    </div>
-    <div id="pseudo-check-msg" style="font-size:.78rem;min-height:18px;margin-bottom:14px;font-weight:700;"></div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-secondary" onclick="closePseudoModal()" style="flex:1;">Annuler</button>
-      <button class="btn btn-primary" onclick="savePseudo()" style="flex:2;">Enregistrer →</button>
-    </div>
-  </div>
-</div>
-
-<script src="data.js"></script>
-<script src="config.js"></script>
-<script src="auth.js"></script>
-<script src="ui.js"></script>
-
-<script src="speech.js"></script>
-<script src="game.js"></script>
-<script src="portfolio.js"></script>
-<script src="srs.js"></script>
-<script src="trophies.js"></script>
-<script src="leaderboard.js"></script>
-<script src="duels.js"></script>
-<script src="friends.js"></script>
-<script src="social.js"></script>
-<script src="compost.js"></script>
-<script src="news.js"></script>
-<script src="boot.js"></script>
-
-<!-- ══════════════════ FORGOT PASSWORD MODAL ══════════════════ -->
-<div class="modal-overlay" id="forgot-modal" style="display:none;" onclick="closeForgot(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px;">
-    <button class="modal-close" onclick="closeForgot()">✕</button>
-
-    <!-- STEP 1: enter email -->
-    <div id="forgot-step-1">
-      <div style="font-size:1.5rem;text-align:center;margin-bottom:6px;">🔑</div>
-      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-forgot-title">Mot de passe oublié</div>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;" id="lbl-forgot-sub">Entre ton email pour récupérer ton compte.</div>
-      <label class="auth-label">Email</label>
-      <input class="auth-input" type="email" id="forgot-email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')forgotStep1()">
-      <div class="auth-error" id="forgot-err-1"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:10px;" onclick="forgotStep1()" id="btn-forgot-1">Vérifier mon compte →</button>
-    </div>
-
-    <!-- STEP 2: found account, set new password -->
-    <div id="forgot-step-2" style="display:none;">
-      <div style="font-size:1.5rem;text-align:center;margin-bottom:6px;">✅</div>
-      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px;" id="lbl-forgot-found-title">Compte trouvé !</div>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;">Compte : <strong id="forgot-found-name" style="color:var(--accent3);"></strong></div>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">Choisis un nouveau mot de passe.</div>
-      <label class="auth-label" id="lbl-forgot-new-pass">Nouveau mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="forgot-new-pass" placeholder="Min. 6 caractères" onkeydown="if(event.key==='Enter')forgotStep2()">
-        <button class="pass-eye" type="button" onclick="togglePass('forgot-new-pass',this)" tabindex="-1">👁</button>
-      </div>
-      <label class="auth-label" style="margin-top:10px;" id="lbl-forgot-confirm-pass">Confirme le mot de passe</label>
-      <div class="pass-wrap">
-        <input class="auth-input" type="password" id="forgot-confirm-pass" placeholder="Répète le mot de passe" onkeydown="if(event.key==='Enter')forgotStep2()">
-        <button class="pass-eye" type="button" onclick="togglePass('forgot-confirm-pass',this)" tabindex="-1">👁</button>
-      </div>
-      <div class="auth-error" id="forgot-err-2"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;" onclick="forgotStep2()" id="btn-forgot-2">Réinitialiser →</button>
-    </div>
-
-    <!-- STEP 3: success -->
-    <div id="forgot-step-3" style="display:none;text-align:center;padding:10px 0;">
-      <div style="font-size:3rem;margin-bottom:10px;">🎉</div>
-      <div style="font-size:1.1rem;font-weight:800;margin-bottom:6px;" id="lbl-forgot-success-title">Mot de passe mis à jour !</div>
-      <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px;" id="lbl-forgot-success-sub">Tu peux maintenant te connecter avec ton nouveau mot de passe.</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="closeForgot();switchTab('login')" id="btn-forgot-login">Se connecter →</button>
-    </div>
-  </div>
-</div>
-
-  <!-- ── FLOATING EVENT BANNER ── -->
-  <div id="event-float"></div>
-
-<!-- ══ WORD TRANSLATION TOOLTIP ══ -->
-<div id="word-tooltip" style="
-  display:none;position:fixed;z-index:9999;
-  background:var(--card,#141428);
-  border:1px solid rgba(124,58,237,.35);
-  border-radius:14px;padding:14px 16px;
-  max-width:280px;min-width:180px;
-  box-shadow:0 8px 32px rgba(0,0,0,.6);
-  font-family:'Nunito',sans-serif;
-  pointer-events:none;
-">
-  <div id="wt-word" style="font-size:1.1rem;font-weight:900;color:#c4b5fd;margin-bottom:4px;"></div>
-  <div id="wt-trans" style="font-size:.88rem;font-weight:800;color:#f1f5f9;margin-bottom:8px;"></div>
-  <div id="wt-context" style="font-size:.76rem;color:#94a3b8;line-height:1.6;
-    border-top:1px solid rgba(255,255,255,.08);padding-top:8px;display:none;">
-    <span style="font-size:.65rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;
-      color:#7c3aed;display:block;margin-bottom:4px;">En contexte</span>
-    <div id="wt-context-text"></div>
-  </div>
-  <div id="wt-langs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;
-    border-top:1px solid rgba(255,255,255,.06);"></div>
-</div>
-
-</body>
-</html>
+
+// ═══════════════════════════════════════════════════
+// DUNGEON ZONE CONFIG
+// ═══════════════════════════════════════════════════
+const DUNGEON = {
+  A1:{id:"A1", name:"Cavernes de l'Aurore",   emoji:"🌿", color:"linear-gradient(135deg,#064e3b,#065f46)",
+    accent:"#10b981", desc:"Premiers mots, premiers pas",
+    monsters:["🐛","🦎","🍄","🌿","🐢","🦗","🌱","🦔","🐝","🦋"],
+    boss:{sprite:"🐲", name:"Dragon des Cavernes", color:"#065f46"}},
+  A2:{id:"A2", name:"Forêt des Fantômes",      emoji:"🌲", color:"linear-gradient(135deg,#1a4731,#166534)",
+    accent:"#22c55e", desc:"Approfondis ton vocabulaire dans l'obscurité",
+    monsters:["👻","🕷","🦉","🌑","🦇","🌙","🍂","🕯","🌿","🦄"],
+    boss:{sprite:"🧟", name:"Fantôme de la Forêt", color:"#166534"}},
+  B1:{id:"B1", name:"Château des Épreuves",     emoji:"🏰", color:"linear-gradient(135deg,#3b0764,#4c1d95)",
+    accent:"#a78bfa", desc:"Construis des phrases, déjoue les pièges",
+    monsters:["⚔️","🛡","🧙","🗡","🪄","💀","🏹","🔮","🗝","👑"],
+    boss:{sprite:"🧙", name:"Sorcier du Château", color:"#4c1d95"}},
+  B2:{id:"B2", name:"Volcan de la Grammaire",   emoji:"🌋", color:"linear-gradient(135deg,#7f1d1d,#991b1b)",
+    accent:"#f87171", desc:"Maîtrise la syntaxe dans la lave bouillante",
+    monsters:["🔥","💥","🌋","☄️","⚡","🌪","🔴","🧨","💢","🌡"],
+    boss:{sprite:"😈", name:"Démon du Volcan", color:"#991b1b"}},
+  C1:{id:"C1", name:"Palais du Ciel",            emoji:"☁️", color:"linear-gradient(135deg,#1e3a5f,#1e40af)",
+    accent:"#60a5fa", desc:"Les nuances et la maîtrise parfaite",
+    monsters:["🦅","⭐","🌟","🌠","🌊","🌈","🦋","🔵","🎯","🏆"],
+    boss:{sprite:"🧝", name:"Sage du Palais", color:"#1e40af"}},
+  C2:{id:"C2", name:"Nexus de l'Omniscience",  emoji:"🌌", color:"linear-gradient(135deg,#0f0f1a,#1a0a2e)",
+    accent:"#c4b5fd", desc:"Langue vivante comme un locuteur natif",
+    monsters:["🌌","🔭","🌀","💫","🎆","🌙","⚡","🔮","👁","♾"],
+    boss:{sprite:"🤖", name:"Maitre de l'Omniscience", color:"#1a0a2e"}},
+};
+// ══════════════════════════════════════════════
+// STATE & STORAGE
+// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// THEME & UI LANGUAGE
+// ══════════════════════════════════════════════
+let _uiLang = localStorage.getItem('lq_ui_lang') || (() => {
+  const nav = (navigator.language||'fr').split('-')[0].toLowerCase();
+  const map = {fr:'fr',en:'en',es:'es',de:'de',cs:'cs',sk:'cs',cz:'cs'};
+  return map[nav] || 'fr';
+})();
+
+function setTheme(mode) {
+  const themes = ['dark','light','claude'];
+  const effective = mode === 'random'
+    ? themes[Math.floor(Math.random() * themes.length)]
+    : mode;
+  localStorage.setItem('lq_theme', effective);
+  document.documentElement.setAttribute('data-theme', effective);
+  ['dark','light','claude'].forEach(m => {
+    const b = document.getElementById('theme-btn-'+m);
+    if(b) b.classList.toggle('active', m === effective);
+  });
+  // Random button never stays "active" — it's an action, not a state
+  const rb = document.getElementById('theme-btn-random');
+  if(rb) rb.classList.remove('active');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('lq_theme');
+  if(saved) setTheme(saved);
+}
+
+function pickTheme(mode) {
+  setTheme(mode);
+  navTo('auth');
+}
+
+// ── Translation helper ──────────────────────────────────────────
+// t('key') → current UI string
+// t('key', {n:5}) → replaces {n} with 5
+function t(key, vars) {
+  const s = UI_STRINGS[_uiLang] || UI_STRINGS.fr;
+  let str = s[key] || (UI_STRINGS.fr[key]) || key;
+  if (vars) Object.entries(vars).forEach(([k,v]) => { str = str.replace(new RegExp('{'+k+'}','g'), v); });
+  return str;
+}
+
+function applyUILang() {
+  const s = UI_STRINGS[_uiLang] || UI_STRINGS.fr;
+  const set = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+  const html = (id, val) => { const e = document.getElementById(id); if(e) e.innerHTML = val; };
+  const ph = (id, val) => { const e = document.getElementById(id); if(e) e.placeholder = val; };
+
+  // NAV
+  set('lbl-nav-learn', s.nav_learn);
+  set('lbl-nav-portfolio', s.nav_portfolio);
+  set('lbl-nav-shop', s.nav_shop);
+  set('lbl-nav-profile', s.nav_profile);
+
+  // THEME PICKER
+  set('lbl-tagline', s.tagline);
+  set('lbl-pick-theme', s.pick_theme);
+  set('lbl-theme-dark', s.theme_dark);
+  set('lbl-theme-light', s.theme_light);
+  set('lbl-theme-claude', s.theme_claude);
+  set('lbl-theme-random', s.theme_random);
+
+  // AUTH
+  set('lbl-tagline-auth', s.tagline);
+  set('tab-login', s.tab_login);
+  set('tab-register', s.tab_register);
+  set('lbl-login-pass', s.lbl_pass);
+  set('btn-do-login', s.btn_login);
+  set('btn-demo', s.demo_link);
+  set('lbl-reg-name', s.lbl_reg_name);
+  set('lbl-reg-email', s.lbl_reg_email);
+  set('lbl-reg-pass', s.lbl_reg_pass);
+  set('btn-do-register', s.btn_register);
+  set('lbl-or-guest', s.or_guest);
+  set('lbl-guest-btn', s.guest_btn);
+  set('lbl-guest-warn', s.guest_warn);
+  ph('login-email', s.ph_login_email);
+  ph('login-pass', s.ph_login_pass);
+  ph('reg-name', s.ph_reg_name);
+  ph('reg-email', s.ph_reg_email);
+  ph('reg-pass', s.ph_reg_pass);
+
+  // LEARN
+  set('lbl-learn-tagline', s.learn_tagline);
+  set('lbl-i-speak', s.i_speak);
+  set('lbl-i-learn', s.i_learn);
+  set('btn-start', s.btn_start);
+
+  // LEVELS
+  set('lbl-levels-sub', s.levels_sub);
+
+  // GAME SELECT
+  set('lbl-mix-badge', s.mix_badge);
+  set('lbl-gtype-mixed', s.gtype_mixed);
+  set('lbl-gdesc-mixed', s.gdesc_mixed);
+  set('lbl-gtype-quiz', s.gtype_quiz);
+  set('lbl-gdesc-quiz', s.gdesc_quiz);
+  set('lbl-gtype-fill', s.gtype_fill);
+  set('lbl-gdesc-fill', s.gdesc_fill);
+  set('lbl-gtype-match', s.gtype_match);
+  set('lbl-gdesc-match', s.gdesc_match);
+  set('lbl-reward-mixed', s.reward_mixed);
+  set('lbl-reward-quiz', s.reward_quiz);
+  set('lbl-reward-fill', s.reward_fill);
+  set('lbl-reward-match', s.reward_match);
+
+  // GAME
+  ph('fill-input', s.ph_fill);
+  set('lbl-your-sent', s.your_sent);
+  set('lbl-words-avail', s.words_avail);
+  set('lbl-pairs', s.pairs);
+  set('btn-check', s.btn_check);
+  set('btn-next', s.btn_next);
+  set('btn-skip', s.btn_continue);
+
+  // RESULTS
+  set('lbl-coins-won', s.coins_won);
+  set('lbl-coins-hint', s.coins_hint);
+  set('lbl-r-correct', s.r_correct);
+  set('lbl-r-wrong', s.r_wrong);
+  set('btn-replay', s.btn_replay);
+  set('btn-r-chapters', s.btn_r_chapters);
+  set('btn-r-invest', s.btn_r_invest);
+
+  // PORTFOLIO
+  set('lbl-wealth-hero', s.wealth_hero);
+  set('lbl-liquid-coins', s.liquid_coins);
+  set('lbl-div-day', s.div_day);
+  set('lbl-invested', s.invested);
+  set('lbl-div-avail', s.div_avail);
+  set('collect-btn', s.btn_collect);
+  set('lbl-div-explain-title', s.div_explain_title);
+  html('lbl-div-explain-body', s.div_explain_body);
+  set('lbl-target-title', s.target_title);
+  set('lbl-target-sub', s.target_sub);
+  set('lbl-target-obj', s.target_obj);
+  set('lbl-tr-missing', s.tr_missing);
+  set('lbl-tr-daily', s.tr_daily);
+  set('lbl-tr-time', s.tr_time);
+  set('lbl-tr-progress', s.tr_progress);
+  set('lbl-tl-target', s.tl_target);
+  set('tl-now', s.tl_now);
+  set('lbl-assets-title', s.assets_title);
+
+  // SHOP
+  set('lbl-shop-title', s.shop_title);
+  set('lbl-shop-sub', s.shop_sub);
+  set('lbl-shop-coins-lbl', s.shop_coins_lbl);
+
+  // PROFILE
+  set('lbl-ps-xp', s.ps_xp);
+  set('lbl-ps-coins', s.ps_coins);
+  set('lbl-ps-sessions', s.ps_sessions);
+  set('lbl-ps-streak', s.ps_streak);
+  set('lbl-ps-chapters', s.ps_chapters);
+  set('lbl-ps-wealth', s.ps_wealth);
+  set('lbl-appearance', s.appearance);
+  set('lbl-lang-ui', s.lang_ui);
+  set('theme-btn-dark', s.theme_dark);
+  set('theme-btn-light', s.theme_light);
+  set('theme-btn-claude', s.theme_claude);
+  set('theme-btn-random', s.theme_random);
+  set('btn-change-lang', s.btn_change_lang);
+  set('btn-logout', s.btn_logout);
+
+  // FORGOT PASSWORD MODAL
+  set('lbl-forgot-link',         s.forgot_link);
+  set('lbl-forgot-title',        s.forgot_title);
+  set('lbl-forgot-sub',          s.forgot_sub);
+  set('btn-forgot-1',            s.forgot_check);
+  set('lbl-forgot-found-title',  s.forgot_found_title);
+  set('lbl-forgot-new-pass',     s.forgot_new_pass);
+  set('lbl-forgot-confirm-pass', s.forgot_confirm_pass);
+  set('btn-forgot-2',            s.forgot_reset);
+  set('lbl-forgot-success-title',s.forgot_success_title);
+  set('lbl-forgot-success-sub',  s.forgot_success_sub);
+  set('btn-forgot-login',        s.forgot_login);
+
+  // QR MODAL
+  set('lbl-qr-title', s.qr_title);
+  set('btn-qr-copy', s.btn_qr_copy);
+  set('btn-qr-close', s.btn_close);
+
+  // LANG CHANGE MODAL
+  set('lbl-langmodal-title', s.langmodal_title);
+  set('lbl-lm-speak', s.lm_speak);
+  set('lbl-lm-learn', s.lm_learn);
+  set('btn-lm-apply', s.btn_apply);
+  set('btn-lm-cancel', s.btn_cancel);
+
+  // ASSET INFO MODAL
+  set('lbl-amod-market', s.amod_market);
+  set('lbl-amod-position', s.amod_position);
+  set('lbl-amod-units', s.amod_units);
+  set('lbl-amod-value', s.amod_value);
+  set('lbl-amod-daily', s.amod_daily);
+  set('lbl-amod-pv', s.amod_pv);
+  set('amod-buy-btn', s.btn_buy);
+  set('amod-sell-btn', s.btn_sell);
+  set('btn-amod-close', s.btn_close);
+
+  // Portfolio mode toggle buttons (translated labels)
+  const _btnP = document.getElementById('pf-mode-practice');
+  const _btnR = document.getElementById('pf-mode-real');
+  if(_btnP) _btnP.textContent = s.pf_mode_practice;
+  if(_btnR) _btnR.textContent = s.pf_mode_real;
+  // Re-render real portfolio if currently visible
+  if(typeof _portfolioMode !== 'undefined' && _portfolioMode === 'real'){
+    if(typeof renderRealPortfolio === 'function') renderRealPortfolio();
+  }
+
+  // Finance Academy — static lesson screen labels
+  set('lbl-academy-title', s.academy_title);
+  // back button in lesson screen uses lesson_back from current lang
+  const _lessonBack = document.getElementById('lesson-done-back');
+  if(_lessonBack) _lessonBack.textContent = s.lesson_back;
+  // Re-render academy grid if portfolio screen is active
+  const pfScreen = document.getElementById('screen-portfolio');
+  if(pfScreen && pfScreen.classList.contains('active')){
+    if(typeof renderAcademy === 'function') renderAcademy();
+    if(typeof renderInvestorLevel === 'function') renderInvestorLevel();
+  }
+}
+
+function renderUILangGrid() {
+  const wrap = document.getElementById('ui-lang-btns');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  Object.entries(LANGS).forEach(([code, l]) => {
+    const btn = document.createElement('button');
+    btn.className = 'lang-ui-btn' + (code === _uiLang ? ' active' : '');
+    btn.textContent = l.flag + ' ' + l.native;
+    btn.onclick = () => { _uiLang = code; localStorage.setItem('lq_ui_lang', code); applyUILang(); renderUILangGrid(); };
+    wrap.appendChild(btn);
+  });
+}
+
+let U=null; // current user
+
+
+// ══════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════
+const _SB = supabase.createClient('https://luufdddauoucmjiixrax.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWZkZGRhdW91Y21qaWl4cmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjg4ODAsImV4cCI6MjA4Nzk0NDg4MH0.sYP_nRJQTMTT4_2svodb8kPV2vF9ceCVkuG5CMVaLv4');
+
+function defaultUser(name, email){
+  return {
+    name, email, pass: '',
+    joined: Date.now(),
+    xp: 0, coins: 100, sessions: 0, streak: 0, lastDay: null, chaptersCompleted: 0,
+    progress: {},
+    assets: {gold:0,house:0,stock:0,crypto:0},
+    assetValues: {gold:0,house:0,stock:0,crypto:0},
+    lastDivTime: Date.now(),
+    pendingDiv: 0, totalInvested: 0,
+    owned: [], avatar: '', lessonsCompleted: {}, investorLevel: 1, unlockedLevels: ['A1'],
+    pseudo: '', lastSeen: Date.now(),
+  };
+}
+
+// Save to Supabase (upsert) + localStorage backup
+async function saveU() {
+  if (!U || U.isGuest) return;
+  // Stamp every save so we can pick the freshest version across devices
+  U._savedAt = Date.now();
+  const serialised = JSON.stringify(U);
+  // Always write localStorage synchronously first
+  localStorage.setItem('lq_u_' + U.email, serialised);
+  const users = JSON.parse(localStorage.getItem('lq_users') || '{}');
+  users[U.email] = U;
+  localStorage.setItem('lq_users', JSON.stringify(users));
+  // Then push to Supabase (best-effort, may lag behind)
+  try {
+    await _SB.from('users').upsert({
+      email: U.email,
+      data: U,
+      updated_at: new Date().toISOString()
+    }, {onConflict: 'email'});
+  } catch(e) { /* offline — localStorage is the source of truth */ }
+}
+
+// Load user — picks freshest version between Supabase and localStorage
+async function loadUserFromDB(email) {
+  const localRaw = localStorage.getItem('lq_u_' + email);
+  const localData = localRaw ? JSON.parse(localRaw) : null;
+  let remoteData = null;
+  try {
+    const { data, error } = await _SB.from('users').select('data').eq('email', email).single();
+    if (data && !error) remoteData = data.data;
+  } catch(e) {}
+  // Pick whichever was saved most recently (_savedAt is set by saveU)
+  if (localData && remoteData) {
+    return (localData._savedAt||0) >= (remoteData._savedAt||0) ? localData : remoteData;
+  }
+  return localData || remoteData || null;
+}
+
+// Legacy compat shims (keep working while migrating)
+function loadUsers(){ return JSON.parse(localStorage.getItem('lq_users') || '{}'); }
+function saveUsers(u){ localStorage.setItem('lq_users', JSON.stringify(u)); }
+function loadCurrent(){ return JSON.parse(localStorage.getItem('lq_current') || 'null'); }
+function saveCurrent(id){ localStorage.setItem('lq_current', JSON.stringify(id)); }
+function clearCurrent(){ localStorage.removeItem('lq_current'); }
+function defaultUser_OLD(name,email){
+  return{
+    name,email,pass:'',
+    joined:Date.now(),
+    xp:0,coins:100,sessions:0,streak:0,lastDay:null,chaptersCompleted:0,
+    progress:{},
+    // Portfolio
+    assets:{gold:0,house:0,stock:0,crypto:0},
+    assetValues:{gold:0,house:0,stock:0,crypto:0},// accumulated value growth
+    lastDivTime:Date.now(),
+    pendingDiv:0,
+    totalInvested:0,
+    // Shop
+    owned:[],
+    // Cosmetics
+    avatar:'',
+  };
+}
+
+// saveU is defined above as async (Supabase + localStorage) — no duplicate here
+
