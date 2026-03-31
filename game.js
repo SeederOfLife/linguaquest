@@ -629,11 +629,14 @@ function restartGame(){
   document.getElementById('start-scr').classList.add('on');
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 window.addEventListener('resize',resize);
 resize();
 </script>
 </body>
 </html>
+=======
+>>>>>>> parent of 7aaf178 (Add files via upload)
 =======
 >>>>>>> parent of 7aaf178 (Add files via upload)
