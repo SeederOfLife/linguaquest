@@ -112,6 +112,7 @@ function renderTrophies() {
       <div class="trophy-desc">${t.desc}</div>
       ${done && t.coins > 0 ? `<div class="trophy-reward">+${t.coins}🪙</div>` : ''}
     </div>`;
+<<<<<<< HEAD
   }).join('');
   const pct = Math.round(earned.length / TROPHIES.length * 100);
   const prog = document.getElementById('trophy-progress');
@@ -231,4 +232,91 @@ function renderEventBanner() {
   // Floating side widget — visible on all screens
   const fl = document.getElementById('event-float');
   if (fl) { fl.innerHTML = html; fl.style.display = 'block'; }
+=======
+
+  if (!earned.length) { el.innerHTML = '<div style="font-size:.75rem;color:var(--muted);">Joue pour débloquer des trophées 🏆</div>'; return; }
+
+  const recentTrophies = typeof TROPHIES !== 'undefined'
+    ? TROPHIES.filter(t => earned.includes(t.id)).slice(-6)
+    : [];
+  el.innerHTML = recentTrophies.map(t =>
+    `<div title="${t.name}: ${t.desc}" style="font-size:1.5rem;cursor:default;">${t.icon}</div>`
+  ).join('') + (earned.length > 6 ? `<div style="font-size:.72rem;color:var(--muted);align-self:center;">+${earned.length-6} autres</div>` : '');
+}
+
+// ── COMPOST LEVEL/TOPIC SELECTORS ────────────────────────────
+let _compostLevel = 'any';
+let _compostTopic = 'any';
+
+function selectCompostLevel(btn, lv) {
+  _compostLevel = lv;
+  document.querySelectorAll('#compost-level-btns .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function selectCompostTopic(btn, topic) {
+  _compostTopic = topic;
+  document.querySelectorAll('#compost-topic-btns .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function openCompostFromGames() {
+  if (typeof openCompostGame === 'function') {
+    openCompostGame({ level: _compostLevel, topic: _compostTopic });
+  }
+}
+
+// ── MINI-GAME LAUNCHER ────────────────────────────────────────
+function openGame(type) {
+  const nL    = S.nL   || 'fr';
+  const tL    = S.tL   || 'en';
+  const name  = encodeURIComponent((U&&U.name) || 'Joueur');
+  const email = encodeURIComponent((U&&U.email)|| 'guest@local');
+  const skin  = encodeURIComponent((U&&U['compostSkin'])||'sprout');
+  const fSkin = encodeURIComponent((U&&U['flappySkin'])||'bluebird');
+  const cSkin = encodeURIComponent((U&&U['carSkin'])||'red');
+
+  const overlay = document.getElementById('minigame-overlay');
+  const iframe  = document.getElementById('minigame-iframe');
+  if(!overlay||!iframe) return;
+
+  const src = type==='flappy'
+    ? `flappy-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&flappySkin=${fSkin}`
+    : `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}`;
+
+  iframe.src = src;
+  overlay.style.display = 'flex';
+
+  window._minigameListener = function(e) {
+    if(e.data==='close'||e.data?.type==='close'){closeMiniGame();return;}
+    if(!e.data||typeof e.data!=='object') return;
+    if(e.data.type==='getWordData') {
+      iframe.contentWindow.postMessage({
+        type:'wordData',
+        words:typeof WD!=='undefined'?WD:{},
+        chapters:typeof CHAPTERS!=='undefined'?CHAPTERS:null,
+      },'*');
+    }
+    if(e.data.type==='saveFlappySkin'&&U&&!U.isGuest){U.flappySkin=e.data.skin;saveU();}
+    if(e.data.type==='saveCarSkin'&&U&&!U.isGuest){U.carSkin=e.data.skin;saveU();}
+    if(e.data.type==='gameResult'&&e.data.won&&U&&!U.isGuest){
+      const bonus=e.data.game==='car'?80:60;
+      U.coins=(U.coins||0)+bonus; saveU(); updateTopBar();
+      if(typeof checkTrophies==='function') checkTrophies();
+      toast('🎉 Victoire ! +'+bonus+' 🪙');
+    }
+  };
+  window.addEventListener('message', window._minigameListener);
+}
+
+function closeMiniGame() {
+  const overlay=document.getElementById('minigame-overlay');
+  const iframe=document.getElementById('minigame-iframe');
+  if(overlay) overlay.style.display='none';
+  if(iframe) iframe.src='';
+  if(window._minigameListener){
+    window.removeEventListener('message',window._minigameListener);
+    window._minigameListener=null;
+  }
+>>>>>>> parent of 58bc2e1 (Add files via upload)
 }

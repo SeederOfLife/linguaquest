@@ -1877,6 +1877,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* Photo question */
 .photo-q-img{width:100%;max-height:160px;object-fit:cover;border-radius:14px;
   margin-bottom:12px;display:block;}
+<<<<<<< HEAD
 
 /* ══ WORD TOOLTIP ══════════════════════════════ */
 #word-tooltip{animation:fadeIn .15s ease;}
@@ -1920,3 +1921,5 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 >>>>>>> parent of 7aaf178 (Add files via upload)
 =======
 >>>>>>> parent of 7aaf178 (Add files via upload)
+=======
+>>>>>>> parent of 58bc2e1 (Add files via upload)
