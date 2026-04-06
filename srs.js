@@ -1,102 +1,350 @@
 // ══════════════════════════════════════════════════════════════
-// SRS.JS — Spaced Repetition System (SM-2 simplified)
-// Tracks per-word performance, schedules reviews
+// LINGUAQUEST — SPEECH ENGINE  (speech.js)
+// Web Speech API TTS + translation tooltips
 // ══════════════════════════════════════════════════════════════
 
-// Review intervals in minutes: again, hard, good, easy
-const SRS_INTERVALS = [1, 10, 1440, 4320, 10080, 20160, 43200];
-// U.srs = { 'fr-en-wordId': { interval, due, fails, reviews } }
+// BCP-47 language codes → browser voice tag
+const SPEECH_LANG_CODES = {
+  fr: 'fr-FR',
+  en: 'en-US',
+  es: 'es-ES',
+  de: 'de-DE',
+  cs: 'cs-CZ',
+};
 
-function srsKey(wid) { return `${S.nL}-${S.tL}-${wid}`; }
+// Extended preferred voice name fragments — covers macOS, iOS, Windows, Android, Chrome
+const VOICE_PREF = {
+  fr: ['Thomas','Amelie','Marie','Julie','Nicolas','Audrey','Virginie',
+       'Google français','Google French','fr-FR'],
+  en: ['Daniel','Karen','Samantha','Alex','Moira','Fiona',
+       'Google US English','Google UK English Female','Google UK English Male',
+       'Microsoft Zira','Microsoft David','en-US','en-GB'],
+  es: ['Monica','Paulina','Diego','Jorge','Soledad',
+       'Google español','Google español de Estados Unidos',
+       'Microsoft Helena','Microsoft Sabina','es-ES','es-MX'],
+  de: ['Anna','Markus','Petra','Yannick',
+       'Google Deutsch','Microsoft Hedda','Microsoft Stefan','de-DE'],
+  cs: ['Zuzana','Google Czech','cs-CZ'],
+};
 
-function initSRS() {
-  if (!U.srs) U.srs = {};
+// Cache loaded voices
+let _voices = [];
+
+function _loadVoices() {
+  const v = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if (v.length) _voices = v;
 }
 
-// Called after each quiz answer
-function srsUpdate(wid, correct) {
-  if (!U || !wid || !S.nL || !S.tL) return;
-  initSRS();
-  const k = srsKey(wid);
-  const card = U.srs[k] || { interval: 0, due: 0, fails: 0, reviews: 0 };
-  const now = Date.now();
+if (window.speechSynthesis) {
+  _loadVoices();
+  window.speechSynthesis.onvoiceschanged = _loadVoices;
+  // Retry for Chrome which loads voices async — longer waits for desktop
+  [100, 300, 600, 1000, 2000, 3500].forEach(ms => setTimeout(_loadVoices, ms));
+}
 
-  if (correct) {
-    // Advance interval
-    const next = SRS_INTERVALS[Math.min(card.interval + 1, SRS_INTERVALS.length - 1)];
-    card.interval = Math.min(card.interval + 1, SRS_INTERVALS.length - 1);
-    card.due = now + next * 60000;
-    card.reviews = (card.reviews || 0) + 1;
-  } else {
-    // Reset to beginning, due in 1 min
-    card.interval = 0;
-    card.due = now + 60000;
-    card.fails = (card.fails || 0) + 1;
+// Pick best available voice for a language code
+function _pickVoice(lang) {
+  if (!_voices.length) _loadVoices();
+  const code   = SPEECH_LANG_CODES[lang] || lang;
+  const prefix = code.split('-')[0];
+  const prefs  = VOICE_PREF[lang] || [];
+
+  // 1. Try preferred names first (most specific)
+  for (const pref of prefs) {
+    const v = _voices.find(v => v.name.toLowerCase().includes(pref.toLowerCase()));
+    if (v) return v;
   }
-  U.srs[k] = card;
+  // 2. Exact BCP-47 match
+  const exact = _voices.find(v => v.lang === code);
+  if (exact) return exact;
+  // 3. Language prefix match (e.g. fr-CA when fr-FR not available)
+  return _voices.find(v => v.lang.toLowerCase().startsWith(prefix)) || null;
 }
 
-// Returns word IDs due for review (up to limit)
-function srsDueWords(limit) {
-  if (!U || !U.srs || !S.nL || !S.tL) return [];
-  const now = Date.now();
-  return Object.entries(U.srs)
-    .filter(([k, v]) => k.startsWith(`${S.nL}-${S.tL}-`) && v.due <= now)
-    .sort((a, b) => a[1].due - b[1].due)
-    .slice(0, limit || 8)
-    .map(([k]) => k.replace(`${S.nL}-${S.tL}-`, ''));
+// ── Core TTS ─────────────────────────────────────────────────────
+let _currentUtt = null;
+
+function speakWord(text, lang, opts = {}) {
+  if (!text || !window.speechSynthesis) return;
+  const rate   = opts.rate   !== undefined ? opts.rate   : 0.82;
+  const pitch  = opts.pitch  !== undefined ? opts.pitch  : 1.0;
+  const volume = opts.volume !== undefined ? opts.volume : 1.0;
+
+  const speaker = document.getElementById('lq-speak-icon');
+  const markDone = () => { if (speaker) speaker.classList.remove('speaking'); };
+  if (speaker) speaker.classList.add('speaking');
+
+  window.speechSynthesis.cancel();
+  const utt  = new SpeechSynthesisUtterance(text);
+  utt.lang   = SPEECH_LANG_CODES[lang] || lang || 'fr-FR';
+  utt.rate   = rate;
+  utt.pitch  = pitch;
+  utt.volume = volume;
+  utt.onend  = markDone;
+
+  // Only assign a voice if it actually matches the target language
+  // (prevents a French voice being assigned when no Czech voice is found)
+  const _trySpeak = () => {
+    const targetCode = (SPEECH_LANG_CODES[lang] || lang).split('-')[0].toLowerCase();
+    const v = _pickVoice(lang);
+    if (v && v.lang.toLowerCase().startsWith(targetCode)) {
+      utt.voice = v;
+    }
+    // utt.lang is always set — browser will pick system voice for that language
+    _currentUtt = utt;
+    window.speechSynthesis.speak(utt);
+  };
+
+  // If voices not loaded yet (common on desktop Chrome), wait and retry once
+  if (_voices.length === 0) {
+    _loadVoices();
+    setTimeout(() => { _loadVoices(); _trySpeak(); }, 350);
+  } else {
+    _trySpeak();
+  }
 }
 
-function srsDueCount() {
-  if (!U || !U.srs || !S.nL || !S.tL) return 0;
-  const now = Date.now();
-  return Object.entries(U.srs)
-    .filter(([k, v]) => k.startsWith(`${S.nL}-${S.tL}-`) && v.due <= now).length;
+// Speak the current exercise question (native lang) + correct answer (target lang)
+function speakQuestion(wordId) {
+  if (!S || !wordId || !WD[wordId]) return;
+  const text = WD[wordId][S.nL];
+  if (text) speakWord(text, S.nL, { rate: 0.85 });
 }
 
-// Build a review quiz from due words
-function startSRSReview() {
-  if (!S.nL || !S.tL) { toast(t('duel_no_lang')); navTo('learn'); return; }
-  const due = srsDueWords(10);
-  if (!due.length) { toast(t('srs_no_due')); return; }
-
-  // Build questions from due words — use all word IDs for wrong answers
-  const allWids = Object.keys(WD);
-  S.qs = due.flatMap(id => {
-    if (!WD[id]) return [];
-    return [mkQQ(id, allWids), mkFQ(id)];
-  }).slice(0, 12);
-  S.isSRSReview = true;
-  S.qi = 0; S.score = 0; S.cor = 0; S.wr = 0;
-  S.ts = { quiz:{c:0,w:0}, fill:{c:0,w:0}, sort:{c:0,w:0}, match:{c:0,w:0} };
-  S.gType = 'mixed';
-  goTo('game');
-  setTypePill(S.qs[0]?.type || 'quiz');
-  sT('g-score', 0); sT('xp-count', (U.xp||0)+' XP');
-  $('g-progress').style.width = '0%';
-  renderQ();
-  toast(t('srs_toast',{n:due.length}));
+function speakAnswer(text, lang) {
+  // Small delay so it doesn't fire simultaneously with user interaction
+  setTimeout(() => speakWord(text, lang || S.tL, { rate: 0.78 }), 220);
 }
 
-// Render the SRS widget (injected into learn screen)
-function renderSRSWidget() {
-  const el = document.getElementById('srs-widget');
-  if (!el || !U || !S.nL || !S.tL) return;
-  const due = srsDueCount();
-  const total = U.srs ? Object.keys(U.srs).filter(k => k.startsWith(`${S.nL}-${S.tL}-`)).length : 0;
-  const learned = U.srs ? Object.entries(U.srs)
-    .filter(([k,v]) => k.startsWith(`${S.nL}-${S.tL}-`) && v.interval >= 3).length : 0;
+// speakResult disabled — was too annoying after every answer
+function speakResult(correct, lang) { /* disabled */ }
 
-  el.innerHTML = `
-    <div class="srs-card" onclick="startSRSReview()">
-      <div class="srs-icon">🧠</div>
-      <div class="srs-info">
-        <div class="srs-title">Révision intelligente</div>
-        <div class="srs-sub">${learned} mots maîtrisés · ${total} suivis</div>
-      </div>
-      <div class="srs-badge ${due > 0 ? 'srs-due' : 'srs-ok'}">
-        ${due > 0 ? t('srs_due',{n:due}) : t('srs_ok')}
-      </div>
+// ── Tooltip ──────────────────────────────────────────────────────
+let _tooltipTimer = null;
+
+function showWordTooltip(anchorEl, wordId, displayLang, nativeLang) {
+  removeWordTooltip();
+  if (!wordId || !WD[wordId]) return;
+
+  const word    = WD[wordId];
+  const tLang   = displayLang || (window.S && S.tL) || 'en';
+  const nLang   = nativeLang  || (window.S && S.nL) || 'fr';
+  const tText   = word[tLang]  || '';
+  const nText   = word[nLang]  || '';
+  const tFlag   = (LANGS && LANGS[tLang] && LANGS[tLang].flag) || '';
+  const nFlag   = (LANGS && LANGS[nLang] && LANGS[nLang].flag) || '';
+
+  const tip = document.createElement('div');
+  tip.id = 'lq-word-tip';
+  tip.className = 'lq-word-tip';
+  tip.innerHTML = `
+    <div class="lq-tip-row lq-tip-target">
+      <span class="lq-tip-flag">${tFlag}</span>
+      <span class="lq-tip-word">${tText}</span>
+      <button class="lq-tip-speak" onclick="speakWord('${tText.replace(/'/g,"\\'")}','${tLang}')" title="Écouter">🔊</button>
+    </div>
+    <div class="lq-tip-divider"></div>
+    <div class="lq-tip-row lq-tip-native">
+      <span class="lq-tip-flag">${nFlag}</span>
+      <span class="lq-tip-trans">${nText}</span>
+      <button class="lq-tip-speak lq-tip-speak-native" onclick="speakWord('${nText.replace(/'/g,"\\'")}','${nLang}')" title="Écouter">🔊</button>
     </div>
   `;
+
+  document.body.appendChild(tip);
+  _positionTooltip(tip, anchorEl);
+
+  // Auto-dismiss after 4 seconds
+  _tooltipTimer = setTimeout(removeWordTooltip, 4000);
+
+  // Click outside = dismiss
+  setTimeout(() => document.addEventListener('click', _outsideTooltipHandler, { once: true }), 50);
 }
+
+function _outsideTooltipHandler(e) {
+  const tip = document.getElementById('lq-word-tip');
+  if (tip && !tip.contains(e.target)) removeWordTooltip();
+}
+
+function removeWordTooltip() {
+  clearTimeout(_tooltipTimer);
+  const tip = document.getElementById('lq-word-tip');
+  if (tip) {
+    tip.classList.add('lq-tip-hide');
+    setTimeout(() => tip.remove(), 200);
+  }
+}
+
+function _positionTooltip(tip, anchor) {
+  const rect = anchor.getBoundingClientRect();
+  const scrollY = window.scrollY || 0;
+  const tipW = 210;
+  const gap = 10;
+
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  let top  = rect.top + scrollY - 90 - gap;
+
+  // Keep inside viewport
+  if (left < 8) left = 8;
+  if (left + tipW > window.innerWidth - 8) left = window.innerWidth - tipW - 8;
+  if (top < scrollY + 10) top = rect.bottom + scrollY + gap;
+
+  tip.style.left = left + 'px';
+  tip.style.top  = top  + 'px';
+}
+
+// ── Unified click handler for vocab elements ─────────────────────
+// Called from game.js on any word element that has data-wid + data-lang
+function onWordClick(el, e) {
+  if (e) e.stopPropagation();
+  const wordId = el.dataset.wid;
+  const lang   = el.dataset.lang || (window.S && S.tL) || 'fr';
+  const nLang  = (window.S && S.nL) || 'fr';
+
+  if (!wordId || !WD[wordId]) {
+    // No word ID — just speak the text content
+    const text = el.textContent.trim();
+    if (text) speakWord(text, lang);
+    return;
+  }
+
+  const text = WD[wordId][lang] || el.textContent.trim();
+  speakWord(text, lang);
+  showWordTooltip(el, wordId, lang, nLang);
+}
+
+// ── Speaker icon in question area ────────────────────────────────
+function renderSpeakIcon(containerId, text, lang) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Remove existing icon
+  const old = container.querySelector('.lq-speak-icon-btn');
+  if (old) old.remove();
+
+  if (!text || !window.speechSynthesis) return;
+
+  const btn = document.createElement('button');
+  btn.className = 'lq-speak-icon-btn';
+  btn.id = 'lq-speak-icon';
+  btn.title = 'Écouter la prononciation';
+  btn.innerHTML = '🔊';
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    speakWord(text, lang);
+    btn.classList.add('speaking');
+    setTimeout(() => btn.classList.remove('speaking'), 1500);
+  };
+  container.appendChild(btn);
+}
+
+// ── Inject CSS ────────────────────────────────────────────────────
+(function injectSpeechCSS() {
+  const style = document.createElement('style');
+  style.textContent = `
+/* ── WORD TOOLTIP ── */
+.lq-word-tip {
+  position: absolute;
+  z-index: 9999;
+  background: var(--card, #26262b);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 14px;
+  padding: 10px 13px;
+  width: 210px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  animation: lqTipIn .18s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: auto;
+}
+.lq-word-tip.lq-tip-hide {
+  animation: lqTipOut .18s ease forwards;
+}
+@keyframes lqTipIn  { from { opacity:0; transform:translateY(6px) scale(.94); } to { opacity:1; transform:none; } }
+@keyframes lqTipOut { to   { opacity:0; transform:translateY(4px) scale(.96); } }
+
+.lq-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.lq-tip-target { margin-bottom: 2px; }
+.lq-tip-flag   { font-size: 1.1rem; flex-shrink: 0; }
+.lq-tip-word   { font-weight: 900; font-size: .97rem; color: var(--text, #fff); flex: 1; }
+.lq-tip-trans  { font-size: .82rem; color: var(--muted, #8c8c99); flex: 1; font-weight: 600; }
+.lq-tip-divider{
+  height: 1px;
+  background: rgba(255,255,255,.08);
+  margin: 6px 0;
+}
+.lq-tip-speak {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 4px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: transform .15s;
+  opacity: .7;
+}
+.lq-tip-speak:hover { opacity: 1; transform: scale(1.2); }
+.lq-tip-speak-native { font-size: .85rem; }
+
+/* ── SPEAKER BUTTON in question ── */
+.lq-speak-icon-btn {
+  background: none;
+  border: 1.5px solid rgba(255,255,255,.12);
+  border-radius: 50%;
+  width: 34px; height: 34px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-left: 8px;
+  vertical-align: middle;
+  transition: all .2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text, #fff);
+  opacity: .75;
+}
+.lq-speak-icon-btn:hover  { opacity: 1; border-color: var(--accent, #e07b39); transform: scale(1.1); }
+.lq-speak-icon-btn.speaking {
+  opacity: 1;
+  border-color: var(--accent, #e07b39);
+  animation: lqSpeaking .6s ease-in-out infinite alternate;
+}
+@keyframes lqSpeaking {
+  from { box-shadow: 0 0 0 0 rgba(224,123,57,.4); }
+  to   { box-shadow: 0 0 0 8px rgba(224,123,57,0); }
+}
+
+/* ── WORD TOKEN clickable feedback ── */
+.word-token[data-wid]:active,
+.match-item[data-wid]:active,
+.answer-btn[data-wid]:active {
+  transform: scale(.96);
+}
+
+/* ── Q-text row with speaker ── */
+.q-text-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── TTS unavailable notice ── */
+.lq-no-tts {
+  font-size: .7rem;
+  color: var(--muted, #8c8c99);
+  text-align: center;
+  margin-top: 4px;
+  display: none;
+}
+  `;
+  document.head.appendChild(style);
+})();
+
+// ── TTS availability check ────────────────────────────────────────
+const TTS_AVAILABLE = !!window.speechSynthesis;

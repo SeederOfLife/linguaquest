@@ -1,208 +1,623 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-    <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="alternate icon" href="favicon.svg">
-  <link rel="apple-touch-icon" href="favicon.svg">
-  <meta name="theme-color" content="#0a0a14">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Politique de confidentialité — LinguaQuest</title>
-  <meta name="description" content="Politique de confidentialité de LinguaQuest : comment nous collectons, utilisons et protégeons vos données personnelles.">
-  <link rel="canonical" href="https://linguaquest-six.vercel.app/privacy.html">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<style>
-    :root {
-      --bg:#0a0a14; --card:#141428; --card2:#1c1c34;
-      --accent:#7c3aed; --accent2:#ec4899; --accent3:#06b6d4;
-      --text:#f1f5f9; --muted:#94a3b8;
+// ── Lesson i18n helpers ──────────────────────────────────────────────────────
+function getLessonT(lesson){
+  if(!lesson) return {};
+  const lang = (typeof _uiLang !== 'undefined' && _uiLang) || 'fr';
+  return (lesson.t && (lesson.t[lang] || lesson.t['fr'])) || lesson.t && Object.values(lesson.t)[0] || {};
+}
+function s_(key, vars){
+  const lang = (typeof _uiLang !== 'undefined' && _uiLang) || 'fr';
+  const strings = (typeof UI_STRINGS !== 'undefined' && UI_STRINGS) || {};
+  const s = strings[lang] || strings['fr'] || {};
+  let str = s[key] || key;
+  if(vars) Object.entries(vars).forEach(([k,v])=>{ str=str.split('{'+k+'}').join(v); });
+  return str;
+}
+
+// ══════════════════════════════════════════════
+// DIVIDEND ENGINE
+// ══════════════════════════════════════════════
+function calcDividends(){
+  if(!U) return;
+  const now=Date.now();
+  const elapsedDays=(now-U.lastDivTime)/(1000*60*60*24);
+  let total=0;
+  ASSET_DEFS.forEach(a=>{
+    const owned=U.assets[a.id]||0;
+    if(owned>0){
+      const invested=a.cost*owned;
+      total+=invested*a.divRate*elapsedDays;
+      U.assetValues[a.id]=(U.assetValues[a.id]||0)+invested*a.growthRate*elapsedDays;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text); line-height:1.8; }
+  });
+  U.pendingDiv=(U.pendingDiv||0)+total;
+  U.lastDivTime=now;
+  saveU();
+}
 
-    .stars { position:fixed; inset:0; z-index:0; pointer-events:none; }
-    .star { position:absolute; border-radius:50%; background:white; animation:twinkle var(--d,3s) ease-in-out infinite alternate; opacity:var(--o,.2); }
-    @keyframes twinkle { to { opacity:calc(var(--o,.2)*0.1); } }
+function collectDividends(){
+  if(!U||U.pendingDiv<0.5) return;
+  const amount=Math.floor(U.pendingDiv);
+  U.coins+=amount; U.pendingDiv-=amount;
+  saveU(); updateTopBar();
+  floatCoin($('collect-btn'),`+${amount} <span class="coin"></span>`);
+  renderPortfolio();
+  toast('🌱 +' + amount + ' D83EDE99 ' + t('btn_collect'));
+}
 
-    nav {
-      position:sticky; top:0; z-index:100;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 32px;
-      background:rgba(10,10,20,.92); backdrop-filter:blur(12px);
-      border-bottom:1px solid rgba(255,255,255,.06);
+function getAssetWealth(){
+  if(!U) return 0;
+  return ASSET_DEFS.reduce((s,a)=>{
+    const owned=U.assets[a.id]||0;
+    if(!owned) return s;
+    return s+a.cost*owned+(U.assetValues[a.id]||0);
+  },0);
+}
+function getTotalWealth(){return Math.floor(U.coins+getAssetWealth());}
+function getDailyDividend(){
+  if(!U) return 0;
+  return ASSET_DEFS.reduce((s,a)=>s+(a.cost*(U.assets[a.id]||0)*a.divRate),0);
+}
+
+// ══════════════════════════════════════════════
+// INVESTOR LEVEL SYSTEM
+// ══════════════════════════════════════════════
+function getInvestorLevel(){
+  const invested=U.totalInvested||0;
+  let cur=INVESTOR_LEVELS[0];
+  for(const lv of INVESTOR_LEVELS){ if(invested>=lv.min) cur=lv; }
+  return cur;
+}
+
+function renderInvestorLevel(){
+  const bar=$('inv-level-bar'); if(!bar) return;
+  const invested=U.totalInvested||0;
+  const cur=getInvestorLevel();
+  const next=INVESTOR_LEVELS.find(l=>l.level===cur.level+1);
+  const pct=next ? Math.min(100,Math.round((invested-cur.min)/(next.min-cur.min)*100)) : 100;
+
+  // Only trigger level-up if user actually crossed a threshold THIS session
+  // (not just because they logged in with a higher level than the saved value)
+  const prevLevel = U.investorLevel || 1;
+  if(cur.level > prevLevel){
+    U.investorLevel = cur.level;
+    if(cur.reward > 0){ U.coins += cur.reward; saveU(); updateTopBar(); }
+    // Only show modal if we're already past the login/init phase
+    if(typeof _appReady !== 'undefined' && _appReady){
+      setTimeout(()=>showLevelUpModal(cur), 400);
     }
-    .nav-logo {
-      font-family:'Fredoka One',cursive; font-size:1.6rem;
-      background:linear-gradient(135deg,var(--accent),var(--accent2) 50%,var(--accent3));
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-      text-decoration:none;
+  } else {
+    U.investorLevel = cur.level;
+  }
+
+  // Build level chips for all 8 levels
+  const chips=INVESTOR_LEVELS.map(lv=>{
+    const unlocked=invested>=lv.min;
+    const lvTitle=(_uiLang==='en'?lv.titleEn:lv.title)||lv.title;
+    return `<div class="inv-unlock-chip ${unlocked?'done':'locked'}" title="Lv.${lv.level}: ${lvTitle}">
+      ${lv.icon} ${lvTitle}${lv.unlocksAsset&&!unlocked?' 🔒':''}
+    </div>`;
+  }).join('');
+
+  bar.innerHTML=`
+    <div class="inv-level-header">
+      <div class="inv-level-badge">${cur.icon}</div>
+      <div class="inv-level-info">
+        <div class="inv-level-title">${cur.icon} ${s_('inv_level_label',{title:(_uiLang==='en'?cur.titleEn:cur.title)||cur.title})}</div>
+        <div class="inv-level-sub">${invested.toLocaleString()} · ${next?s_('inv_next_unlock',{n:next.min.toLocaleString()}):s_('inv_max')}</div>
+      </div>
+      <div class="inv-level-num">Niv. ${cur.level}/8</div>
+    </div>
+    <div class="inv-xp-row">
+      <div class="inv-xp-bar-wrap"><div class="inv-xp-bar" style="width:${pct}%;background:${cur.color}"></div></div>
+      <div class="inv-xp-pct">${pct}%</div>
+    </div>
+    ${next&&next.unlocksAsset?`<div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">${s_('inv_next_asset',{asset:(ASSET_DEFS.find(a=>a.id===next.unlocksAsset)||{name:'?'}).name,n:next.min.toLocaleString()})}${next.reward>0?' · '+s_('inv_reward',{n:next.reward}):''}</div>`:''}
+    <div class="inv-unlock-row">${chips}</div>
+  `;
+}
+
+function showLevelUpModal(lv){
+  toast('🎉 ' + t('level_unlocked',{id:lv.level}) + ' ' + lv.icon + ' +' + lv.reward + ' D83EDE99');
+  confetti();
+}
+
+// ══════════════════════════════════════════════
+// FINANCE ACADEMY
+// ══════════════════════════════════════════════
+let _lessonState={lessonId:null,qi:-1,score:0,answered:false};
+
+let _academyOpen = false;
+
+function toggleAcademy(){
+  _academyOpen = !_academyOpen;
+  const grid = $('lesson-grid');
+  const arrow = $('academy-arrow');
+  if(grid) grid.style.display = _academyOpen ? 'grid' : 'none';
+  if(arrow) arrow.textContent = _academyOpen ? '▲' : '▼';
+  if(_academyOpen) renderAcademy();
+}
+
+function isLessonUnlocked(lesson, completed){
+  if(!lesson.prereq) return true;
+  return !!completed[lesson.prereq];
+}
+
+function renderAcademy(){
+  const grid=$('lesson-grid'); if(!grid) return;
+  if(!_academyOpen) return; // only render when visible
+  const completed=U.lessonsCompleted||{};
+  const lang=(typeof _uiLang!=='undefined'&&_uiLang)||'fr';
+  grid.innerHTML='';
+
+  // Group lessons by topic
+  const topicOrder=['bases','bourse','risque','macro','avance'];
+  const byTopic={};
+  FINANCE_LESSONS.forEach(l=>{
+    const t=l.topic||'bases';
+    if(!byTopic[t]) byTopic[t]=[];
+    byTopic[t].push(l);
+  });
+
+  topicOrder.forEach(topicId=>{
+    const lessons=byTopic[topicId]; if(!lessons||!lessons.length) return;
+    const topicDef=(typeof LESSON_TOPICS!=='undefined'&&LESSON_TOPICS)?
+      LESSON_TOPICS.find(t=>t.id===topicId):null;
+    const topicLabel=topicDef?(topicDef.label[lang]||topicDef.label.fr||topicId):topicId;
+
+    const doneCount=lessons.filter(l=>!!completed[l.id]).length;
+    const header=document.createElement('div');
+    header.className='academy-topic-header';
+    header.innerHTML=`<span class="academy-topic-label">${topicLabel}</span><span class="academy-topic-progress">${doneCount}/${lessons.length}</span>`;
+    grid.appendChild(header);
+
+    lessons.forEach(lesson=>{
+      const lt=getLessonT(lesson);
+      const done=!!completed[lesson.id];
+      const unlocked=isLessonUnlocked(lesson,completed);
+      const card=document.createElement('div');
+      card.className=`lesson-card${done?' lesson-done':''}${!unlocked?' lesson-locked':''}`;
+      card.innerHTML=`
+        <div class="lesson-icon">${lesson.icon}</div>
+        <div class="lesson-title">${lt.title||''}</div>
+        <div class="lesson-diff">${lt.difficulty||''}</div>
+        <div class="lesson-reward">🪙 +${lesson.reward}</div>
+        ${done?'<div class="lesson-done-badge">✅</div>':''}
+        ${!unlocked?'<div class="lesson-lock-info">🔒</div>':''}
+      `;
+      if(unlocked) card.onclick=()=>openLesson(lesson.id);
+      grid.appendChild(card);
+    });
+  });
+}
+
+function openLesson(id){
+  const lesson=FINANCE_LESSONS.find(l=>l.id===id);
+  if(!lesson) return;
+  _lessonState={lessonId:id,qi:-1,score:0,answered:false};
+  const lt=getLessonT(lesson);
+  $('lesson-bc').textContent=lt.title;
+  $('lesson-intro-zone').textContent=lt.intro;
+  $('lesson-intro-zone').style.display='block';
+  $('lesson-q-card').style.display='none';
+  $('lesson-complete').style.display='none';
+  $('lesson-btn-start').style.display='inline-flex';
+  $('lesson-btn-start').textContent=`${lesson.icon} ${s_('lesson_start')} (${lt.questions.length})`;
+  $('lesson-btn-next').style.display='none';
+  $('lesson-prog-fill').style.width='0%';
+  goTo('lesson');
+}
+
+function lessonStartQuestions(){
+  $('lesson-intro-zone').style.display='none';
+  $('lesson-btn-start').style.display='none';
+  _lessonState.qi=0;
+  renderLessonQuestion();
+}
+
+function renderLessonQuestion(){
+  const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
+  if(!lesson) return;
+  const qi=_lessonState.qi;
+  const lt2=getLessonT(lesson);
+  if(qi>=lt2.questions.length){ lessonComplete(); return; }
+  const q=lt2.questions[qi];
+  const total=lt2.questions.length;
+  $('lesson-prog-fill').style.width=`${(qi/total)*100}%`;
+  $('lesson-q-num').textContent=s_('lesson_q_label',{i:qi+1,n:total});
+  $('lesson-q-text').textContent=q.q;
+  $('lesson-explain').textContent='';
+  $('lesson-explain').className='lesson-explain-bar';
+  _lessonState.answered=false;
+
+  const choicesDiv=$('lesson-choices');
+  choicesDiv.innerHTML='';
+  q.choices.forEach((choice,i)=>{
+    const btn=document.createElement('button');
+    btn.className='lesson-choice';
+    btn.textContent=choice;
+    btn.onclick=()=>pickLessonChoice(i,btn,q);
+    choicesDiv.appendChild(btn);
+  });
+
+  $('lesson-q-card').style.display='block';
+  $('lesson-btn-next').style.display='none';
+}
+
+function pickLessonChoice(idx,btn,q){
+  if(_lessonState.answered) return;
+  _lessonState.answered=true;
+  const correct=idx===q.correct;
+  if(correct) _lessonState.score++;
+  // Colour all choices
+  document.querySelectorAll('.lesson-choice').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.correct) b.classList.add('choice-correct');
+    else if(i===idx&&!correct) b.classList.add('choice-wrong');
+  });
+  // Show explanation
+  const exp=$('lesson-explain');
+  exp.textContent=(correct?'✅ ':'❌ ')+q.explain;
+  exp.className='lesson-explain-bar show';
+  $('lesson-btn-next').style.display='inline-flex';
+  const _l2=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
+  const _lt2=getLessonT(_l2);
+  $('lesson-btn-next').textContent=_lessonState.qi+1>=_lt2.questions.length?s_('lesson_finish'):s_('lesson_next');
+}
+
+function lessonNext(){
+  _lessonState.qi++;
+  renderLessonQuestion();
+}
+
+function lessonComplete(){
+  const lesson=FINANCE_LESSONS.find(l=>l.id===_lessonState.lessonId);
+  if(!lesson) return;
+  const score=_lessonState.score;
+  const lt3=getLessonT(lesson);
+  const total=lt3.questions.length;
+  const pct=Math.round(score/total*100);
+  const alreadyDone=(U.lessonsCompleted||{})[lesson.id];
+
+  // Award coins only first time
+  let earned=0;
+  if(!alreadyDone){
+    earned=Math.round(lesson.reward*(pct/100));
+    U.coins+=earned;
+    if(!U.lessonsCompleted) U.lessonsCompleted={};
+    U.lessonsCompleted[lesson.id]=true;
+    saveU(); updateTopBar();
+  }
+
+  $('lesson-q-card').style.display='none';
+  $('lesson-btn-next').style.display='none';
+  $('lesson-btn-start').style.display='none';
+  $('lesson-prog-fill').style.width='100%';
+  $('lesson-done-title').textContent=pct>=80?s_('lesson_done_great'):pct>=50?s_('lesson_done_good'):s_('lesson_done_keep');
+  $('lesson-done-sub').textContent=s_('lesson_done_score',{s:score,t:total,p:pct})+(alreadyDone?' '+s_('lesson_done_already'):'');
+  $('lesson-done-reward').innerHTML=earned>0?`+${earned} <span class="coin"></span>`:`🏆 ${pct}%`;
+  $('lesson-complete').style.display='block';
+  if(earned>0) confetti();
+}
+
+// ══════════════════════════════════════════════
+// PORTFOLIO SCREEN
+// ══════════════════════════════════════════════
+function renderPortfolio(){
+  if(!U) return;
+  // Safety: ensure all required fields exist (in case of old saved data)
+  if(!U.assets)      U.assets = {};
+  if(!U.assetValues) U.assetValues = {};
+  if(!U.lessonsCompleted) U.lessonsCompleted = {};
+  if(U.investorLevel === undefined) U.investorLevel = 1;
+  if(!U.totalInvested) U.totalInvested = 0;
+  calcDividends();
+  const wealth=getTotalWealth();
+  const daily=getDailyDividend();
+  const invested=U.totalInvested||0;
+  $('wealth-total').innerHTML=`${wealth.toLocaleString()} <span class="coin"></span>`;
+  $('wealth-sub').innerHTML=`+${daily.toFixed(1)} <span class="coin"></span>/j · Patrimoine en croissance constante`;
+  $('pf-coins').innerHTML=Math.floor(U.coins).toLocaleString()+' <span class="coin"></span>';
+  $('pf-div-total').innerHTML=daily.toFixed(1)+' <span class="coin"></span>/j';
+  $('pf-invested').innerHTML=invested.toLocaleString()+' <span class="coin"></span>';
+
+  // Dividend banner
+  const pending=U.pendingDiv||0;
+  const db=$('div-banner');
+  if(pending>=1){
+    db.style.display='flex';
+    $('div-amount').innerHTML=`+${Math.floor(pending)} <span class="coin"></span>`;
+    $('div-banner-sub').innerHTML = t('div_avail') + ' · ' + daily.toFixed(1) + ' <span class="coin"></span>';
+    $('collect-btn').disabled=false;
+  } else { db.style.display='none'; }
+
+  // Investor level bar
+  renderInvestorLevel();
+
+  // Finance Academy
+  renderAcademy();
+
+  // Assets grid
+  const investorLv=getInvestorLevel().level;
+  const grid=$('assets-grid'); grid.innerHTML='';
+  ASSET_DEFS.forEach(a=>{
+    const owned=U.assets[a.id]||0;
+    const unlocked=a.unlockLevel<=investorLv;
+    const base=a.cost*owned;
+    const appreciated=base+(U.assetValues[a.id]||0);
+    const scaledCost=Math.round(a.cost*(1+owned*0.1));
+    const canBuy=U.coins>=scaledCost&&unlocked;
+    const pct=Math.min(100,owned*10);
+    const dailyEarn=(a.cost*owned*a.divRate).toFixed(1);
+    const growthPct=owned>0?((U.assetValues[a.id]||0)/Math.max(base,1)*100).toFixed(1):0;
+    const reqLv=INVESTOR_LEVELS.find(l=>l.level===a.unlockLevel);
+
+    const div=document.createElement('div');
+    div.className=`asset-card ${a.class}${!unlocked?' asset-locked':''}`;
+    div.innerHTML=`
+      ${!unlocked?`<div class="asset-locked-overlay">
+        <div class="asset-locked-icon">🔒</div>
+        <div class="asset-locked-msg">${t('level_investor_req').replace('{n}',a.unlockLevel)}</div>
+      </div>`:''}
+      <div class="asset-card-header">
+        <div class="asset-card-icon">${a.icon}</div>
+        <div class="asset-card-info">
+          <div class="asset-card-name">${a.name} <span class="asset-card-ticker">${a.type}</span></div>
+          <div class="asset-card-real" id="rp-${a.id}">${unlocked?'Chargement…':'—'}</div>
+        </div>
+        <div class="asset-card-right">
+          <div class="asset-card-value">${Math.floor(appreciated).toLocaleString()} <span class="coin"></span></div>
+          <div class="asset-card-sub">${owned>0?`${owned} unité${owned!==1?'s':''} · +${growthPct}%`:`Niv. ${a.unlockLevel}`}</div>
+        </div>
+      </div>
+      ${owned>0?`<div class="asset-card-divbar"><div class="asset-card-divbar-fill ${a.class}" style="width:${pct}%"></div></div>`:''}
+      <div class="asset-card-meta">
+        <span>🌱 ${a.divRate*100}%/j</span>
+        ${owned>0?`<span class="asset-meta-earn">+${dailyEarn} <span class="coin"></span>/j</span>`:''}
+        <span>📈 +${(a.growthRate*100).toFixed(2)}%/j</span>
+      </div>
+      <div class="asset-card-actions">
+        <button class="asset-buy-btn" onclick="buyAsset('${a.id}')" ${!canBuy?'disabled':''}>
+          ${owned===0?t('level_buy_btn'):t('level_add_unit')} <span class="asset-btn-cost">${scaledCost} <span class="coin"></span></span>
+        </button>
+        ${owned>0?`<button class="asset-sell-btn" onclick="sellAsset('${a.id}')">Vendre</button>`:''}
+        <button class="asset-info-btn-sm" onclick="openAssetInfo('${a.id}')">📊</button>
+      </div>
+    `;
+    grid.appendChild(div);
+  });
+
+  // Fetch live prices
+  setTimeout(()=>{ fetchMarketPrices(); updateTarget(); }, 0);
+}
+
+function buyAsset(id){
+  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
+  const investorLv=getInvestorLevel().level;
+  if(a.unlockLevel>investorLv){ toast('🔒 ' + t('level_investor_req',{n:a.unlockLevel})); return; }
+  const owned=U.assets[id]||0;
+  const scaledCost=Math.round(a.cost*(1+owned*0.1));
+  if(U.coins<scaledCost){ toast('❌ ' + t('rp_insufficient')); return; }
+  U.coins-=scaledCost;
+  U.assets[id]=owned+1;
+  U.totalInvested=(U.totalInvested||0)+scaledCost;
+  saveU(); updateTopBar();
+  floatCoin($('assets-grid'),`-${scaledCost} <span class="coin"></span>`);
+  renderPortfolio();
+  toast(`${a.icon} ${a.name} niv.${U.assets[id]} · +${(a.divRate*100).toFixed(1)}%/j`);
+  setTimeout(()=>{ if(typeof checkTrophies==='function') checkTrophies(); }, 400);
+}
+
+function sellAsset(id){
+  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
+  const owned=U.assets[id]||0; if(owned<=0) return;
+  const lastCost=Math.round(a.cost*(1+(owned-1)*0.1));
+  const sellPrice=Math.round(lastCost*0.8);
+  U.coins+=sellPrice;
+  U.assets[id]=owned-1;
+  U.totalInvested=Math.max(0,(U.totalInvested||0)-lastCost);
+  if(U.assetValues[id]) U.assetValues[id]=Math.max(0,U.assetValues[id]-lastCost*0.05);
+  saveU(); updateTopBar();
+  floatCoin($('assets-grid'),`+${sellPrice} <span class="coin"></span>`);
+  renderPortfolio();
+  toast(t('rp_sold_toast') + ' ' + a.name + ' +' + sellPrice + ' D83EDE99');
+}
+
+// ══════════════════════════════════════════════
+// REAL MARKET DATA — 8 assets
+// ══════════════════════════════════════════════
+const MARKET_IDS = {
+  gold:   {source:'yahoo',    ticker:'GC%3DF',  label:'Or / XAU',         unit:'USD/oz'},
+  house:  {source:'yahoo',    ticker:'VNQ',     label:'REIT VNQ',          unit:'USD'},
+  stock:  {source:'yahoo',    ticker:'SPY',     label:'S&P 500 ETF',       unit:'USD'},
+  crypto: {source:'coingecko',cgId:'bitcoin',   label:'Bitcoin / USD',     unit:'USD'},
+  etf:    {source:'yahoo',    ticker:'VT',      label:'ETF Monde VT',      unit:'USD'},
+  bonds:  {source:'yahoo',    ticker:'TLT',     label:'Obligations TLT',   unit:'USD'},
+  oil:    {source:'yahoo',    ticker:'CL%3DF',  label:'Pétrole WTI',       unit:'USD/baril'},
+  nasdaq: {source:'yahoo',    ticker:'QQQ',     label:'Nasdaq 100 QQQ',    unit:'USD'},
+};
+
+const _priceCache={};
+let _lastFetch=0;
+
+async function fetchMarketPrices(){
+  const now=Date.now();
+  if(now-_lastFetch<5*60*1000&&Object.keys(_priceCache).length>0){ updatePriceDisplay(); return; }
+  _lastFetch=now;
+
+  // Bitcoin via CoinGecko
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',{mode:'cors'});
+    if(r.ok){const d=await r.json(); if(d.bitcoin) _priceCache.crypto={price:d.bitcoin.usd,change:d.bitcoin.usd_24h_change};}
+  }catch(e){}
+
+  // Yahoo Finance via allorigins proxy — all other tickers
+  const yahooIds=['gold','house','stock','etf','bonds','oil','nasdaq'];
+  for(const id of yahooIds){
+    const info=MARKET_IDS[id]; if(!info||info.source!=='yahoo') continue;
+    try{
+      const url=`https://query1.finance.yahoo.com/v8/finance/chart/${info.ticker}?interval=1d&range=5d`;
+      const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const r=await fetch(proxy,{signal:AbortSignal.timeout(8000)});
+      if(r.ok){
+        const wrapper=await r.json();
+        const d=JSON.parse(wrapper.contents);
+        const res=d?.chart?.result?.[0];
+        if(res){
+          const price=res.meta.regularMarketPrice;
+          const prev=res.meta.chartPreviousClose||res.meta.previousClose;
+          _priceCache[id]={price, change:prev?((price-prev)/prev*100):0, history:res.indicators?.quote?.[0]?.close||[]};
+        }
+      }
+    }catch(e){}
+  }
+  applyRealPriceGrowth();
+  updatePriceDisplay();
+}
+
+// Drive practice asset appreciation from real market % change
+function applyRealPriceGrowth(){
+  if(!U) return;
+  if(!U._lastRealPrice) U._lastRealPrice={};
+  let changed=false;
+  ASSET_DEFS.forEach(a=>{
+    const owned=U.assets[a.id]||0;
+    const cache=_priceCache[a.id];
+    if(!cache) return;
+    const last=U._lastRealPrice[a.id];
+    if(!last){
+      U._lastRealPrice[a.id]=cache.price;
+      changed=true;
+      return;
     }
-    .nav-back {
-      color:var(--muted); text-decoration:none; font-size:.88rem; font-weight:700;
-      transition:color .2s; display:flex; align-items:center; gap:6px;
+    if(owned>0 && last!==cache.price){
+      const pct=(cache.price-last)/last;
+      const base=a.cost*owned;
+      U.assetValues[a.id]=(U.assetValues[a.id]||0)+base*pct;
+      changed=true;
     }
-    .nav-back:hover { color:var(--text); }
+    U._lastRealPrice[a.id]=cache.price;
+  });
+  if(changed) saveU();
+}
 
-    .page { position:relative; z-index:1; max-width:780px; margin:0 auto; padding:60px 28px 100px; }
+function updatePriceDisplay(){
+  Object.entries(MARKET_IDS).forEach(([id,info])=>{
+    const el=document.getElementById('rp-'+id); if(!el) return;
+    const c=_priceCache[id];
+    if(!c){el.innerHTML=`<span style="color:var(--muted);font-size:.7rem;">prix indisponible</span>`; return;}
+    const chgColor=c.change>=0?'var(--green)':'var(--red)';
+    const chgSign=c.change>=0?'+':'';
+    el.innerHTML=`<span style="font-weight:800;color:var(--text);">$${c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span> <span style="color:${chgColor};font-weight:700;">${chgSign}${c.change.toFixed(2)}% aujourd'hui</span>`;
+  });
+}
 
-    .page-title {
-      font-family:'Fredoka One',cursive;
-      font-size:clamp(1.8rem,5vw,2.8rem);
-      margin-bottom:6px; line-height:1.1;
-    }
-    .page-date { font-size:.8rem; color:var(--muted); font-weight:700; margin-bottom:48px; }
+// ══════════════════════════════════════════════
+// ASSET INFO MODAL
+// ══════════════════════════════════════════════
+let _currentAssetId=null;
 
-    /* Ad */
-    .ad-block { margin:40px 0; text-align:center; }
-    .ad-lbl { font-size:.68rem; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+function openAssetInfo(id){
+  const a=ASSET_DEFS.find(x=>x.id===id); if(!a) return;
+  _currentAssetId=id;
+  const owned=U.assets[id]||0;
+  const base=a.cost*owned;
+  const appreciated=base+(U.assetValues[id]||0);
+  const daily=(a.cost*owned*a.divRate).toFixed(1);
+  const pv=appreciated-base;
 
-    /* Content */
-    h2 {
-      font-family:'Fredoka One',cursive; font-size:1.3rem;
-      margin:44px 0 12px;
-      padding-bottom:8px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    h3 { font-size:1rem; font-weight:900; margin:24px 0 8px; color:var(--accent3); }
-    p { font-size:.9rem; color:var(--muted); margin-bottom:14px; font-weight:600; }
-    ul { margin:0 0 14px 20px; }
-    ul li { font-size:.9rem; color:var(--muted); margin-bottom:6px; font-weight:600; }
-    a { color:var(--accent3); text-decoration:none; }
-    a:hover { text-decoration:underline; }
+  $('amod-icon').textContent=a.icon;
+  $('amod-name').textContent=a.name;
+  $('amod-type').textContent=a.type+' · '+(MARKET_IDS[id]?.label||'');
+  $('amod-owned').textContent=owned+' unité'+(owned!==1?'s':'');
+  $('amod-val').innerHTML=Math.floor(appreciated)+' <span class="coin"></span>';
+  $('amod-daily').innerHTML=daily+' <span class="coin"></span>/j';
+  $('amod-pv').innerHTML=`<span style="color:${pv>=0?'var(--green)':'var(--red)'}">${pv>=0?'+':''}${Math.floor(pv)} <span class="coin"></span></span>`;
+  $('amod-explain').textContent=a.realWhat||a.explain;
 
-    .highlight-box {
-      background:var(--card2); border:1px solid rgba(255,255,255,.07);
-      border-radius:14px; padding:20px 22px; margin:20px 0;
-    }
-    .highlight-box p { margin:0; }
+  // Live price
+  const c=_priceCache[id];
+  if(c){
+    $('amod-price').textContent='$'+c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    $('amod-change').innerHTML=`<span style="color:${c.change>=0?'var(--green)':'var(--red)'}">${c.change>=0?'+':''}${c.change.toFixed(2)}% sur 24h</span>`;
+    $('amod-ticker').textContent=MARKET_IDS[id]?.label||'';
+    // Mini sparkline chart
+    renderSparkline(id, c.history||[]);
+  } else {
+    $('amod-price').textContent='Chargement…';
+    $('amod-change').textContent='';
+    $('amod-ticker').textContent='';
+    fetchMarketPrices().then(()=>{
+      const fresh=_priceCache[id];
+      if(fresh&&_currentAssetId===id){
+        $('amod-price').textContent='$'+fresh.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const cc=fresh.change>=0?'var(--green)':'var(--red)';
+        $('amod-change').innerHTML=`<span style="color:${cc}">${fresh.change>=0?'+':''}${fresh.change.toFixed(2)}% sur 24h</span>`;
+        renderSparkline(id,fresh.history||[]);
+      }
+    });
+  }
 
-    footer {
-      background:rgba(0,0,0,.3); border-top:1px solid rgba(255,255,255,.06);
-      padding:28px 32px; text-align:center;
-      font-size:.78rem; color:var(--muted);
-    }
-    footer a { color:var(--muted); text-decoration:none; margin:0 10px; }
-    footer a:hover { color:var(--text); }
-  </style>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7915647470407065" crossorigin="anonymous"></script>
-</head>
-<body>
+  // Wire buy/sell
+  const scaledCost=Math.round(a.cost*(1+owned*0.1));
+  $('amod-buy-btn').innerHTML=`${t('level_buy_btn')} (${scaledCost})`;
+  $('amod-buy-btn').onclick=()=>{buyAsset(id);openAssetInfo(id);};
+  $('amod-buy-btn').disabled=U.coins<scaledCost||(a.unlockLevel>getInvestorLevel().level);
+  const sellPrice=owned>0?Math.round(a.cost*(1+(owned-1)*0.1)*0.8):0;
+  $('amod-sell-btn').innerHTML=owned>0?`${t('level_sell_btn')} (${sellPrice})`:t('level_sell_btn');
+  $('amod-sell-btn').onclick=()=>{if(owned>0){sellAsset(id);closeAssetModal();}};
+  $('amod-sell-btn').disabled=owned<=0;
 
-<div class="stars" id="stars"></div>
+  $('asset-modal').style.display='flex';
+}
 
-<nav>
-  <a href="landing.html" class="nav-logo">🌍 LQ</a>
-  <a href="landing.html" class="nav-back">← Retour à l'accueil</a>
-</nav>
+function renderSparkline(id, history){
+  // Draw a tiny SVG sparkline inside the modal's price block
+  const container=$('amod-price').parentElement;
+  const existing=container.querySelector('.amod-sparkline');
+  if(existing) existing.remove();
+  const data=history.filter(v=>v!=null);
+  if(data.length<2) return;
+  const w=280,h=40;
+  const min=Math.min(...data),max=Math.max(...data),range=max-min||1;
+  const pts=data.map((v,i)=>{
+    const x=Math.round(i/(data.length-1)*w);
+    const y=Math.round(h-(v-min)/range*h);
+    return `${x},${y}`;
+  }).join(' ');
+  const rising=data[data.length-1]>=data[0];
+  const color=rising?'#10b981':'#ef4444';
+  const svg=document.createElement('div');
+  svg.className='amod-sparkline';
+  svg.style='margin-top:8px;';
+  svg.innerHTML=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px">
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${data.length>1?(data.length-1)/(data.length-1)*w:w}" cy="${h-(data[data.length-1]-min)/range*h}" r="3" fill="${color}"/>
+    <text x="2" y="10" font-size="8" fill="var(--muted)">5j</text>
+  </svg>`;
+  container.appendChild(svg);
+}
 
-<div class="page">
+function closeAssetModal(e){
+  if(!e||e.target===$('asset-modal')){
+    $('asset-modal').style.display='none';
+    _currentAssetId=null;
+  }
+}
 
-  <h1 class="page-title">Politique de confidentialité</h1>
-  <div class="page-date">Dernière mise à jour : mars 2026</div>
-
-  <div class="highlight-box">
-    <p>LinguaQuest est une application d'apprentissage des langues gratuite. Nous prenons la protection de vos données personnelles au sérieux. Cette page explique quelles données nous collectons, pourquoi et comment vous pouvez les contrôler.</p>
-  </div>
-
-  <!-- Ad -->
-  <div class="ad-block">
-    <div class="ad-lbl">Publicité</div>
-
-  </div>
-
-  <h2>1. Responsable du traitement</h2>
-  <p>LinguaQuest est un projet indépendant. Pour toute question relative à vos données personnelles, vous pouvez nous contacter à l'adresse suivante : <a href="/cdn-cgi/l/email-protection#a3c0cccdd7c2c0d7e3cfcacdc4d6c2d2d6c6d0d78dc2d3d3"><span class="__cf_email__" data-cfemail="74171b1a0015170034181d1a13011505011107005a150404">[email&#160;protected]</span></a></p>
-
-  <h2>2. Données que nous collectons</h2>
-
-  <h3>Données de compte</h3>
-  <p>Lors de l'inscription, nous collectons :</p>
-  <ul>
-    <li>Votre prénom ou pseudo</li>
-    <li>Votre adresse email</li>
-    <li>Votre mot de passe (stocké sous forme hachée, jamais en clair)</li>
-  </ul>
-
-  <h3>Données de progression</h3>
-  <p>Pour vous offrir une expérience personnalisée, nous sauvegardons :</p>
-  <ul>
-    <li>Votre progression dans les chapitres et niveaux</li>
-    <li>Vos scores de quiz, votre XP et vos pièces virtuelles</li>
-    <li>Votre portefeuille d'actifs virtuels (or, actions, immobilier, crypto)</li>
-    <li>Vos statistiques de répétition espacée (mots révisés, intervalles)</li>
-    <li>Votre streak (jours consécutifs de connexion)</li>
-    <li>Les trophées débloqués</li>
-  </ul>
-
-  <h3>Données techniques</h3>
-  <p>Comme la plupart des sites web, nous pouvons recevoir automatiquement :</p>
-  <ul>
-    <li>Votre adresse IP</li>
-    <li>Le type et la version de votre navigateur</li>
-    <li>Les pages visitées et la durée des sessions</li>
-  </ul>
-
-  <h2>3. Utilisation des données</h2>
-  <p>Vos données sont utilisées exclusivement pour :</p>
-  <ul>
-    <li>Créer et gérer votre compte</li>
-    <li>Sauvegarder et synchroniser votre progression sur vos appareils</li>
-    <li>Afficher votre classement dans le leaderboard global (uniquement votre pseudo, vos XP et votre streak sont visibles par les autres joueurs)</li>
-    <li>Améliorer les fonctionnalités de l'application</li>
-  </ul>
-  <p>Nous ne vendons jamais vos données à des tiers. Nous ne les utilisons pas à des fins de marketing externe.</p>
-
-  <h2>4. Google AdSense et cookies publicitaires</h2>
-  <p>LinguaQuest utilise Google AdSense pour afficher des publicités. Google AdSense peut utiliser des cookies pour afficher des annonces personnalisées basées sur vos visites sur ce site et d'autres sites.</p>
-  <p>Google, en tant que fournisseur tiers, utilise des cookies pour diffuser des annonces. L'utilisation par Google du cookie DART lui permet de diffuser des annonces à vos utilisateurs en fonction de leur visite sur vos sites et d'autres sites sur Internet.</p>
-  <ul>
-    <li>Vous pouvez désactiver les publicités personnalisées sur la page <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Paramètres des annonces Google</a></li>
-    <li>Vous pouvez également visiter <a href="https://www.aboutads.info/" target="_blank" rel="noopener">aboutads.info</a> pour désactiver les cookies publicitaires de tiers</li>
-  </ul>
-
-  <h2>5. Stockage des données</h2>
-  <p>Vos données de compte et de progression sont stockées sur :</p>
-  <ul>
-    <li><strong>Supabase</strong> (base de données cloud hébergée sur des serveurs en Europe) — pour la synchronisation multi-appareils</li>
-    <li><strong>localStorage</strong> de votre navigateur — pour l'accès hors ligne et les performances</li>
-  </ul>
-
-  <h2>6. Durée de conservation</h2>
-  <p>Vos données sont conservées aussi longtemps que votre compte est actif. Si vous souhaitez supprimer votre compte et toutes les données associées, contactez-nous à <a href="/cdn-cgi/l/email-protection#0665696872676572466a6f68617367777363757228677676"><span class="__cf_email__" data-cfemail="40232f2e34212334002c292e27352131352533346e213030">[email&#160;protected]</span></a>.</p>
-
-  <h2>7. Vos droits (RGPD)</h2>
-  <p>Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez des droits suivants :</p>
-  <ul>
-    <li><strong>Droit d'accès</strong> : demander une copie de vos données personnelles</li>
-    <li><strong>Droit de rectification</strong> : corriger des données inexactes</li>
-    <li><strong>Droit à l'effacement</strong> : demander la suppression de votre compte et de vos données</li>
-    <li><strong>Droit à la portabilité</strong> : recevoir vos données dans un format lisible par machine</li>
-    <li><strong>Droit d'opposition</strong> : vous opposer au traitement de vos données</li>
-  </ul>
-  <p>Pour exercer ces droits, contactez-nous à <a href="/cdn-cgi/l/email-protection#3c5f5352485d5f487c5055525b495d4d49594f48125d4c4c"><span class="__cf_email__" data-cfemail="7615191802171502361a1f18110317070313050258170606">[email&#160;protected]</span></a>. Nous répondons dans un délai de 30 jours.</p>
-
-  <h2>8. Cookies</h2>
-  <p>LinguaQuest utilise les types de cookies suivants :</p>
-  <ul>
-    <li><strong>Cookies fonctionnels</strong> : nécessaires au fonctionnement de l'application (session, préférences de thème, langue d'interface). Ces cookies ne peuvent pas être désactivés sans affecter le fonctionnement de l'application.</li>
-    <li><strong>Cookies publicitaires</strong> : utilisés par Google AdSense pour personnaliser les annonces. Vous pouvez les désactiver via les paramètres de votre navigateur ou les outils mentionnés à la section 4.</li>
-  </ul>
-
-  <h2>9. Protection des mineurs</h2>
-  <p>LinguaQuest est accessible à tous les âges. Nous ne collectons pas sciemment de données personnelles d'enfants de moins de 13 ans. Si vous êtes parent et pensez que votre enfant nous a fourni des données personnelles, contactez-nous pour les supprimer.</p>
-
-  <h2>10. Modifications de cette politique</h2>
-  <p>Nous nous réservons le droit de modifier cette politique de confidentialité. Toute modification sera publiée sur cette page avec une nouvelle date de mise à jour. Nous vous encourageons à consulter régulièrement cette page.</p>
-
-  <h2 id="mentions">11. Mentions légales</h2>
-  <p>LinguaQuest est un projet indépendant à but éducatif.</p>
-  <p>Hébergement : Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, États-Unis.</p>
-  <p>Base de données : Supabase Inc.</p>
-  <p>Contact : <a href="/cdn-cgi/l/email-protection#2d4e4243594c4e596d4144434a584c5c58485e59034c5d5d"><span class="__cf_email__" data-cfemail="c4a7abaab0a5a7b084a8adaaa3b1a5b5b1a1b7b0eaa5b4b4">[email&#160;protected]</span></a></p>
-
-</div>
-
-<footer>
-  <div style="margin-bottom:10px;">
-    <a href="landing.html">Accuei
+// ══════════════════════════════════════════════
+// GLOBAL ENTER KEY
+// ══════════════════════════════════════════════
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Enter') return;
+  const active=document.querySelector('.screen.active');
+  if(!active) return;
+  if(active.id==='screen-game'){
+    const nb=$('btn-next'),cb=$('btn-check');
+    if(nb&&nb.style.display!=='none'){e.preventDefault();nextQ();return;}
+    if(cb&&cb.style.display!=='none'&&S.curType!=='fill'){e.preventDefault();checkCurrentQ();}
+  }
+  if(active.id==='screen-lesson'){
+    const nb=$('lesson-btn-next');
+    if(nb&&nb.style.display!=='none'){e.preventDefault();lessonNext();}
+  }
+});

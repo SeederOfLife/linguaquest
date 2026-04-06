@@ -69,7 +69,7 @@ async function renderMarketNews() {
   const news = await fetchMarketNews();
 
   el.innerHTML = `<div class="news-strip">
-    <div class="news-header">📰 Actualités marché <span style="color:var(--muted);font-weight:400;font-size:.7rem;">• mis à jour 10min</span></div>
+    <div class="news-header">${t('news_title')} <span style="color:var(--muted);font-weight:400;font-size:.7rem;">• 10min</span></div>
     ${news.map(n => `
       <div class="news-item" onclick="${n.link ? `window.open('${n.link}','_blank')` : ''}">
         <div class="news-emoji">${n.emoji}</div>

@@ -1,350 +1,436 @@
 // ══════════════════════════════════════════════════════════════
-// LINGUAQUEST — SPEECH ENGINE  (speech.js)
-// Web Speech API TTS + translation tooltips
+// SOCIAL.JS — Pseudo, Online presence, Messaging, Practice rooms
+//
+// ── NEW SUPABASE SQL (run in dashboard) ──────────────────────
+//
+// -- Messages table
+// CREATE TABLE messages (
+//   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//   from_email TEXT NOT NULL,
+//   to_email   TEXT NOT NULL,
+//   content    TEXT NOT NULL,
+//   read       BOOLEAN DEFAULT false,
+//   created_at TIMESTAMPTZ DEFAULT NOW()
+// );
+// ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "pub_all" ON messages FOR ALL USING (true) WITH CHECK (true);
+//
+// -- Practice rooms table
+// CREATE TABLE practice_rooms (
+//   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//   code TEXT UNIQUE NOT NULL,
+//   host_email TEXT NOT NULL,
+//   host_name  TEXT NOT NULL,
+//   lang_native  TEXT,
+//   lang_target  TEXT,
+//   topic TEXT DEFAULT 'any',
+//   max_players INT DEFAULT 4,
+//   status TEXT DEFAULT 'open',  -- 'open' | 'started' | 'closed'
+//   players JSONB DEFAULT '[]',
+//   created_at TIMESTAMPTZ DEFAULT NOW()
+// );
+// ALTER TABLE practice_rooms ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "pub_all" ON practice_rooms FOR ALL USING (true) WITH CHECK (true);
+//
 // ══════════════════════════════════════════════════════════════
 
-// BCP-47 language codes → browser voice tag
-const SPEECH_LANG_CODES = {
-  fr: 'fr-FR',
-  en: 'en-US',
-  es: 'es-ES',
-  de: 'de-DE',
-  cs: 'cs-CZ',
-};
+// ── PSEUDO SYSTEM ─────────────────────────────────────────────
+let _pseudoCheckTimer = null;
+let _pseudoAvailable = false;
 
-// Extended preferred voice name fragments — covers macOS, iOS, Windows, Android, Chrome
-const VOICE_PREF = {
-  fr: ['Thomas','Amelie','Marie','Julie','Nicolas','Audrey','Virginie',
-       'Google français','Google French','fr-FR'],
-  en: ['Daniel','Karen','Samantha','Alex','Moira','Fiona',
-       'Google US English','Google UK English Female','Google UK English Male',
-       'Microsoft Zira','Microsoft David','en-US','en-GB'],
-  es: ['Monica','Paulina','Diego','Jorge','Soledad',
-       'Google español','Google español de Estados Unidos',
-       'Microsoft Helena','Microsoft Sabina','es-ES','es-MX'],
-  de: ['Anna','Markus','Petra','Yannick',
-       'Google Deutsch','Microsoft Hedda','Microsoft Stefan','de-DE'],
-  cs: ['Zuzana','Google Czech','cs-CZ'],
-};
+function openPseudoModal() {
+  const el = $('pseudo-modal');
+  if (!el) return;
+  const inp = $('pseudo-input');
+  if (inp) inp.value = U.pseudo || '';
+  const msg = $('pseudo-check-msg');
+  if (msg) msg.textContent = U.pseudo ? `@${U.pseudo} · pseudo actuel` : '';
+  el.style.display = 'flex';
+  setTimeout(() => inp?.focus(), 80);
+}
+function closePseudoModal() { const el=$('pseudo-modal');if(el)el.style.display='none'; }
 
-// Cache loaded voices
-let _voices = [];
-
-function _loadVoices() {
-  const v = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  if (v.length) _voices = v;
+function pseudoCheckDebounce() {
+  clearTimeout(_pseudoCheckTimer);
+  _pseudoCheckTimer = setTimeout(checkPseudoAvailability, 400);
 }
 
-if (window.speechSynthesis) {
-  _loadVoices();
-  window.speechSynthesis.onvoiceschanged = _loadVoices;
-  // Retry for Chrome which loads voices async — longer waits for desktop
-  [100, 300, 600, 1000, 2000, 3500].forEach(ms => setTimeout(_loadVoices, ms));
-}
+async function checkPseudoAvailability() {
+  const val = ($('pseudo-input')?.value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  const msg = $('pseudo-check-msg');
+  if (!msg) return;
+  if (!val || val.length < 3) { msg.textContent = 'Minimum 3 caractères'; msg.style.color='var(--muted)'; _pseudoAvailable=false; return; }
+  if (val.length > 20)        { msg.textContent = 'Maximum 20 caractères'; msg.style.color='var(--accent2)'; _pseudoAvailable=false; return; }
+  if (val === U.pseudo)       { msg.textContent = '✅ C\'est ton pseudo actuel'; msg.style.color='var(--green)'; _pseudoAvailable=true; return; }
 
-// Pick best available voice for a language code
-function _pickVoice(lang) {
-  if (!_voices.length) _loadVoices();
-  const code   = SPEECH_LANG_CODES[lang] || lang;
-  const prefix = code.split('-')[0];
-  const prefs  = VOICE_PREF[lang] || [];
-
-  // 1. Try preferred names first (most specific)
-  for (const pref of prefs) {
-    const v = _voices.find(v => v.name.toLowerCase().includes(pref.toLowerCase()));
-    if (v) return v;
-  }
-  // 2. Exact BCP-47 match
-  const exact = _voices.find(v => v.lang === code);
-  if (exact) return exact;
-  // 3. Language prefix match (e.g. fr-CA when fr-FR not available)
-  return _voices.find(v => v.lang.toLowerCase().startsWith(prefix)) || null;
-}
-
-// ── Core TTS ─────────────────────────────────────────────────────
-let _currentUtt = null;
-
-function speakWord(text, lang, opts = {}) {
-  if (!text || !window.speechSynthesis) return;
-  const rate   = opts.rate   !== undefined ? opts.rate   : 0.82;
-  const pitch  = opts.pitch  !== undefined ? opts.pitch  : 1.0;
-  const volume = opts.volume !== undefined ? opts.volume : 1.0;
-
-  const speaker = document.getElementById('lq-speak-icon');
-  const markDone = () => { if (speaker) speaker.classList.remove('speaking'); };
-  if (speaker) speaker.classList.add('speaking');
-
-  window.speechSynthesis.cancel();
-  const utt  = new SpeechSynthesisUtterance(text);
-  utt.lang   = SPEECH_LANG_CODES[lang] || lang || 'fr-FR';
-  utt.rate   = rate;
-  utt.pitch  = pitch;
-  utt.volume = volume;
-  utt.onend  = markDone;
-
-  // Only assign a voice if it actually matches the target language
-  // (prevents a French voice being assigned when no Czech voice is found)
-  const _trySpeak = () => {
-    const targetCode = (SPEECH_LANG_CODES[lang] || lang).split('-')[0].toLowerCase();
-    const v = _pickVoice(lang);
-    if (v && v.lang.toLowerCase().startsWith(targetCode)) {
-      utt.voice = v;
+  msg.textContent = 'Vérification…'; msg.style.color='var(--muted)';
+  try {
+    const { data } = await _SB.from('users').select('email').eq('pseudo', val).maybeSingle();
+    if (data) {
+      msg.textContent = `❌ @${val} déjà pris`; msg.style.color='var(--accent2)'; _pseudoAvailable=false;
+    } else {
+      msg.textContent = `✅ @${val} disponible !`; msg.style.color='var(--green)'; _pseudoAvailable=true;
     }
-    // utt.lang is always set — browser will pick system voice for that language
-    _currentUtt = utt;
-    window.speechSynthesis.speak(utt);
-  };
+  } catch(e) { msg.textContent = 'Erreur de vérification'; }
+}
 
-  // If voices not loaded yet (common on desktop Chrome), wait and retry once
-  if (_voices.length === 0) {
-    _loadVoices();
-    setTimeout(() => { _loadVoices(); _trySpeak(); }, 350);
+async function savePseudo() {
+  const val = ($('pseudo-input')?.value||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if (!_pseudoAvailable && val !== U.pseudo) { toast('❌'); return; }
+  U.pseudo = val;
+  await saveU();
+  const el = $('prof-pseudo');
+  if (el) el.textContent = val ? `@${val}` : '+ Ajouter un pseudo';
+  closePseudoModal();
+  toast('✅ @' + val);
+}
+
+function initPseudoDisplay() {
+  const el = $('prof-pseudo');
+  if (el) el.textContent = U.pseudo ? `@${U.pseudo}` : '+ Ajouter un pseudo';
+}
+
+// ── ONLINE PRESENCE ────────────────────────────────────────────
+let _presenceInterval = null;
+const ONLINE_THRESHOLD = 3 * 60 * 1000; // 3 min
+
+function startPresence() {
+  _updateLastSeen();
+  clearInterval(_presenceInterval);
+  _presenceInterval = setInterval(_updateLastSeen, 60000);
+  // Update on user activity
+  ['click','keydown','touchstart'].forEach(ev =>
+    document.addEventListener(ev, _debouncePresence, { passive: true })
+  );
+}
+
+let _presenceDebounce = null;
+function _debouncePresence() {
+  clearTimeout(_presenceDebounce);
+  _presenceDebounce = setTimeout(_updateLastSeen, 5000);
+}
+
+async function _updateLastSeen() {
+  if (!U || U.isGuest) return;
+  U.lastSeen = Date.now();
+  // Lightweight update — just save lastSeen
+  try {
+    await _SB.from('users').update({ data: U, updated_at: new Date().toISOString() })
+      .eq('email', U.email);
+  } catch(e) {}
+}
+
+function isOnline(lastSeen) {
+  if (!lastSeen) return false;
+  return Date.now() - lastSeen < ONLINE_THRESHOLD;
+}
+
+function onlineDot(lastSeen) {
+  const online = isOnline(lastSeen);
+  if (!online) return '';
+  return `<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:var(--green);border-radius:50%;border:2px solid var(--card);z-index:1;"></div>`;
+}
+
+function onlineLabel(lastSeen) {
+  if (!lastSeen) return '';
+  if (isOnline(lastSeen)) return '<span style="color:var(--green);font-size:.68rem;font-weight:800;">● En ligne</span>';
+  const diff = Math.floor((Date.now() - lastSeen) / 60000);
+  if (diff < 60)   return `<span style="color:var(--muted);font-size:.68rem;">vu il y a ${diff}min</span>`;
+  if (diff < 1440) return `<span style="color:var(--muted);font-size:.68rem;">vu il y a ${Math.floor(diff/60)}h</span>`;
+  return `<span style="color:var(--muted);font-size:.68rem;">vu il y a ${Math.floor(diff/1440)}j</span>`;
+}
+
+// ── MESSAGING ─────────────────────────────────────────────────
+let _activeChatEmail = null;
+let _msgSubscription = null;
+let _unreadCache = {};
+
+function openChat(friendEmail, friendName) {
+  _activeChatEmail = friendEmail;
+  const modal = $('chat-modal');
+  if (!modal) return;
+  $('chat-friend-name').textContent = friendName || friendEmail;
+  $('chat-messages').innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.8rem;">Chargement…</div>';
+  modal.style.display = 'flex';
+  loadMessages(friendEmail);
+  markMessagesRead(friendEmail);
+  // Subscribe to real-time new messages
+  _subscribeToMessages(friendEmail);
+  setTimeout(() => $('chat-input')?.focus(), 100);
+}
+
+function closeChat() {
+  $('chat-modal').style.display = 'none';
+  _activeChatEmail = null;
+  if (_msgSubscription) { _SB.removeChannel(_msgSubscription); _msgSubscription = null; }
+}
+
+async function loadMessages(friendEmail) {
+  const el = $('chat-messages');
+  if (!el) return;
+  try {
+    const { data } = await _SB.from('messages')
+      .select('*')
+      .or(`and(from_email.eq.${U.email},to_email.eq.${friendEmail}),and(from_email.eq.${friendEmail},to_email.eq.${U.email})`)
+      .order('created_at', { ascending: true })
+      .limit(50);
+
+    if (!data || !data.length) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:.8rem;">Aucun message — dis bonjour ! 👋</div>';
+      return;
+    }
+    el.innerHTML = data.map(m => _msgBubble(m)).join('');
+    el.scrollTop = el.scrollHeight;
+  } catch(e) { console.error('loadMessages', e); }
+}
+
+function _msgBubble(m) {
+  const mine = m.from_email === U.email;
+  const time = new Date(m.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+  return `<div class="msg-bubble-wrap ${mine ? 'mine' : 'theirs'}">
+    <div class="msg-bubble ${mine ? 'msg-mine' : 'msg-theirs'}">${_escapeHtml(m.content)}</div>
+    <div class="msg-time">${time}</div>
+  </div>`;
+}
+
+function _escapeHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function _subscribeToMessages(friendEmail) {
+  if (_msgSubscription) _SB.removeChannel(_msgSubscription);
+  _msgSubscription = _SB
+    .channel('messages-' + U.email)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'messages',
+      filter: `to_email=eq.${U.email}`
+    }, payload => {
+      if (payload.new.from_email === _activeChatEmail) {
+        const el = $('chat-messages');
+        if (el) {
+          el.insertAdjacentHTML('beforeend', _msgBubble(payload.new));
+          el.scrollTop = el.scrollHeight;
+        }
+        markMessagesRead(_activeChatEmail);
+      } else {
+        // Notification for message from someone else
+        _unreadCache[payload.new.from_email] = (_unreadCache[payload.new.from_email]||0)+1;
+        _updateUnreadBadge();
+      }
+    })
+    .subscribe();
+}
+
+async function sendMessage() {
+  const inp = $('chat-input');
+  const content = (inp?.value||'').trim();
+  if (!content || !_activeChatEmail) return;
+  inp.value = '';
+  try {
+    const msg = { from_email: U.email, to_email: _activeChatEmail, content };
+    const { data } = await _SB.from('messages').insert(msg).select().single();
+    if (data) {
+      const el = $('chat-messages');
+      if (el) { el.insertAdjacentHTML('beforeend', _msgBubble(data)); el.scrollTop = el.scrollHeight; }
+    }
+  } catch(e) { toast('❌'); inp.value = content; }
+}
+
+async function markMessagesRead(fromEmail) {
+  try {
+    await _SB.from('messages').update({ read: true })
+      .eq('to_email', U.email).eq('from_email', fromEmail).eq('read', false);
+    delete _unreadCache[fromEmail];
+    _updateUnreadBadge();
+  } catch(e) {}
+}
+
+async function loadUnreadCounts() {
+  if (!U || U.isGuest) return;
+  try {
+    const { data } = await _SB.from('messages')
+      .select('from_email').eq('to_email', U.email).eq('read', false);
+    _unreadCache = {};
+    (data||[]).forEach(m => { _unreadCache[m.from_email] = (_unreadCache[m.from_email]||0)+1; });
+    _updateUnreadBadge();
+  } catch(e) {}
+}
+
+function getUnread(email) { return _unreadCache[email] || 0; }
+
+function _updateUnreadBadge() {
+  const total = Object.values(_unreadCache).reduce((s,n)=>s+n,0);
+  const tab = $('rank-tab-friends');
+  if (!tab) return;
+  if (total > 0) {
+    tab.innerHTML = `👥 Amis <span style="background:var(--accent2);color:#fff;border-radius:10px;padding:1px 7px;font-size:.65rem;margin-left:4px;">${total}</span>`;
   } else {
-    _trySpeak();
+    tab.innerHTML = '👥 Amis';
   }
 }
 
-// Speak the current exercise question (native lang) + correct answer (target lang)
-function speakQuestion(wordId) {
-  if (!S || !wordId || !WD[wordId]) return;
-  const text = WD[wordId][S.nL];
-  if (text) speakWord(text, S.nL, { rate: 0.85 });
+// ── PRACTICE ROOMS ────────────────────────────────────────────
+let _roomsInterval = null;
+
+function _randRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:5}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
 }
 
-function speakAnswer(text, lang) {
-  // Small delay so it doesn't fire simultaneously with user interaction
-  setTimeout(() => speakWord(text, lang || S.tL, { rate: 0.78 }), 220);
+async function createPracticeRoom() {
+  if (!U || U.isGuest) { toast('❌ Connecte-toi d\'abord'); return; }
+  if (!S.nL || !S.tL) { toast('Choisis une langue d\'abord'); navTo('learn'); return; }
+  const code = _randRoomCode();
+  const topicEl = $('room-topic-select');
+  const topic = topicEl?.value || 'any';
+  try {
+    const { error } = await _SB.from('practice_rooms').insert({
+      code, host_email: U.email, host_name: U.name,
+      lang_native: S.nL, lang_target: S.tL, topic,
+      players: JSON.stringify([{ email: U.email, name: U.name, ready: false }]),
+      status: 'open',
+    });
+    if (error) throw error;
+    toast('🏠 ' + code);
+    navigator.clipboard?.writeText(code).catch(()=>{});
+    loadPracticeRooms();
+    renderMyRoom(code);
+  } catch(e) { toast('❌'); console.error(e); }
 }
 
-// speakResult disabled — was too annoying after every answer
-function speakResult(correct, lang) { /* disabled */ }
+async function joinPracticeRoom() {
+  const code = ($('room-code-input')?.value||'').trim().toUpperCase();
+  if (code.length !== 5) { toast('❌ 5'); return; }
+  try {
+    const { data, error } = await _SB.from('practice_rooms').select('*').eq('code',code).single();
+    if (error || !data) { toast('❌'); return; }
+    if (data.status !== 'open') { toast('❌'); return; }
 
-// ── Tooltip ──────────────────────────────────────────────────────
-let _tooltipTimer = null;
+    const players = JSON.parse(data.players||'[]');
+    if (players.length >= data.max_players) { toast('❌'); return; }
+    if (players.find(p=>p.email===U.email)) { toast('✅'); renderMyRoom(code); return; }
 
-function showWordTooltip(anchorEl, wordId, displayLang, nativeLang) {
-  removeWordTooltip();
-  if (!wordId || !WD[wordId]) return;
+    players.push({ email: U.email, name: U.name, ready: false });
+    await _SB.from('practice_rooms').update({ players: JSON.stringify(players) }).eq('code', code);
 
-  const word    = WD[wordId];
-  const tLang   = displayLang || (window.S && S.tL) || 'en';
-  const nLang   = nativeLang  || (window.S && S.nL) || 'fr';
-  const tText   = word[tLang]  || '';
-  const nText   = word[nLang]  || '';
-  const tFlag   = (LANGS && LANGS[tLang] && LANGS[tLang].flag) || '';
-  const nFlag   = (LANGS && LANGS[nLang] && LANGS[nLang].flag) || '';
-
-  const tip = document.createElement('div');
-  tip.id = 'lq-word-tip';
-  tip.className = 'lq-word-tip';
-  tip.innerHTML = `
-    <div class="lq-tip-row lq-tip-target">
-      <span class="lq-tip-flag">${tFlag}</span>
-      <span class="lq-tip-word">${tText}</span>
-      <button class="lq-tip-speak" onclick="speakWord('${tText.replace(/'/g,"\\'")}','${tLang}')" title="Écouter">🔊</button>
-    </div>
-    <div class="lq-tip-divider"></div>
-    <div class="lq-tip-row lq-tip-native">
-      <span class="lq-tip-flag">${nFlag}</span>
-      <span class="lq-tip-trans">${nText}</span>
-      <button class="lq-tip-speak lq-tip-speak-native" onclick="speakWord('${nText.replace(/'/g,"\\'")}','${nLang}')" title="Écouter">🔊</button>
-    </div>
-  `;
-
-  document.body.appendChild(tip);
-  _positionTooltip(tip, anchorEl);
-
-  // Auto-dismiss after 4 seconds
-  _tooltipTimer = setTimeout(removeWordTooltip, 4000);
-
-  // Click outside = dismiss
-  setTimeout(() => document.addEventListener('click', _outsideTooltipHandler, { once: true }), 50);
+    S.nL = data.lang_native;
+    S.tL = data.lang_target;
+    toast('✅ ' + code);
+    renderMyRoom(code);
+  } catch(e) { toast('❌'); console.error(e); }
 }
 
-function _outsideTooltipHandler(e) {
-  const tip = document.getElementById('lq-word-tip');
-  if (tip && !tip.contains(e.target)) removeWordTooltip();
+async function loadPracticeRooms() {
+  const el = $('rooms-list');
+  if (!el) return;
+  try {
+    const { data } = await _SB.from('practice_rooms')
+      .select('*').eq('status','open')
+      .order('created_at',{ascending:false}).limit(10);
+
+    if (!data || !data.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:16px;">Aucun salon ouvert — crée le premier !</div>';
+      return;
+    }
+    el.innerHTML = data.map(r => _roomCard(r)).join('');
+  } catch(e) { console.error('loadPracticeRooms',e); }
 }
 
-function removeWordTooltip() {
-  clearTimeout(_tooltipTimer);
-  const tip = document.getElementById('lq-word-tip');
-  if (tip) {
-    tip.classList.add('lq-tip-hide');
-    setTimeout(() => tip.remove(), 200);
-  }
+function _roomCard(r) {
+  const players = JSON.parse(r.players||'[]');
+  const nFlag = LANGS[r.lang_native]?.flag || r.lang_native || '?';
+  const tFlag = LANGS[r.lang_target]?.flag || r.lang_target || '?';
+  const isMine = r.host_email === U?.email;
+  return `
+    <div class="room-card">
+      <div class="room-card-left">
+        <div class="room-card-host">${r.host_name}</div>
+        <div class="room-card-meta">${nFlag} → ${tFlag} · ${players.length}/${r.max_players} joueurs</div>
+        <div class="room-players">${players.map(p=>`<span class="room-player-chip">${p.name.charAt(0).toUpperCase()}</span>`).join('')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <div class="room-code-badge">${r.code}</div>
+        ${isMine
+          ? `<button class="btn btn-sm btn-primary" onclick="startRoomGame('${r.code}')">▶ Lancer</button>`
+          : `<button class="btn btn-sm btn-primary" onclick="joinRoomDirectly('${r.code}')">Rejoindre</button>`}
+      </div>
+    </div>`;
 }
 
-function _positionTooltip(tip, anchor) {
-  const rect = anchor.getBoundingClientRect();
-  const scrollY = window.scrollY || 0;
-  const tipW = 210;
-  const gap = 10;
-
-  let left = rect.left + rect.width / 2 - tipW / 2;
-  let top  = rect.top + scrollY - 90 - gap;
-
-  // Keep inside viewport
-  if (left < 8) left = 8;
-  if (left + tipW > window.innerWidth - 8) left = window.innerWidth - tipW - 8;
-  if (top < scrollY + 10) top = rect.bottom + scrollY + gap;
-
-  tip.style.left = left + 'px';
-  tip.style.top  = top  + 'px';
+async function joinRoomDirectly(code) {
+  if ($('room-code-input')) $('room-code-input').value = code;
+  await joinPracticeRoom();
 }
 
-// ── Unified click handler for vocab elements ─────────────────────
-// Called from game.js on any word element that has data-wid + data-lang
-function onWordClick(el, e) {
-  if (e) e.stopPropagation();
-  const wordId = el.dataset.wid;
-  const lang   = el.dataset.lang || (window.S && S.tL) || 'fr';
-  const nLang  = (window.S && S.nL) || 'fr';
-
-  if (!wordId || !WD[wordId]) {
-    // No word ID — just speak the text content
-    const text = el.textContent.trim();
-    if (text) speakWord(text, lang);
-    return;
-  }
-
-  const text = WD[wordId][lang] || el.textContent.trim();
-  speakWord(text, lang);
-  showWordTooltip(el, wordId, lang, nLang);
+async function startRoomGame(code) {
+  try {
+    await _SB.from('practice_rooms').update({ status: 'started' }).eq('code', code);
+    // Launch a practice game with current lang pair
+    if (typeof startPractice === 'function') startPractice();
+    toast('🎮');
+    switchRankTab('duels');
+  } catch(e) { toast('❌'); }
 }
 
-// ── Speaker icon in question area ────────────────────────────────
-function renderSpeakIcon(containerId, text, lang) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  // Remove existing icon
-  const old = container.querySelector('.lq-speak-icon-btn');
-  if (old) old.remove();
-
-  if (!text || !window.speechSynthesis) return;
-
-  const btn = document.createElement('button');
-  btn.className = 'lq-speak-icon-btn';
-  btn.id = 'lq-speak-icon';
-  btn.title = 'Écouter la prononciation';
-  btn.innerHTML = '🔊';
-  btn.onclick = (e) => {
-    e.stopPropagation();
-    speakWord(text, lang);
-    btn.classList.add('speaking');
-    setTimeout(() => btn.classList.remove('speaking'), 1500);
-  };
-  container.appendChild(btn);
+function renderMyRoom(code) {
+  const el = $('my-room-zone');
+  if (!el) return;
+  el.style.display = '';
+  el.innerHTML = `
+    <div class="room-card" style="border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05);">
+      <div class="room-card-left">
+        <div style="font-weight:900;font-size:.88rem;color:var(--green);">🏠 Mon salon actif</div>
+        <div class="room-code-badge" style="margin-top:6px;font-size:1.1rem;letter-spacing:3px;">${code}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">Partage ce code !</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="btn btn-sm btn-primary" onclick="startRoomGame('${code}')">▶ Lancer</button>
+        <button class="btn btn-sm btn-secondary" onclick="copyRoomCode('${code}')">📋 Copier</button>
+      </div>
+    </div>`;
 }
 
-// ── Inject CSS ────────────────────────────────────────────────────
-(function injectSpeechCSS() {
-  const style = document.createElement('style');
-  style.textContent = `
-/* ── WORD TOOLTIP ── */
-.lq-word-tip {
-  position: absolute;
-  z-index: 9999;
-  background: var(--card, #26262b);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 14px;
-  padding: 10px 13px;
-  width: 210px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5);
-  animation: lqTipIn .18s cubic-bezier(.34,1.56,.64,1);
-  pointer-events: auto;
-}
-.lq-word-tip.lq-tip-hide {
-  animation: lqTipOut .18s ease forwards;
-}
-@keyframes lqTipIn  { from { opacity:0; transform:translateY(6px) scale(.94); } to { opacity:1; transform:none; } }
-@keyframes lqTipOut { to   { opacity:0; transform:translateY(4px) scale(.96); } }
-
-.lq-tip-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.lq-tip-target { margin-bottom: 2px; }
-.lq-tip-flag   { font-size: 1.1rem; flex-shrink: 0; }
-.lq-tip-word   { font-weight: 900; font-size: .97rem; color: var(--text, #fff); flex: 1; }
-.lq-tip-trans  { font-size: .82rem; color: var(--muted, #8c8c99); flex: 1; font-weight: 600; }
-.lq-tip-divider{
-  height: 1px;
-  background: rgba(255,255,255,.08);
-  margin: 6px 0;
-}
-.lq-tip-speak {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 2px 4px;
-  border-radius: 6px;
-  line-height: 1;
-  transition: transform .15s;
-  opacity: .7;
-}
-.lq-tip-speak:hover { opacity: 1; transform: scale(1.2); }
-.lq-tip-speak-native { font-size: .85rem; }
-
-/* ── SPEAKER BUTTON in question ── */
-.lq-speak-icon-btn {
-  background: none;
-  border: 1.5px solid rgba(255,255,255,.12);
-  border-radius: 50%;
-  width: 34px; height: 34px;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-left: 8px;
-  vertical-align: middle;
-  transition: all .2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--text, #fff);
-  opacity: .75;
-}
-.lq-speak-icon-btn:hover  { opacity: 1; border-color: var(--accent, #e07b39); transform: scale(1.1); }
-.lq-speak-icon-btn.speaking {
-  opacity: 1;
-  border-color: var(--accent, #e07b39);
-  animation: lqSpeaking .6s ease-in-out infinite alternate;
-}
-@keyframes lqSpeaking {
-  from { box-shadow: 0 0 0 0 rgba(224,123,57,.4); }
-  to   { box-shadow: 0 0 0 8px rgba(224,123,57,0); }
+function copyRoomCode(code) {
+  navigator.clipboard?.writeText(code).then(()=>toast('✅ ' + code)).catch(()=>toast(code));
 }
 
-/* ── WORD TOKEN clickable feedback ── */
-.word-token[data-wid]:active,
-.match-item[data-wid]:active,
-.answer-btn[data-wid]:active {
-  transform: scale(.96);
+function stopRoomsRefresh() { clearInterval(_roomsInterval); }
+
+function initRoomsRefresh() {
+  loadPracticeRooms();
+  clearInterval(_roomsInterval);
+  _roomsInterval = setInterval(loadPracticeRooms, 15000);
 }
 
-/* ── Q-text row with speaker ── */
-.q-text-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
+// ── HELPERS ───────────────────────────────────────────────────
+function chatKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
 
-/* ── TTS unavailable notice ── */
-.lq-no-tts {
-  font-size: .7rem;
-  color: var(--muted, #8c8c99);
-  text-align: center;
-  margin-top: 4px;
-  display: none;
+function selectRoomTopic(btn) {
+  document.querySelectorAll('#room-topic-select .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
-  `;
-  document.head.appendChild(style);
-})();
 
-// ── TTS availability check ────────────────────────────────────────
-const TTS_AVAILABLE = !!window.speechSynthesis;
+// ── BOOT HOOK ─────────────────────────────────────────────────
+// Call this from afterLogin / boot.js
+function initSocial() {
+  if (!U || U.isGuest) return;
+  initPseudoDisplay();
+  startPresence();
+  loadUnreadCounts();
+  // Subscribe to incoming messages globally
+  _SB.channel('inbox-' + U.email)
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'messages',
+      filter: `to_email=eq.${U.email}`
+    }, payload => {
+      if (payload.new.from_email !== _activeChatEmail) {
+        _unreadCache[payload.new.from_email] = (_unreadCache[payload.new.from_email]||0)+1;
+        _updateUnreadBadge();
+        // Show a subtle toast
+        toast('💬');
+      }
+    })
+    .subscribe();
+}

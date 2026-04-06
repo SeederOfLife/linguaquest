@@ -1,818 +1,347 @@
+// ══════════════════════════════════════════════════════════════
+// FRIENDS.JS — Friend requests, friend list, duel invite
+//
+// Supabase SQL (run once in dashboard):
+// CREATE TABLE friendships (
+//   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//   requester_email TEXT NOT NULL,
+//   receiver_email  TEXT NOT NULL,
+//   status TEXT DEFAULT 'pending',  -- 'pending' | 'accepted' | 'declined'
+//   created_at TIMESTAMPTZ DEFAULT NOW(),
+//   UNIQUE(requester_email, receiver_email)
+// );
+// ALTER TABLE friendships ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "pub_read"   ON friendships FOR SELECT USING (true);
+// CREATE POLICY "pub_insert" ON friendships FOR INSERT WITH CHECK (true);
+// CREATE POLICY "pub_update" ON friendships FOR UPDATE USING (true);
+// ══════════════════════════════════════════════════════════════
 
-// ==============================================================
-// TTS ENGINE — multi-language, robust voice loading
-// ==============================================================
+let _friendsSearchTimer = null;
+let _friendsCache = null;
+let _pendingCache  = null;
 
-const _LANG_BCP = {fr:'fr-FR', en:'en-US', es:'es-ES', de:'de-DE', cs:'cs-CZ'};
-
-// Extended voice name fragments — covers macOS, iOS, Windows, Android, Chrome
-const _LANG_VOICES = {
-  fr: ['Thomas','Amelie','Marie','Julie','Nicolas','Audrey','Virginie',
-       'Google français','Google French','fr-FR','Français'],
-  en: ['Daniel','Karen','Samantha','Alex','Moira','Veena','Fiona',
-       'Google US English','Google UK English Female','Google UK English Male',
-       'Microsoft Zira','Microsoft David','Microsoft Mark',
-       'en-US','en-GB','English'],
-  es: ['Monica','Paulina','Diego','Jorge','Juan','Soledad','Rosa',
-       'Google español','Google español de Estados Unidos',
-       'Microsoft Helena','Microsoft Sabina','Microsoft Raul',
-       'es-ES','es-MX','Spanish'],
-  de: ['Anna','Markus','Petra','Yannick','Hedda',
-       'Google Deutsch','Microsoft Hedda','Microsoft Stefan',
-       'de-DE','Deutsch','German'],
-  cs: ['Zuzana','Google Czech','cs-CZ','Czech'],
-};
-
-let _voiceCache = [];
-let _voiceLoadAttempts = 0;
-
-function _getVoices() {
-  if (_voiceCache.length) return _voiceCache;
-  if (window.speechSynthesis) {
-    const v = window.speechSynthesis.getVoices();
-    if (v.length) { _voiceCache = v; }
-  }
-  return _voiceCache;
+// ── RENDER MAIN SCREEN ────────────────────────────────────────
+async function renderFriendsScreen() {
+  await Promise.all([_loadFriends(), _loadPending()]);
+  if (typeof loadUnreadCounts === 'function') loadUnreadCounts();
+  if (typeof initRoomsRefresh === 'function') initRoomsRefresh();
 }
 
-// Robust init: Chrome needs onvoiceschanged; Safari/Firefox load sync
-if (window.speechSynthesis) {
-  const _initVoices = () => {
-    const v = window.speechSynthesis.getVoices();
-    if (v.length) _voiceCache = v;
-  };
-  _initVoices();
-  window.speechSynthesis.onvoiceschanged = _initVoices;
-  // Retry a few times in case Chrome is slow
-  [100, 300, 600, 1200].forEach(ms =>
-    setTimeout(() => { if (!_voiceCache.length) _initVoices(); }, ms)
-  );
+// ── SEARCH ────────────────────────────────────────────────────
+function friendsSearchDebounce() {
+  clearTimeout(_friendsSearchTimer);
+  _friendsSearchTimer = setTimeout(friendsSearch, 500);
 }
 
-function _pickVoice(lang) {
-  const bcp    = _LANG_BCP[lang] || 'en-US';
-  const prefix = bcp.split('-')[0];   // e.g. 'en', 'fr'
-  const prefs  = _LANG_VOICES[lang] || [];
-  const voices = _getVoices();
-  if (!voices.length) return null;
+async function friendsSearch() {
+  const query = ($('friends-search-input')?.value || '').trim().toLowerCase();
+  const el = $('friends-search-result');
+  if (!el) return;
+  if (!query || query.length < 3) { el.innerHTML = ''; return; }
 
-  // 1. Preferred name fragments (most specific)
-  for (const pref of prefs) {
-    const v = voices.find(v => v.name.toLowerCase().includes(pref.toLowerCase()));
-    if (v) return v;
-  }
-  // 2. Exact BCP-47 match (e.g. 'fr-FR')
-  const exact = voices.find(v => v.lang === bcp);
-  if (exact) return exact;
-  // 3. Language prefix match (e.g. 'fr-CA' when 'fr-FR' absent)
-  const byPrefix = voices.find(v => v.lang.toLowerCase().startsWith(prefix));
-  if (byPrefix) return byPrefix;
-  // 4. Nothing found — let browser decide via utt.lang
-  return null;
-}
+  el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:10px;">Recherche…</div>';
 
-// ── TTS SPEAK ─────────────────────────────────────────────────
-// For fr/en: use best native OS voice (always installed)
-// For cs/de/es: set lang ONLY — Chrome uses its cloud TTS (correct accent)
-// Never assign a voice for cs/de/es — wrong voice is worse than no voice
-
-function _speak(text, lang, rate, onEnd) {
-  if (!text || !window.speechSynthesis) { if (onEnd) onEnd(); return; }
-  window.speechSynthesis.cancel();
-
-  const utt    = new SpeechSynthesisUtterance(text);
-  const bcp    = _LANG_BCP[lang] || 'fr-FR';
-  utt.lang     = bcp;
-  utt.rate     = rate || 0.82;
-  utt.volume   = 1.0;
-
-  // Only assign a voice for fr/en — for cs/de/es just set lang and
-  // let Chrome/Safari pick the correct cloud voice automatically
-  if (lang === 'fr' || lang === 'en') {
-    const v = _pickVoice(lang);
-    if (v) utt.voice = v;
-  }
-  // For cs/de/es: utt.lang = 'cs-CZ'/'de-DE'/'es-ES' with no utt.voice
-  // → browser uses its built-in cloud TTS for that language
-
-  if (onEnd) { utt.onend = onEnd; utt.onerror = onEnd; }
-  window.speechSynthesis.speak(utt);
-}
-
-function _speakThenUnlock(text, lang) {
-  const btn = $('btn-next');
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; }
-  if (!window.speechSynthesis || !text) {
-    setTimeout(() => { if(btn){btn.disabled=false;btn.style.opacity='';} }, 400);
-    return;
-  }
-  let unlocked = false;
-  const unlock = () => {
-    if (unlocked) return; unlocked = true;
-    if (btn) { btn.disabled=false; btn.style.opacity=''; btn.classList.add('voice-ready'); setTimeout(()=>btn.classList.remove('voice-ready'),600); }
-  };
-  setTimeout(unlock, 3500);
-  _speak(text, lang, 0.78, unlock);
-}
-
-function _speakClick(text, lang) {
-  _speak(text, lang, 0.85, null);
-}
-
-// ==============================================
-// GAME ENGINE
-// ==============================================
-function wt(id,lang){return WD[id]?.[lang]||id;}
-function getCh(){
-  // DIY lesson path
-  if(S._diyLesson){
-    const d=S._diyLesson;
-    const wids=d.pairs.map((p,i)=>{
-      const id='_diy_'+i;
-      // Inject into WD so wt() can find it
-      if(!WD[id]) WD[id]={};
-      WD[id][S.nL]=p.native;
-      WD[id][S.tL]=p.target;
-      if(p.imgUrl) WD[id]._img=p.imgUrl;
-      return id;
+  try {
+    // Search by partial email match
+    // Search by email OR pseudo
+    const { data: byEmail } = await _SB.from('users').select('data').ilike('email', `%${query}%`).limit(3);
+    const { data: byPseudo } = await _SB.from('users').select('data').ilike('pseudo', `%${query}%`).limit(3);
+    const seen = new Set();
+    const allData = [...(byEmail||[]), ...(byPseudo||[])].filter(r => {
+      if (!r.data || seen.has(r.data.email)) return false;
+      seen.add(r.data.email); return true;
     });
-    return {id:'_diy',title:{},wids,sents:{fr:[],en:[],es:[],de:[],cs:[]}};
-  }
-  return (CHAPTERS[S.level]||[]).find(c=>c.id===S.chap);
-}
+    const data = allData; const error = null;
 
-function startGame(type){
-  S.gType=type;S.score=0;S.cor=0;S.wr=0;S.qi=0;
-  S.ts={quiz:{c:0,w:0},fill:{c:0,w:0},match:{c:0,w:0},sort:{c:0,w:0}};
-  const ch=getCh();if(!ch)return;
-  if(type==='match'){startMatchSA(ch);return;}
-  S.qs=type==='mixed'?buildMixed(ch):type==='quiz'?buildQuizOnly(ch):buildFillOnly(ch);
-  S.qi=0;goTo('game');renderQ();
-  if(U){U.sessions=(U.sessions||0)+1;saveU();}
-}
-function buildMixed(ch){
-  const gramIntro = buildGramIntro(ch);
-  const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','quiz','fill','match4','photo','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
-function buildQuizOnly(ch){return shuf([...ch.wids]).slice(0,8).map(id=>mkQQ(id,ch.wids));}
-function buildFillOnly(ch){return shuf([...ch.wids]).slice(0,6).map(id=>mkFQ(id));}
-function mkQQ(id,all){const q=wt(id,S.nL),cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));const imgUrl=WD[id]?._img||undefined;return{type:'quiz',q,correct:cor,choices:shuf([cor,...wr]),imgUrl};}
-function mkFQ(id){const imgUrl=WD[id]?._img||undefined;return{type:'fill',q:wt(id,S.nL),correct:wt(id,S.tL),imgUrl};}
-function mkSQ(sent,nSent){return{type:'sort',q:nSent,correct:sent,words:sent.split(' ')};}
-function mkMQ(ids){return{type:'match',ids};}
-
-function startMatchSA(ch){S.mPairs=shuf([...ch.wids]).slice(0,6);S.mSel=null;S.mDone=0;S.mTotal=S.mPairs.length;S.mEmbed=false;goTo('game');setTypePill('match');showZone('match');sT('g-text',t('game_match_title'));sT('g-dir',dirLbl());sT('g-num','');sT('g-hint',t('game_match_hint'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(S.mPairs);sT('match-prog-txt',`0/${S.mTotal}`);$('g-progress').style.width='0%';sT('g-score',0);hideFB();hideAllBtns();showBtn('btn-skip');startTimer(60);}
-
-function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi];S.curQ=q;S.curType=q.type;const tot=S.qs.length;$('g-progress').style.width=`${(S.qi/tot)*100}%`;sT('g-dir',dirLbl());sT('g-num',`${S.qi+1} / ${tot}`);sT('g-hint','');hideFB();hideAllBtns();setTypePill(q.type);showZone(q.type);$('fuzzy-note').style.display='none';
-// Show image if available (DIY lessons with imgUrl)
-const imgWrap=$('g-img-wrap'),imgEl=$('g-img');
-if(imgWrap&&imgEl){if(q.imgUrl){imgEl.src=q.imgUrl;imgWrap.style.display='block';imgEl.onerror=()=>{imgWrap.style.display='none';};}else{imgWrap.style.display='none';imgEl.src='';}}
-if(q.type==='gram_tip')renderGramTip(q);else if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='write')renderWriteQ(q);else if(q.type==='speak')renderSpeakQ(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);
-  if(typeof patchWordLookup==='function') patchWordLookup();}
-function renderQuiz(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
-function renderFill(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
-function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text',t('game_match_title'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
-function renderSort(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);S.sortArr=[];const bank=$('word-bank');bank.innerHTML='';shuf([...q.words]).forEach(w=>{const t=document.createElement('div');t.className='word-token';t.textContent=w;t.onclick=()=>{_speakClick(w,S.tL);addSort(w,t);};bank.appendChild(t);});$('sentence-slots').innerHTML='<span class="slot-placeholder">'+t('slot_placeholder')+'</span>';showBtn('btn-check');showBtn('btn-reset');startTimer(30);}
-
-function renderMatchCols(ids){const ls=shuf(ids.map(id=>({id,text:wt(id,S.nL)}))),rs=shuf(ids.map(id=>({id,text:wt(id,S.tL)})));const lc=$('match-left'),rc=$('match-right');lc.innerHTML='';rc.innerHTML='';ls.forEach(it=>{lc.appendChild(mkMI(it,'left'));});rs.forEach(it=>{rc.appendChild(mkMI(it,'right'));});}
-function mkMI(it,side){const d=document.createElement('div');d.className='match-item';d.textContent=it.text;d.dataset.id=it.id;d.dataset.side=side;d.onclick=()=>{_speakClick(it.text,side==='left'?S.nL:S.tL);clickMatch(d);};return d;}
-function clickMatch(el){if(el.classList.contains('matched'))return;const sel=S.mSel;if(!sel){S.mSel=el;el.classList.add('selected');return;}if(sel===el){el.classList.remove('selected');S.mSel=null;return;}if(sel.dataset.side===el.dataset.side){sel.classList.remove('selected');S.mSel=el;el.classList.add('selected');return;}if(sel.dataset.id===el.dataset.id){sel.classList.remove('selected');sel.classList.add('matched');el.classList.add('matched');S.mDone++;S.cor++;S.ts.match.c++;S.score+=10;sT('g-score',S.score);sT('match-prog-txt',`${S.mDone}/${S.mTotal}`);$('g-progress').style.width=`${(S.mDone/S.mTotal)*100}%`;
-  // Speak native then target with a gap
-  const _nText=wt(sel.dataset.id||el.dataset.id,S.nL);const _tText=wt(sel.dataset.id||el.dataset.id,S.tL);
-  _speakClick(_nText,S.nL);setTimeout(()=>_speakClick(_tText,S.tL),700);
-  if(S.mDone>=S.mTotal){clearInterval(S.timer);setTimeout(()=>S.mEmbed?nextQ():showResults(),1400);}}else{sel.classList.remove('selected');el.classList.add('wrong-match');setTimeout(()=>el.classList.remove('wrong-match'),360);S.wr++;S.ts.match.w++;}S.mSel=null;}
-function skipMatch(){S.mEmbed?nextQ():showResults();}
-
-function pickQ(choice,btn,q){clearInterval(S.timer);const ok=choice===q.correct;document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>{b.disabled=true;if(b.querySelector('span:last-child').textContent===q.correct)b.classList.add('correct');});if(!ok)btn.classList.add('wrong');ok?(S.score+=10,S.cor++,S.ts.quiz.c++,showFB(true,t('game_perfect'),q.correct)):(S.wr++,S.ts.quiz.w++,showFB(false,t('game_wrong'),t('game_answer')+q.correct));sT('g-score',S.score);showBtn('btn-next');
-  // Speak the correct answer once immediately
-  setTimeout(()=>_speakThenUnlock(q.correct,S.tL),150);
-  S._lastAnswerWord = q.correct;
-  S._lastAnswerLang = S.tL;
-  if(typeof renderRepeatBtn==='function') renderRepeatBtn();
-}
-function checkCurrentQ(){const q=S.curQ;if(q.type==='fill')doFill(q);else if(q.type==='write')checkWriteQ();else if(q.type==='sort')doSort(q);}
-
-// Fuzzy
-function deacc(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();}
-function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j;}for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=a[i-1]===b[j-1]?d[i-1][j-1]:1+Math.min(d[i-1][j],d[i][j-1],d[i-1][j-1]);return d[m][n];}
-function fuzzy(inp,cor){const clean=s=>deacc(s.replace(/[^\w\s]/gi,''));const a=clean(inp),b=clean(cor);if(a===b||deacc(inp)===deacc(cor))return'exact';const dist=lev(a,b);return dist<=(b.length<=3?1:b.length<=7?2:3)?'close':'wrong';}
-
-function doFill(q){clearInterval(S.timer);const inp=$('fill-input'),res=fuzzy(inp.value,q.correct);inp.disabled=true;if(res==='exact'){inp.className='fill-input correct';S.score+=10;S.cor++;S.ts.fill.c++;showFB(true,t('game_perfect'),q.correct);}else if(res==='close'){inp.className='fill-input close';S.score+=5;S.cor++;S.ts.fill.c++;const fn=$('fuzzy-note');fn.textContent=t('game_close')+' '+t('game_exact_answer')+q.correct;fn.style.display='block';showFB('close',t('game_close'),t('game_exact_answer')+q.correct);}else{inp.className='fill-input wrong';S.wr++;S.ts.fill.w++;showFB(false,t('game_wrong'),t('game_answer')+q.correct);}sT('g-score',S.score);hideBtn('btn-check');showBtn('btn-next');
-  // Speak the answer once
-  setTimeout(()=>_speakThenUnlock(q.correct,S.tL),150);
-  S._lastAnswerWord = q.correct;
-  S._lastAnswerLang = S.tL;
-  if(typeof renderRepeatBtn==='function') renderRepeatBtn();
-}
-function doSort(q){clearInterval(S.timer);const built=S.sortArr.join(' '),res=fuzzy(built,q.correct);if(res==='exact'){S.score+=10;S.cor++;S.ts.sort.c++;showFB(true,t('game_perfect'),q.correct);}else if(res==='close'){S.score+=5;S.cor++;S.ts.sort.c++;showFB('close',t('game_close'),q.correct);}else{S.wr++;S.ts.sort.w++;showFB(false,t('game_wrong'),t('game_answer')+q.correct);}sT('g-score',S.score);hideBtn('btn-check');hideBtn('btn-reset');showBtn('btn-next');setTimeout(()=>_speakThenUnlock(q.correct,S.tL),150);S._lastAnswerWord=q.correct;S._lastAnswerLang=S.tL;if(typeof renderRepeatBtn==='function')renderRepeatBtn();}
-
-function addSort(word,el){if(el.style.opacity==='0.3')return;S.sortArr.push(word);el.style.opacity='0.3';el.style.pointerEvents='none';renderSlots();}
-function renderSlots(){const slots=$('sentence-slots');if(!S.sortArr.length){slots.innerHTML='<span class="slot-placeholder">'+t('slot_placeholder')+'</span>';return;}slots.innerHTML='';S.sortArr.forEach((w,i)=>{const t=document.createElement('div');t.className='word-token in-sentence';t.textContent=w;t.onclick=()=>{S.sortArr.splice(i,1);reEnable(w);renderSlots();};slots.appendChild(t);});}
-function reEnable(w){for(const t of $('word-bank').children)if(t.textContent===w&&t.style.opacity==='0.3'){t.style.opacity='1';t.style.pointerEvents='auto';break;}}
-function resetSort(){S.sortArr=[];renderSlots();document.querySelectorAll('#word-bank .word-token').forEach(t=>{t.style.opacity='1';t.style.pointerEvents='auto';});}
-function nextQ(){S.qi++;S.qi>=S.qs.length?showResults():renderQ();}
-
-function startTimer(secs){clearInterval(S.timer);S.tLeft=secs;const el=$('g-timer');tickT(el,secs);S.timer=setInterval(()=>{S.tLeft--;tickT(el,S.tLeft);if(S.tLeft<=0){clearInterval(S.timer);onTimeout();}},1000);}
-function tickT(el,t){if(!el)return;el.textContent=`⏱ ${t}`;el.className='timer-badge'+(t<=5?' urgent':'');}
-function onTimeout(){const q=S.curQ;if(S.curType==='quiz'){S.wr++;S.ts.quiz.w++;showFB(false,'⏱ Temps écoulé !','');document.querySelectorAll('#answers-grid .answer-btn').forEach(b=>b.disabled=true);showBtn('btn-next');}else if(S.curType==='fill')doFill(q);else if(S.curType==='sort')doSort(q);else if(S.curType==='match'){S.mEmbed?nextQ():showResults();}}
-
-function showFB(ok,title,detail){const b=$('g-fb'),cls=ok===true?'correct-fb':ok==='close'?'close-fb':'wrong-fb';b.className=`feedback-banner show ${cls}`;sT('g-fb-icon',ok===true?'✅':ok==='close'?'✨':'❌');sT('g-fb-title',title);sT('g-fb-detail',detail);}
-function hideFB(){const b=$('g-fb');if(b)b.className='feedback-banner';}
-function showZone(type){['quiz','fill','match','sort'].forEach(z=>{const el=document.getElementById('zone-'+z);if(el)el.style.display=z===type?'block':'none';});}
-function setTypePill(type){const labels={quiz:'⚡ Quiz',fill:t('game_type_fill'),match:t('game_type_match'),sort:t('game_type_sort')};const p=$('g-type-pill');p.className=`type-pill ${type}`;p.textContent=labels[type]||type;}
-function hideAllBtns(){['btn-check','btn-reset','btn-next','btn-skip'].forEach(id=>hideBtn(id));}
-function showBtn(id){const e=$(id);if(e)e.style.display='inline-flex';}
-function hideBtn(id){const e=$(id);if(e)e.style.display='none';}
-
-// ==============================================
-// RESULTS + COIN REWARD
-// ==============================================
-function renderGramTip(q) {
-  sT('g-text', '');
-  sT('g-dir', '');
-  sT('g-hint', '');
-  hideFB(); hideAllBtns();
-  setTypePill('fill');
-  $('g-type-pill').textContent = '📖 Grammaire';
-  $('g-type-pill').style.cssText = 'background:rgba(6,182,212,.13);color:var(--accent3);border:1px solid rgba(6,182,212,.2);display:inline-flex;';
-
-  // Show gram tip zone, hide others
-  document.querySelectorAll('[id^="zone-"]').forEach(z => z.style.display='none');
-  const tipZone = $('zone-gram-tip');
-  if(tipZone) tipZone.style.display='block';
-
-  // Render rule — bold **text** → <strong>
-  const ruleEl = $('gram-rule-text');
-  if(ruleEl) {
-    ruleEl.innerHTML = q.rule.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:var(--accent3)">$1</strong>');
-  }
-
-  // Examples
-  const exEl = $('gram-examples');
-  if(exEl) {
-    exEl.innerHTML = (q.examples||[]).map(ex =>
-      '<div style="background:rgba(255,255,255,.06);border-radius:10px;padding:8px 12px;' +
-      'font-size:.82rem;font-family:monospace;color:var(--accent4);">→ ' + ex + '</div>'
-    ).join('');
-  }
-
-  // Show "Compris !" button
-  showBtn('btn-next');
-  const nb = $('btn-next');
-  if(nb) { nb.textContent = 'Compris ! →'; nb.disabled = false; }
-}
-
-function showResults(){
-  clearInterval(S.timer);
-  const tot=S.cor+S.wr||1,pct=Math.round(S.cor/tot*100);
-  const stars=pct>=90?3:pct>=60?2:pct>=30?1:0;
-  const xpE=S.cor*15;
-  const coinMultipliers={mixed:3,quiz:1.5,fill:2,match:1,duel:2};
-  const baseCoin=Math.floor(S.cor*(coinMultipliers[S.gType]||1));
-  let coinsEarned=Math.min(baseCoin,{mixed:30,quiz:15,fill:20,match:10,duel:25}[S.gType]||20);
-  let xpBonus=1;
-  if(S.isEventQuiz&&typeof getCurrentEvent==='function') xpBonus=getCurrentEvent().bonusXP||1;
-  const xpTotal=xpE*xpBonus;
-
-  if(U){
-    const key=pk(S.chap),prev=U.progress[key]||{};
-    U.progress[key]={completed:stars>0,stars:Math.max(prev.stars||0,stars)};
-    U.xp=(U.xp||0)+xpTotal; U.coins+=coinsEarned;
-    if(stars>0&&!prev.completed) U.chaptersCompleted=(U.chaptersCompleted||0)+1;
-    if(S.wr===0&&S.cor>=5) U._lastPerfect=S.cor;
-    const h=new Date().getHours();
-    if(h===0||h===1) U._nightOwl=true;
-    if(h<7) U._earlyBird=true;
-    if(S.isEventQuiz&&pct>=60) U._eventsWon=(U._eventsWon||0)+1;
-    const today=new Date().toDateString();
-    if(U.lastDay!==today){U.streak=(U.lastDay===new Date(Date.now()-86400000).toDateString()?U.streak:0)+1;U.lastDay=today;}
-    if(typeof srsUpdate==='function'&&S.qs){
-      S.qs.forEach((q,i)=>{
-        const wid=Object.keys(WD).find(id=>WD[id][S.tL]===q.correct);
-        if(wid) srsUpdate(wid, i<S.cor);
-      });
+    if (error || !data || !data.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:10px;">Aucun utilisateur trouvé</div>';
+      return;
     }
-    saveU(); updateTopBar();
-    $('xp-bar').style.width=((U.xp%500)/7)+'%'; sT('xp-count',U.xp+' XP');
-    setTimeout(()=>{ if(typeof checkTrophies==='function') checkTrophies(); },600);
-    if(S.isDuel&&typeof submitDuelScore==='function') submitDuelScore(S.score,S.cor);
-    S.isEventQuiz=false; S.isSRSReview=false; S.isDuel=false; S.isPractice=false;
+
+    const users = data
+      .map(r => r.data)
+      .filter(u => u && u.email && u.email !== U.email && !u.isGuest);
+
+    if (!users.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:10px;">Aucun résultat</div>';
+      return;
+    }
+
+    // Check existing friendship status
+    const emails = users.map(u => u.email);
+    const { data: existing } = await _SB
+      .from('friendships')
+      .select('*')
+      .or(`requester_email.in.(${emails.map(e=>`"${e}"`).join(',')}),receiver_email.in.(${emails.map(e=>`"${e}"`).join(',')})`);
+
+    el.innerHTML = users.map(u => {
+      const fs = (existing || []).find(f =>
+        (f.requester_email === U.email && f.receiver_email === u.email) ||
+        (f.requester_email === u.email && f.receiver_email === U.email)
+      );
+      return _userSearchCard(u, fs);
+    }).join('');
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:10px;">Erreur de recherche</div>';
+    console.error('friendsSearch', e);
   }
-  const msgs=[t('game_result_0'),t('game_result_1'),t('game_result_2'),t('game_result_3')];
-  sT('r-stars',['☆☆☆','★☆☆','★★☆','★★★'][stars]);
-  sT('r-title',msgs[stars]);
-  sT('r-score',pct+'%');
-  sT('r-sub', t('game_r_sub',{c:S.cor, s:S.cor>1?'s':'', t:tot}));
-  sT('r-correct',S.cor); sT('r-wrong',S.wr);
-  sT('r-xp',xpBonus>1?`+${xpTotal} ✨×${xpBonus}`:`+${xpTotal}`);
-  sT('coin-reward-amount','+'+coinsEarned);
-  const bd=$('r-breakdown'); bd.innerHTML='';
-  const tdef={quiz:{i:'⚡',l:'Quiz'},fill:{i:'✏️',l:'Fill'},match:{i:'🔗',l:'Match'},sort:{i:'🧩',l:'Ordre'}};
-  Object.entries(S.ts).forEach(([k,v])=>{if(v.c+v.w===0)return;const p2=Math.round(v.c/(v.c+v.w)*100);const d=document.createElement('div');d.style.cssText='background:var(--card2);border-radius:9px;padding:7px 12px;text-align:center;min-width:56px;';d.innerHTML=`<div style="font-size:.95rem">${tdef[k].i}</div><div style="font-weight:800;font-size:.76rem;">${tdef[k].l}</div><div style="font-size:.74rem;color:${p2>=70?'var(--green)':'var(--red)'};">${p2}%</div>`;bd.appendChild(d);});
-  goTo('results');
-  if(stars>=2) confetti();
-  if(coinsEarned>0) floatCoin($('coin-reward-amount'),`+${coinsEarned} <span class="coin"></span>`);
-  // result speech removed
-}
-function playAgain(){startGame(S.gType);}
-
-
-
-// ===========================================================
-//  BOSS FIGHT
-// ===========================================================
-let _bossState = null;
-
-function startBossFight(chapId, bossConfig) {
-  const ch = getCh() || (CHAPTERS[S.level]||[]).find(c=>c.id===chapId);
-  if(!ch) { goToSel(chapId); return; } // fallback to normal game
-  const allWids = ch.wids || [];
-  if(allWids.length < 4) { goToSel(chapId); return; }
-
-  const boss = bossConfig || (DUNGEON&&DUNGEON[S.level]&&DUNGEON[S.level].boss) || {sprite:'👹',name:'Boss',color:'#991b1b'};
-  const maxBossHP = Math.min(30, allWids.length * 3);
-
-  _bossState = {
-    chapId, boss,
-    bossHP: maxBossHP, maxBossHP,
-    playerHP: 5, maxPlayerHP: 5,
-    questions: buildBossQuestions(ch),
-    qi: 0,
-    won: false, over: false
-  };
-
-  // Setup UI
-  $('boss-name').textContent = boss.sprite + ' ' + boss.name;
-  $('boss-sprite').textContent = boss.sprite;
-  $('boss-sprite').style.textShadow = '0 0 40px ' + (boss.color||'#ef4444');
-  document.getElementById('screen-boss').style.background =
-    'radial-gradient(ellipse at 50% 30%,' + (boss.color||'#1a0a0a') + '99 0%,#080008 100%)';
-  updateBossHUD();
-  showBossQuestion();
-  goTo('boss');
 }
 
-function buildBossQuestions(ch) {
-  const ids = shuf([...ch.wids]);
-  return ids.slice(0, Math.min(15, ids.length)).map(id => mkQQ(id, ch.wids));
-}
-
-function updateBossHUD() {
-  const b = _bossState;
-  const bPct = Math.max(0, (b.bossHP / b.maxBossHP) * 100);
-  const pPct = Math.max(0, (b.playerHP / b.maxPlayerHP) * 100);
-  $('boss-hp-fill').style.width = bPct + '%';
-  $('player-hp-fill').style.width = pPct + '%';
-  $('boss-hp-text').textContent = b.bossHP + ' HP';
-  $('player-hp-text').textContent = b.playerHP + ' ❤️';
-  // Color warning
-  $('boss-hp-fill').style.background = bPct < 30
-    ? 'linear-gradient(90deg,#dc2626,#f97316)'
-    : 'linear-gradient(90deg,#dc2626,#f97316)';
-  $('player-hp-fill').style.background = pPct < 40
-    ? 'linear-gradient(90deg,#ef4444,#f97316)'
-    : 'linear-gradient(90deg,#10b981,#22d3ee)';
-}
-
-function showBossQuestion() {
-  const b = _bossState;
-  if(b.qi >= b.questions.length) { b.questions = buildBossQuestions(getCh()||(CHAPTERS[S.level]||[]).find(c=>c.id===b.chapId)||{wids:[]}); b.qi=0; }
-  const q = b.questions[b.qi];
-  sT('boss-q-text', q.q);
-  sT('boss-q-dir', dirLbl());
-
-  // Photo
-  const imgWrap = $('boss-q-img-wrap'), imgEl = $('boss-q-img');
-  if(imgWrap && imgEl) {
-    if(q.imgUrl){ imgEl.src=q.imgUrl; imgWrap.style.display='block'; imgEl.onerror=()=>{imgWrap.style.display='none';}; }
-    else imgWrap.style.display='none';
+function _userSearchCard(u, friendship) {
+  const initial = (u.name || '?').charAt(0).toUpperCase();
+  let btn = '';
+  if (!friendship) {
+    btn = `<button class="btn btn-primary btn-sm" onclick="sendFriendRequest('${u.email}')">➕ Ajouter</button>`;
+  } else if (friendship.status === 'pending') {
+    const sent = friendship.requester_email === U.email;
+    btn = `<span style="font-size:.75rem;color:var(--muted);font-weight:700;">${sent ? '⏳ En attente' : '📬 Veut être ami'}</span>`;
+  } else if (friendship.status === 'accepted') {
+    btn = `<span style="font-size:.75rem;color:var(--green);font-weight:800;">✅ Ami</span>`;
   }
-
-  // Answers
-  const grid = $('boss-answers');
-  grid.innerHTML = '';
-  q.choices.forEach(ch => {
-    const btn = document.createElement('button');
-    btn.className = 'answer-btn';
-    btn.innerHTML = ch;
-    btn.onclick = () => bossAnswer(ch, q.correct, btn, q);
-    grid.appendChild(btn);
-  });
-  sT('boss-msg', '');
-  if(typeof speakQuestion==='function') setTimeout(()=>_speakClick(q.q,S.nL), 150);
+  return `
+    <div class="friend-card">
+      <div class="friend-avatar">${initial}</div>
+      <div class="friend-info">
+        <div class="friend-name">${u.name || u.email}</div>
+        <div class="friend-meta">${u.email} · ${u.xp||0} XP</div>
+      </div>
+      <div>${btn}</div>
+    </div>`;
 }
 
-function bossAnswer(chosen, correct, btn, q) {
-  const b = _bossState;
-  if(b.over) return;
+// ── SEND REQUEST ──────────────────────────────────────────────
+async function sendFriendRequest(receiverEmail) {
+  if (!U || U.isGuest) { toast('❌ ' + t('tab_login')); return; }
+  if (receiverEmail === U.email) { toast('❌'); return; }
 
-  // Disable all
-  $('boss-answers').querySelectorAll('button').forEach(b=>b.disabled=true);
+  try {
+    // Check not already friends
+    const { data: existing } = await _SB
+      .from('friendships')
+      .select('id, status')
+      .or(`and(requester_email.eq.${U.email},receiver_email.eq.${receiverEmail}),and(requester_email.eq.${receiverEmail},receiver_email.eq.${U.email})`)
+      .maybeSingle();
 
-  if(chosen === correct) {
-    btn.classList.add('correct');
-    b.bossHP -= 3;
-    sT('boss-msg', '⚔️ +3 dégâts !');
-    // Shake boss
-    const sp = $('boss-sprite');
-    sp.classList.add('boss-shake');
-    setTimeout(()=>sp.classList.remove('boss-shake'), 350);
-    if(typeof speakAnswer==='function') speakAnswer(correct, S.tL);
-  } else {
-    btn.classList.add('wrong');
-    // Highlight correct
-    $('boss-answers').querySelectorAll('button').forEach(b=>{ if(b.innerHTML===correct) b.classList.add('correct'); });
-    b.playerHP -= 1;
-    sT('boss-msg', "💢 Le boss t'attaque !");
-    document.querySelector('.boss-arena').classList.add('boss-attack');
-    setTimeout(()=>document.querySelector('.boss-arena').classList.remove('boss-attack'), 450);
+    if (existing) {
+      if (existing.status === 'accepted') { toast('✅'); return; }
+      if (existing.status === 'pending')  { toast('⏳'); return; }
+    }
+
+    const { error } = await _SB.from('friendships').insert({
+      requester_email: U.email,
+      receiver_email:  receiverEmail,
+      status: 'pending',
+    });
+    if (error) throw error;
+
+    toast('✅');
+    // Refresh search results
+    friendsSearch();
+  } catch(e) {
+    toast('❌');
+    console.error('sendFriendRequest', e);
   }
+}
 
-  updateBossHUD();
-  b.qi++;
+// ── ACCEPT / DECLINE ─────────────────────────────────────────
+async function acceptFriend(id) {
+  try {
+    const { error } = await _SB
+      .from('friendships')
+      .update({ status: 'accepted' })
+      .eq('id', id);
+    if (error) throw error;
+    toast('🎉');
+    _pendingCache = null;
+    _friendsCache = null;
+    renderFriendsScreen();
+  } catch(e) { toast('❌'); console.error(e); }
+}
 
+async function declineFriend(id) {
+  try {
+    const { error } = await _SB
+      .from('friendships')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    toast('✗');
+    _pendingCache = null;
+    renderFriendsScreen();
+  } catch(e) { toast('❌'); console.error(e); }
+}
+
+async function removeFriend(id) {
+  if (!confirm('✗?')) return;
+  try {
+    await _SB.from('friendships').delete().eq('id', id);
+    toast('✗');
+    _friendsCache = null;
+    _loadFriends();
+  } catch(e) { toast('❌'); }
+}
+
+// ── LOAD PENDING REQUESTS ─────────────────────────────────────
+async function _loadPending() {
+  const wrap = $('friends-pending-wrap');
+  const list = $('friends-pending-list');
+  if (!list) return;
+
+  try {
+    const { data } = await _SB
+      .from('friendships')
+      .select('*')
+      .eq('receiver_email', U.email)
+      .eq('status', 'pending');
+
+    if (!data || !data.length) {
+      if (wrap) wrap.style.display = 'none';
+      return;
+    }
+
+    if (wrap) wrap.style.display = '';
+
+    // Fetch requester names
+    const emails = data.map(f => f.requester_email);
+    const { data: userData } = await _SB
+      .from('users')
+      .select('data')
+      .in('email', emails);
+
+    const userMap = {};
+    (userData || []).forEach(r => { if (r.data) userMap[r.data.email] = r.data; });
+
+    list.innerHTML = data.map(f => {
+      const u = userMap[f.requester_email] || { name: f.requester_email, xp: 0 };
+      const initial = (u.name || '?').charAt(0).toUpperCase();
+      return `
+        <div class="friend-card">
+          <div class="friend-avatar" style="background:linear-gradient(135deg,var(--accent2),var(--accent));">${initial}</div>
+          <div class="friend-info">
+            <div class="friend-name">${u.name || f.requester_email}</div>
+            <div class="friend-meta">${f.requester_email} · ${u.xp||0} XP</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="acceptFriend('${f.id}')">✓ Accepter</button>
+            <button class="btn btn-secondary btn-sm" onclick="declineFriend('${f.id}')">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Show badge on tab
+    const tab = $('rank-tab-friends');
+    if (tab && data.length > 0) {
+      tab.innerHTML = `👥 Amis <span style="background:var(--accent2);color:#fff;border-radius:10px;padding:1px 7px;font-size:.65rem;margin-left:4px;">${data.length}</span>`;
+    }
+
+  } catch(e) { console.error('_loadPending', e); }
+}
+
+// ── LOAD FRIENDS LIST ─────────────────────────────────────────
+async function _loadFriends() {
+  const el = $('friends-list');
+  if (!el) return;
+
+  try {
+    // Get all accepted friendships involving me
+    const { data: friendships } = await _SB
+      .from('friendships')
+      .select('*')
+      .eq('status', 'accepted')
+      .or(`requester_email.eq.${U.email},receiver_email.eq.${U.email}`);
+
+    if (!friendships || !friendships.length) {
+      el.innerHTML = `
+        <div style="text-align:center;padding:32px;color:var(--muted);">
+          <div style="font-size:2.5rem;margin-bottom:10px;">👥</div>
+          <div style="font-weight:800;margin-bottom:6px;">Aucun ami pour l'instant</div>
+          <div style="font-size:.8rem;">Cherche un ami par email ci-dessus !</div>
+        </div>`;
+      return;
+    }
+
+    // Get friend emails
+    const friendEmails = friendships.map(f =>
+      f.requester_email === U.email ? f.receiver_email : f.requester_email
+    );
+
+    const { data: userData } = await _SB
+      .from('users')
+      .select('data')
+      .in('email', friendEmails);
+
+    const userMap = {};
+    (userData || []).forEach(r => { if (r.data) userMap[r.data.email] = r.data; });
+
+    el.innerHTML = friendships.map(f => {
+      const friendEmail = f.requester_email === U.email ? f.receiver_email : f.requester_email;
+      const u = userMap[friendEmail] || { name: friendEmail, xp: 0, streak: 0, coins: 0 };
+      return _friendCard(u, f.id);
+    }).join('');
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;font-size:.85rem;">Erreur de chargement</div>';
+    console.error('_loadFriends', e);
+  }
+}
+
+function _friendCard(u, friendshipId) {
+  const unread = typeof getUnread === 'function' ? getUnread(u.email) : 0;
+  const unreadBadge = unread > 0 ? ` <span style="background:var(--accent2);color:#fff;border-radius:8px;padding:0 5px;font-size:.6rem;">${unread}</span>` : '';
+  const onlineStatus = typeof onlineLabel === 'function' ? onlineLabel(u.lastSeen) : '';
+  const initial   = (u.name || '?').charAt(0).toUpperCase();
+  const dotHtml   = typeof onlineDot === 'function' ? onlineDot(u.lastSeen) : '';
+  const streak    = u.streak  || 0;
+  const xp        = u.xp     || 0;
+  const coins     = Math.floor(u.coins || 0);
+  const lvl       = u.investorLevel || 1;
+
+  // XP bar for level (rough estimate)
+  const xpPct = Math.min(100, Math.round((xp % 500) / 500 * 100));
+
+  return `
+    <div class="friend-card friend-card-full">
+      <div class="friend-avatar-wrap">
+        ${dotHtml}<div class="friend-avatar friend-avatar-lg">${initial}</div>
+        ${streak >= 3 ? `<div class="friend-streak-badge">🔥${streak}</div>` : ''}
+      </div>
+      <div class="friend-info" style="flex:1;">
+        <div class="friend-name">${u.name || u.email}</div>
+        <div class="friend-meta">${u.email} ${onlineStatus}</div>
+        <div class="friend-stats">
+          <span class="friend-stat">⭐ ${xp.toLocaleString()} XP</span>
+          <span class="friend-stat">🪙 ${coins.toLocaleString()}</span>
+          <span class="friend-stat">📈 Niv.${lvl}</span>
+        </div>
+        <div class="friend-xp-bar">
+          <div class="friend-xp-fill" style="width:${xpPct}%"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+        <button class="btn btn-primary btn-sm" onclick="openChat('${u.email}','${(u.name||'Ami').replace(/'/g,'')}')" >💬 Message</button>
+        <button class="btn btn-secondary btn-sm" onclick="inviteFriendToDuel('${u.email}')">⚔️ Duel</button>
+        <button class="btn btn-secondary btn-sm" onclick="removeFriend('${friendshipId}')" style="font-size:.7rem;padding:4px 8px;opacity:.6;">Retirer</button>
+      </div>
+    </div>`;
+}
+
+// ── INVITE FRIEND TO DUEL ─────────────────────────────────────
+function inviteFriendToDuel(friendEmail) {
+  if (!S.nL || !S.tL) { toast(t('duel_no_lang')); navTo('learn'); return; }
+  // Open create duel modal — friend email shown for sharing
+  openCreateDuel();
+  // Show a hint in the modal
   setTimeout(() => {
-    if(b.bossHP <= 0) { bossVictory(); return; }
-    if(b.playerHP <= 0) { bossDefeat(); return; }
-    showBossQuestion();
-  }, 900);
-}
-
-function bossVictory() {
-  const b = _bossState;
-  b.over = true; b.won = true;
-  confetti();
-  $('boss-sprite').textContent = '💀';
-  sT('boss-msg', '🏆 Boss vaincu ! Niveau maîtrisé !');
-  // Mark chapter complete
-  const progKey = pk(b.chapId);
-  if(!U.progress[progKey]) U.progress[progKey]={};
-  U.progress[progKey].completed = true;
-  U.progress[progKey].stars = 3;
-  U.coins = (U.coins||0) + 150;
-  saveU(); updateTopBar();
-  setTimeout(()=>{
-    showBossResult(true);
-  }, 1500);
-}
-
-function bossDefeat() {
-  const b = _bossState;
-  b.over = true;
-  $('boss-sprite').textContent = '😈';
-  sT('boss-msg', '💀 Tu as été vaincu... Réessaie !');
-  setTimeout(()=>showBossResult(false), 1500);
-}
-
-function showBossResult(won) {
-  const b = _bossState;
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;text-align:center;';
-
-  const title = document.createElement('div');
-  title.textContent = won ? '🏆' : '💀';
-  title.style.fontSize = '4rem';
-
-  const msg = document.createElement('div');
-  msg.innerHTML = won
-    ? '<strong style="font-size:1.5rem;color:#fbbf24;">Boss vaincu !<br>' + b.boss.name + ' est tombé !</strong><br><span style="color:#22c55e;font-weight:800;">+150 🪙</span>'
-    : '<strong style="font-size:1.5rem;color:#f87171;">Défaite...<br>Tu peux réessayer !</strong>';
-
-  const continueBtn = document.createElement('button');
-  continueBtn.textContent = 'Continuer';
-  continueBtn.style.cssText = 'background:linear-gradient(135deg,#7c3aed,#ec4899);color:#fff;border:none;border-radius:14px;padding:14px 28px;font-family:inherit;font-weight:900;font-size:1rem;cursor:pointer;margin-top:8px;';
-  continueBtn.onclick = function(){ overlay.remove(); goTo('chapters'); };
-
-  overlay.appendChild(title);
-  overlay.appendChild(msg);
-  overlay.appendChild(continueBtn);
-
-  if(!won) {
-    const retryBtn = document.createElement('button');
-    retryBtn.textContent = 'Réessayer';
-    retryBtn.style.cssText = 'background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 24px;font-family:inherit;font-weight:900;font-size:.9rem;cursor:pointer;';
-    retryBtn.onclick = function(){ overlay.remove(); startBossFight(b.chapId, b.boss); };
-    overlay.appendChild(retryBtn);
-  }
-
-  document.body.appendChild(overlay);
-}
-
-
-// ===========================================================
-//  PHOTO QUIZ — mkPQ()
-// ===========================================================
-// Fetches image from Wikimedia for the word, shows it, user picks translation
-const _imgCache = {};
-
-async function fetchWikiImg(word) {
-  if(_imgCache[word]) return _imgCache[word];
-  try{
-    const r = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(word));
-    const d = await r.json();
-    const url = d?.thumbnail?.source || null;
-    _imgCache[word] = url;
-    return url;
-  }catch(e){ return null; }
-}
-
-function mkPQ(id, all) {
-  // Photo quiz: show image, pick correct translation
-  const q = wt(id, S.nL);
-  const cor = wt(id, S.tL);
-  const wr = shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));
-  // Try to get image from WD first, then fetch async
-  const imgUrl = WD[id]?._img || null;
-  const obj = {type:'photo', q, correct:cor, choices:shuf([cor,...wr]), wordId:id, imgUrl};
-  // Async fetch if no cached image
-  if(!imgUrl && !WD[id]?._imgFetched) {
-    WD[id] = WD[id]||{};
-    WD[id]._imgFetched = true;
-    fetchWikiImg(q).then(url=>{
-      if(url){ WD[id]._img=url; obj.imgUrl=url; }
-    });
-  }
-  return obj;
-}
-
-function renderPhotoQ(q) {
-  sT('g-text', q.q);
-  setTimeout(()=>_speakClick(q.q, S.nL), 200);
-  const imgWrap=$('g-img-wrap'), imgEl=$('g-img');
-  if(imgWrap && imgEl) {
-    if(q.imgUrl){
-      imgEl.src=q.imgUrl; imgWrap.style.display='block';
-      imgEl.onerror=()=>imgWrap.style.display='none';
-    } else {
-      // Try to load async
-      imgWrap.style.display='none';
-      fetchWikiImg(q.q).then(url=>{
-        if(url&&imgEl&&imgWrap){ imgEl.src=url; imgWrap.style.display='block'; }
-      });
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:.75rem;color:var(--accent3);font-weight:700;margin-bottom:10px;text-align:center;';
+    hint.textContent = `⚔️ Duel contre ${friendEmail} — crée et partage le code !`;
+    const modal = $('duel-create-modal');
+    if (modal) {
+      const box = modal.querySelector('.modal-box');
+      if (box) box.insertBefore(hint, box.children[1]);
     }
-  }
-  const grid=$('answers-grid');grid.innerHTML='';
-  ['A','B','C','D'].forEach((l,i)=>{
-    if(!q.choices[i])return;
-    const btn=document.createElement('button');
-    btn.className='answer-btn';
-    btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;
-    btn.onclick=()=>pickQ(q.choices[i],btn,q);
-    grid.appendChild(btn);
-  });
-  startTimer(18);
-}
-
-
-// =============================================
-//  GRAMMAR TIP CARDS
-// =============================================
-const GRAM_TIPS = {
-  'A1-10': {
-    fr: {
-      rule: "En français, chaque nom a un genre : **masculin** (le, un) ou **féminin** (la, une). Il n'y a pas de règle universelle — il faut apprendre le genre avec le mot !",
-      examples: ["le livre ✅", "la maison ✅", "le soleil ✅", "la lune ✅"]
-    },
-    en: { rule: "In French, every noun has a gender: masculine (le/un) or feminine (la/une). Learn the article with the word!", examples:["le livre (the book)","la maison (the house)"] }
-  },
-  'A1-11': {
-    fr: {
-      rule: "**Articles définis** : le (masc.), la (fém.), les (pluriel). **Articles indéfinis** : un (masc.), une (fém.), des (pluriel). Devant voyelle : l'.",
-      examples: ["le chien → l'ami", "la fille → l'école", "un livre, une table, des livres"]
-    },
-    en: { rule: "French articles agree with the noun's gender and number. Definite: le/la/les. Indefinite: un/une/des.", examples:["le chien, la fille, les enfants"] }
-  },
-  'A2-9': {
-    fr: {
-      rule: "Au **présent**, les verbes en -ER : je parl**e**, tu parl**es**, il parl**e**, nous parlons, vous parlez, ils parl**ent**. Les terminaisons -e, -es, -e, -ons, -ez, -ent.",
-      examples: ["je parle", "tu manges", "il travaille", "nous étudions"]
-    },
-    en: { rule: "French -ER verbs in present tense: je parle, tu parles, il parle, nous parlons, vous parlez, ils parlent.", examples:["parler → je parle","manger → je mange"] }
-  },
-  'A2-11': {
-    fr: {
-      rule: "Le **passé composé** = avoir/être + participe passé. Verbes de mouvement avec ÊTRE (aller, venir, partir...). Tous les autres avec AVOIR.",
-      examples: ["j'ai mangé (manger)", "je suis allé (aller)", "tu as fini (finir)"]
-    },
-    en: { rule: "French passé composé = avoir/être + past participle. Motion verbs use être. Others use avoir.", examples:["j'ai mangé = I ate","je suis allé = I went"] }
-  },
-  'B1-9': {
-    fr: {
-      rule: "**Imparfait** = habitude ou état passé (je mangeais). **Passé composé** = action terminée à un moment précis (j'ai mangé). Ensemble : imparfait = décor, passé composé = action.",
-      examples: ["Je lisais quand il est entré", "Pendant qu'il dormait, le téléphone a sonné"]
-    },
-    en: { rule: "Imparfait = ongoing/habitual past. Passé composé = completed action. Think: imparfait is the background, passé composé is the event.", examples:["I was reading (imparfait) when he arrived (PC)"] }
-  },
-  'B2-7': {
-    fr: {
-      rule: "**Connecteurs logiques** : Cause (parce que, car, puisque), Conséquence (donc, ainsi, par conséquent), Opposition (mais, cependant, bien que + subjonctif), Concession (bien que, même si, quoique).",
-      examples: ["Il est parti parce qu'il était fatigué", "Bien qu'il soit tard, je reste", "Elle travaille, cependant elle se repose le week-end"]
-    },
-    en: { rule: "Logical connectors: Cause (because, since), Consequence (so, therefore), Opposition (but, however, although + subjunctive), Concession (even if, although).", examples:["Because he was tired → parce qu'il était fatigué"] }
-  },
-};
-
-function getGramTip(chapId, lang) {
-  const tip = GRAM_TIPS[chapId];
-  if(!tip) return null;
-  return tip[lang] || tip.fr || tip.en;
-}
-
-function buildGramIntro(ch) {
-  // Returns a grammar tip question if available
-  const tip = getGramTip(ch.id, S.nL);
-  if(!tip) return null;
-  return {
-    type: 'gram_tip',
-    rule: tip.rule,
-    examples: tip.examples || [],
-  };
-}
-
-// =====================================================
-//  WRITING EXERCISE (type: write)
-// =====================================================
-function mkWQ(id, prompt_override) {
-  // Writing exercise: show an image + prompt, type a sentence
-  const word = wt(id, S.nL);
-  const target = wt(id, S.tL);
-  const imgUrl = WD[id]?._img || null;
-  return {
-    type: 'write',
-    q: word,
-    correct: target,
-    prompt: prompt_override || null,
-    imgUrl,
-    wordId: id
-  };
-}
-
-function renderWriteQ(q) {
-  sT('g-text', q.prompt || q.q);
-  setTimeout(()=>_speakClick(q.q, S.nL), 200);
-
-  // Image
-  const imgWrap=$('g-img-wrap'), imgEl=$('g-img');
-  if(imgWrap && imgEl) {
-    if(q.imgUrl){ imgEl.src=q.imgUrl; imgWrap.style.display='block'; imgEl.onerror=()=>{imgWrap.style.display='none';}; }
-    else imgWrap.style.display='none';
-  }
-
-  const ta = $('write-input');
-  if(ta){ ta.value=''; ta.className='fill-input'; ta.disabled=false; }
-  const hint = $('write-hint');
-  if(hint){ hint.style.display='none'; hint.textContent=''; }
-
-  showZone('write');
-  showBtn('btn-check');
-  startTimer(30);
-  setTimeout(()=>ta?.focus(), 100);
-}
-
-function checkWriteQ() {
-  const q = S.curQ;
-  if(!q || q.type !== 'write') return;
-  clearInterval(S.timer);
-  const ta = $('write-input');
-  if(!ta) return;
-  const inp = ta.value.trim();
-  ta.disabled = true;
-
-  const res = fuzzy(inp, q.correct);
-  if(res === 'exact' || res === 'close') {
-    ta.className = 'fill-input correct';
-    S.cor++; S.score += res==='exact' ? 12 : 8;
-    S.ts.fill = S.ts.fill || {c:0,w:0};
-    S.ts.fill.c++;
-    showFB(res==='close'?'close':true,
-      res==='exact' ? t('correct') : t('fb_close_title'),
-      res==='exact' ? q.correct : t('fb_close_detail').replace('{a}',q.correct));
-    if(typeof speakAnswer==='function') speakAnswer(q.correct, S.tL);
-  } else {
-    ta.className = 'fill-input wrong';
-    S.wr++; S.ts.fill = S.ts.fill || {c:0,w:0};
-    S.ts.fill.w++;
-    showFB(false, t('wrong'), q.correct);
-    const hint = $('write-hint');
-    if(hint){ hint.textContent = '→ ' + q.correct; hint.style.display='block'; }
-  }
-  hideAllBtns(); showBtn('btn-next');
-}
-
-// =====================================================
-//  SPEAKING EXERCISE (type: speak)
-// =====================================================
-let _speechRec = null;
-
-function mkSpeakQ(id) {
-  const word = wt(id, S.nL);
-  const target = wt(id, S.tL);
-  const imgUrl = WD[id]?._img || null;
-  return { type:'speak', q:word, correct:target, wordId:id, imgUrl };
-}
-
-function renderSpeakQ(q) {
-  const phrase = $('speak-phrase');
-  if(phrase) phrase.textContent = q.correct;
-  sT('speak-status', 'Appuie sur le micro et repete');
-  const res = $('speak-result');
-  if(res) res.style.display = 'none';
-  const btn = $('speak-mic-btn');
-  if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); btn.disabled=false; }
-
-  // Show image
-  const imgWrap=$('g-img-wrap'), imgEl=$('g-img');
-  if(imgWrap && imgEl) {
-    if(q.imgUrl){ imgEl.src=q.imgUrl; imgWrap.style.display='block'; imgEl.onerror=()=>{imgWrap.style.display='none';}; }
-    else imgWrap.style.display='none';
-  }
-
-  sT('g-text', q.q);
-  showZone('speak');
-  hideAllBtns(); showBtn('btn-skip');
-  startTimer(20);
-  // Auto-speak the target phrase
-  setTimeout(()=>_speakClick(q.correct, S.tL), 300);
-}
-
-function startSpeaking() {
-  const q = S.curQ;
-  if(!q || !('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-    // No speech recognition — mark as done and move on
-    sT('speak-status', '🎤 Non disponible — cliquer Suivant');
-    showBtn('btn-next');
-    return;
-  }
-
-  const btn = $('speak-mic-btn');
-  if(btn){ btn.textContent='⏹'; btn.classList.add('listening'); }
-  sT('speak-status', '🔴 Je t écoute...');
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  _speechRec = new SR();
-  _speechRec.lang = ({fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'})[S.tL] || 'fr-FR';
-  _speechRec.interimResults = false;
-  _speechRec.maxAlternatives = 3;
-
-  _speechRec.onresult = function(event) {
-    const heard = Array.from(event.results[0]).map(r=>r.transcript).join(' ');
-    const target = q.correct || '';
-    const ok = fuzzy(heard.trim(), target.trim());
-    const res = $('speak-result');
-    const btn = $('speak-mic-btn');
-
-    if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); btn.disabled=false; }
-
-    if(ok !== 'wrong') {
-      sT('speak-status', '✅ Excellent !');
-      if(res){ res.innerHTML='<span style="color:var(--green);font-weight:800;">'+heard+'</span>'; res.style.display='block'; }
-      S.cor++; S.score += 10;
-      showFB(true, t('correct'), '');
-    } else {
-      sT('speak-status', '❌ Essaie encore');
-      if(res){ res.innerHTML='J ai entendu: <em>'+heard+'</em><br>Attendu: <strong style="color:var(--accent3)">'+target+'</strong>'; res.style.display='block'; }
-      S.wr++;
-      showFB(false, t('wrong'), target);
-    }
-    hideAllBtns(); showBtn('btn-next');
-  };
-
-  _speechRec.onerror = function(e) {
-    if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); }
-    sT('speak-status', 'Erreur micro — cliquer Suivant');
-    showBtn('btn-next');
-  };
-
-  _speechRec.onend = function() {
-    if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); }
-  };
-
-  _speechRec.start();
-}
-
-
-// ── REPEAT ANSWER BUTTON ─────────────────────────────
-function renderRepeatBtn(){
-  // Remove existing repeat btn if any
-  const old = document.getElementById('btn-repeat-answer');
-  if(old) old.remove();
-  if(!S._lastAnswerWord) return;
-
-  const fb = $('g-fb');
-  if(!fb || !fb.classList.contains('show')) return;
-
-  const btn = document.createElement('button');
-  btn.id = 'btn-repeat-answer';
-  btn.innerHTML = '🔊 Réécouter';
-  btn.style.cssText = 'background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);'
-    +'border-radius:10px;padding:7px 14px;font-family:inherit;font-weight:800;'
-    +'font-size:.78rem;color:#22d3ee;cursor:pointer;transition:all .15s;'
-    +'margin-left:8px;vertical-align:middle;flex-shrink:0;';
-  btn.onclick = function(e) {
-    e.stopPropagation();
-    if(window.speechSynthesis) window.speechSynthesis.cancel();
-    setTimeout(()=>_speakClick(S._lastAnswerWord, S._lastAnswerLang||S.tL), 50);
-  };
-
-  // Insert inside the feedback banner
-  fb.appendChild(btn);
+    // Store email for auto-fill after creation
+    window._duelFriendEmail = friendEmail;
+  }, 100);
 }
