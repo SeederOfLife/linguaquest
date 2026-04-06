@@ -1,234 +1,955 @@
-// ══════════════════════════════════════════════════════════════
-// TROPHIES.JS — Achievement system + Themed Events
-// ══════════════════════════════════════════════════════════════
-
-// ── TROPHY DEFINITIONS ──────────────────────────────────────────
-const TROPHIES = [
-  // Learning
-  { id:'first_quiz',    icon:'🎯', name:'Premier pas',      desc:'Terminer ton premier quiz',                  coins:50,  xp:20,  check: u => (u.sessions||0) >= 1 },
-  { id:'streak3',       icon:'🔥', name:'En feu',           desc:'3 jours de suite',                           coins:100, xp:50,  check: u => (u.streak||0) >= 3 },
-  { id:'streak7',       icon:'⚡', name:'Semaine parfaite', desc:'7 jours de suite',                           coins:300, xp:150, check: u => (u.streak||0) >= 7 },
-  { id:'streak30',      icon:'👑', name:'Indestructible',   desc:'30 jours de suite',                          coins:1000,xp:500, check: u => (u.streak||0) >= 30 },
-  { id:'perfect10',     icon:'💎', name:'Perfectionniste',  desc:'10/10 dans un quiz',                         coins:200, xp:100, check: u => (u._lastPerfect||0) >= 10 },
-  { id:'speed',         icon:'⚡', name:'Éclair',           desc:'Répondre en moins de 2 secondes',            coins:150, xp:75,  check: u => !!(u._speedUnlock) },
-  { id:'chapters5',     icon:'📚', name:'Studieux',         desc:'Compléter 5 chapitres',                      coins:200, xp:100, check: u => (u.chaptersCompleted||0) >= 5 },
-  { id:'chapters15',    icon:'🎓', name:'Diplômé',          desc:'Compléter 15 chapitres',                     coins:500, xp:300, check: u => (u.chaptersCompleted||0) >= 15 },
-  { id:'xp1000',        icon:'⭐', name:'Montée en grade',  desc:'Atteindre 1000 XP',                          coins:300, xp:0,   check: u => (u.xp||0) >= 1000 },
-  { id:'xp5000',        icon:'🌟', name:'Élite',            desc:'Atteindre 5000 XP',                          coins:1000,xp:0,   check: u => (u.xp||0) >= 5000 },
-  { id:'srs50',         icon:'🧠', name:'Mémoire de fer',   desc:'Réviser 50 mots avec le SRS',                coins:250, xp:100, check: u => _srsReviewCount(u) >= 50 },
-  { id:'srs_master',    icon:'🧬', name:'Scientifique',     desc:'Maîtriser 20 mots (niveau 3+)',               coins:400, xp:200, check: u => _srsMasteredCount(u) >= 20 },
-  // Finance
-  { id:'first_invest',  icon:'💰', name:'Premier investisseur', desc:'Acheter ton premier actif',              coins:100, xp:50,  check: u => Object.values(u.assets||{}).some(v=>v>0) },
-  { id:'coins500',      icon:'🪙', name:'Épargnant',        desc:'Accumuler 500 pièces',                       coins:0,   xp:50,  check: u => (u.coins||0) >= 500 },
-  { id:'coins5000',     icon:'💎', name:'Millionnaire',     desc:'Accumuler 5000 pièces',                      coins:0,   xp:200, check: u => (u.coins||0) >= 5000 },
-  { id:'investor3',     icon:'📈', name:'Investisseur',     desc:'Atteindre le niveau investisseur 3',         coins:300, xp:150, check: u => (u.investorLevel||0) >= 3 },
-  { id:'tycoon',        icon:'🏦', name:'Tycoon',           desc:'Atteindre le niveau investisseur maximum',   coins:2000,xp:1000,check: u => (u.investorLevel||0) >= 8 },
-  { id:'academy',       icon:'🏛️', name:'Académicien',      desc:'Compléter 3 leçons Finance Academy',         coins:500, xp:250, check: u => Object.keys(u.lessonsCompleted||{}).length >= 3 },
-  // Events
-  { id:'event_win',     icon:'🎪', name:'Héros de l\'événement', desc:'Terminer un événement spécial',         coins:500, xp:300, check: u => (u._eventsWon||0) >= 1 },
-  // Duel
-  { id:'duel_first',    icon:'⚔️', name:'Duelliste',        desc:'Gagner un premier duel',                     coins:200, xp:100, check: u => (u.duelsWon||0) >= 1 },
-  { id:'duel_10',       icon:'🗡️', name:'Champion des duels','desc':'Gagner 10 duels',                         coins:800, xp:400, check: u => (u.duelsWon||0) >= 10 },
-  // Social
-  { id:'shared',        icon:'🔗', name:'Ambassadeur',      desc:'Partager l\'app via QR',                     coins:100, xp:50,  check: u => !!(u._shared) },
-  // Night owl / early bird
-  { id:'night_owl',     icon:'🦉', name:'Chouette de nuit', desc:'Jouer après minuit',                         coins:100, xp:50,  check: u => !!(u._nightOwl) },
-  { id:'early_bird',    icon:'🐦', name:'Lève-tôt',         desc:'Jouer avant 7h du matin',                    coins:100, xp:50,  check: u => !!(u._earlyBird) },
-  // Meta
-  { id:'collector',     icon:'🏆', name:'Collectionneur',   desc:'Débloquer 10 trophées',                      coins:500, xp:250, check: u => (u.trophies||[]).length >= 10 },
-  { id:'legend',        icon:'🌈', name:'Légende',          desc:'Débloquer tous les trophées',                coins:5000,xp:2000,check: u => (u.trophies||[]).length >= TROPHIES.length - 1 },
-];
-
-function _srsReviewCount(u) {
-  if (!u.srs) return 0;
-  return Object.values(u.srs).reduce((s,v)=>(s + (v.reviews||0)), 0);
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function goTo(sc){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $('screen-'+sc).classList.add('active');
+  window.scrollTo(0,0);clearInterval(S.timer);
 }
-function _srsMasteredCount(u) {
-  if (!u.srs) return 0;
-  return Object.values(u.srs).filter(v=>(v.interval||0) >= 3).length;
-}
-
-// Check and award any new trophies — called after each game + on key events
-function checkTrophies() {
-  if (!U || U.isGuest) return;
-  if (!U.trophies) U.trophies = [];
-  const now = new Date();
-  const h = now.getHours();
-  if (h === 0 || h === 1) U._nightOwl = true;
-  if (h < 7) U._earlyBird = true;
-
-  let newOnes = [];
-  for (const t of TROPHIES) {
-    if (U.trophies.includes(t.id)) continue;
-    try {
-      if (t.check(U)) {
-        U.trophies.push(t.id);
-        U.coins = (U.coins||0) + t.coins;
-        U.xp   = (U.xp||0)   + t.xp;
-        newOnes.push(t);
-      }
-    } catch(e) {}
-  }
-  if (newOnes.length) {
-    saveU();
-    updateTopBar();
-    // Show sequentially
-    newOnes.forEach((t, i) => setTimeout(() => showTrophyUnlock(t), i * 2500));
-  }
-}
-
-function showTrophyUnlock(t) {
-  const el = document.createElement('div');
-  el.className = 'trophy-popup';
-  el.innerHTML = `
-    <div class="trophy-pop-icon">${t.icon}</div>
-    <div class="trophy-pop-body">
-      <div class="trophy-pop-title">🏆 Trophée débloqué !</div>
-      <div class="trophy-pop-name">${t.name}</div>
-      <div class="trophy-pop-desc">${t.desc}</div>
-      ${t.coins>0?`<div class="trophy-pop-reward">+${t.coins} 🪙 · +${t.xp} XP</div>`:''}
-    </div>
-  `;
-  document.body.appendChild(el);
-  setTimeout(()=>el.classList.add('trophy-pop-in'), 50);
-  setTimeout(()=>{ el.classList.remove('trophy-pop-in'); el.classList.add('trophy-pop-out'); setTimeout(()=>el.remove(),500); }, 4000);
-  if (typeof confetti === 'function') confetti();
-}
-
-// Render trophy screen
-function renderTrophies() {
-  const el = document.getElementById('trophies-grid');
-  if (!el) return;
-  const earned = U?.trophies || [];
-  const sorted = [...TROPHIES].sort((a,b) => {
-    const ae = earned.includes(a.id), be = earned.includes(b.id);
-    return ae===be ? 0 : ae ? -1 : 1;
+function navTo(tab){
+  const screens={learn:'learn',portfolio:'portfolio',shop:'shop',profile:'profile',auth:'auth','theme-picker':'theme-picker',lesson:'lesson',rank:'rank',trophies:'trophies','compost-lobby':'compost-lobby','compost-game':'compost-game'};
+  ['learn','portfolio','shop','profile','rank'].forEach(t=>{
+    const n=$('nav-'+t); if(n) n.classList.toggle('active',t===tab);
   });
-  el.innerHTML = sorted.map(t => {
-    const done = earned.includes(t.id);
-    return `<div class="trophy-card ${done?'trophy-earned':'trophy-locked'}">
-      <div class="trophy-icon">${done ? t.icon : '🔒'}</div>
-      <div class="trophy-name">${t.name}</div>
-      <div class="trophy-desc">${t.desc}</div>
-      ${done && t.coins > 0 ? `<div class="trophy-reward">+${t.coins}🪙</div>` : ''}
-    </div>`;
+  if(tab==='portfolio'){ renderPortfolio(); }
+  if(tab==='shop') renderShop();
+  if(tab==='profile'){ renderProfile(); renderTrophiesPreview(); }
+  if(tab==='rank'){
+    // Show lb tab by default, ensure all zones correct
+    switchRankTab('lb');
+  }
+  if(tab!=='rank' && typeof stopDuelRefresh==='function') stopDuelRefresh();
+  if(tab==='trophies'){ renderTrophies(); }
+  if(tab==='learn'){ renderSRSWidget(); }
+  renderEventBanner();
+  if(screens[tab]) goTo(screens[tab]);
+}
+
+// ══════════════════════════════════════════════
+// TOP BAR
+// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// TOP BAR
+// ══════════════════════════════════════════════
+function updateTopBar(){
+  if(!U) return;
+  $('tb-coins').textContent=Math.floor(U.coins);
+  const ab=$('avatar-btn');ab.textContent=U.name.charAt(0).toUpperCase();
+  if(U.owned.includes('avatar_diamond')) ab.style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
+  else if(U.owned.includes('avatar_gold')) ab.style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+}
+
+// ══════════════════════════════════════════════
+// SHOP
+// ══════════════════════════════════════════════
+let _shopCat = 'all';
+function renderShop(){
+  if(!U) return;
+  $('shop-coins').textContent=Math.floor(U.coins);
+
+  // Build category tabs
+  const tabs=$('shop-tabs');
+  if(tabs){
+    const cats=[
+      {id:'all',   label:'Tout'},
+      {id:'consumable', label:'⚡ Boosts'},
+      {id:'cosmetic',   label:'💎 Style'},
+      {id:'premium',    label:'🎁 Bonus'},
+      {id:'duel',       label:'⚔️ Duels'},
+    ];
+    tabs.innerHTML=cats.map(c=>`<button class="topic-tab${_shopCat===c.id?' active':''}" onclick="_shopCat='${c.id}';renderShop()">${c.label}</button>`).join('');
+  }
+
+  const grid=$('shop-grid');grid.innerHTML='';
+  const items=_shopCat==='all' ? SHOP_ITEMS : SHOP_ITEMS.filter(x=>x.type===_shopCat);
+  items.forEach(item=>{
+    const owned=U.owned?.includes(item.id);
+    const stacks=item.stacks; // consumables can be re-bought
+    const alreadyHas=owned&&!stacks;
+    const canBuy=!alreadyHas&&Math.floor(U.coins)>=item.price;
+    const uses=item.stacks?(U.shopUses?.[item.id]||0):null;
+    const catColor={consumable:'var(--accent3)',cosmetic:'var(--gold)',premium:'var(--green)',duel:'var(--accent2)'}[item.type]||'var(--muted)';
+    const div=document.createElement('div');
+    div.className='shop-item'+(alreadyHas?' owned':'');
+    div.innerHTML=`
+      ${alreadyHas?'<div class="owned-badge">✓ Possédé</div>':''}
+      <div style="margin-bottom:5px;"><span class="shop-cat-badge" style="background:${catColor}22;color:${catColor};">${{consumable:t('shop_cat_boost')||'Boost',cosmetic:t('shop_cat_style')||'Style',premium:'Bonus',duel:'Duel'}[item.type]||item.type}</span></div>
+      <div class="shop-icon">${item.icon}</div>
+      <div class="shop-name">${item.name}</div>
+      <div class="shop-desc">${item.desc}</div>
+      ${uses!==null?`<div style="font-size:.72rem;color:var(--accent3);margin-bottom:4px;">✓ ${uses} en stock</div>`:''}
+      <div class="shop-price">${item.price>0?`<span class="coin"></span> ${item.price}`:'🎁 Gratuit'}</div>
+      <button class="btn btn-sm ${alreadyHas?'btn-secondary':'btn-primary'}" style="margin-top:10px;width:100%;justify-content:center;" onclick="buyShop('${item.id}')" ${alreadyHas||(!canBuy&&item.price>0)?'disabled':''}>
+        ${alreadyHas?t('shop_owned')||'Possédé ✓':item.price===0?t('shop_claim')||'Réclamer':t('level_buy_btn')}
+      </button>
+    `;
+    grid.appendChild(div);
+  });
+  if(!items.length) grid.innerHTML='<div style="color:var(--muted);text-align:center;padding:30px;grid-column:1/-1;">Aucun article dans cette catégorie</div>';
+}
+
+function buyShop(id){
+  const item=SHOP_ITEMS.find(x=>x.id===id);
+  if(!item) return;
+  if(!item.stacks && U.owned?.includes(id)){toast('Déjà possédé');return;}
+  if(item.price>0&&Math.floor(U.coins)<item.price){toast('❌ Pas assez de pièces !');return;}
+  U.coins-=item.price;
+  if(item.stacks){
+    if(!U.shopUses) U.shopUses={};
+    U.shopUses[id]=(U.shopUses[id]||0)+1;
+  } else {
+    if(!U.owned) U.owned=[];
+    U.owned.push(id);
+  }
+  // Apply instant effects
+  if(id==='bonus_coins'){ U.coins+=(item.bonus||50); toast('🎁 +'+item.bonus+' pièces !'); }
+  if(id==='xp_boost')   { U.xpBoostSessions=3; toast('⚡ XP x2 pendant 3 sessions !'); }
+  if(id==='streak_shield'){ U.streakShield=true; toast('🛡️ Bouclier série actif !'); }
+  if(id==='hint_pack')  { U.hints=(U.hints||0)+5; toast('💡 +5 indices ajoutés !'); }
+  if(id==='duel_token') { U.duelTokens=(U.duelTokens||0)+1; toast('⚔️ Jeton duel +1 !'); }
+  if(id==='coin_magnet'){ U.coinMagnet=true; toast('🧲 Aimant à pièces actif !'); }
+  saveU();updateTopBar();renderShop();
+  toast(`${item.icon} ${item.name} acheté !`);
+}
+
+// ══════════════════════════════════════════════
+// PROFILE
+// ══════════════════════════════════════════════
+function renderProfile(){
+  if(!U) return;
+  $('prof-name').textContent=U.name;
+  $('prof-email').textContent=U.email;
+  $('prof-joined').textContent=t('joined')+new Date(U.joined).toLocaleDateString('fr');
+  const pseudoEl=$('prof-pseudo');
+  if(pseudoEl){
+    if(U.pseudo){ pseudoEl.textContent='@'+U.pseudo; pseudoEl.style.opacity='1'; }
+    else{ pseudoEl.textContent='+ Choisir un pseudo'; pseudoEl.style.opacity='.5'; }
+  }
+  $('prof-avatar').textContent=U.name.charAt(0).toUpperCase();
+  if(U.owned.includes('avatar_diamond')) $('prof-avatar').style.background='linear-gradient(135deg,#3b82f6,#06b6d4)';
+  else if(U.owned.includes('avatar_gold')) $('prof-avatar').style.background='linear-gradient(135deg,#d97706,#fbbf24)';
+  $('ps-xp').textContent=U.xp||0;
+  $('ps-coins').textContent=Math.floor(U.coins);
+  $('ps-sessions').textContent=U.sessions||0;
+  $('ps-streak').textContent=U.streak||0;
+  $('ps-chapters').textContent=U.chaptersCompleted||0;
+  $('ps-wealth').textContent=getTotalWealth();
+  // Theme buttons
+  const savedTheme = localStorage.getItem('lq_theme') || 'dark';
+  ['dark','light','claude'].forEach(m => {
+    const b = document.getElementById('theme-btn-'+m);
+    if(b) b.classList.toggle('active', m === savedTheme);
+  });
+  // UI Language grid
+  renderUILangGrid();
+}
+
+// ══════════════════════════════════════════════
+// LANG GRIDS & LEARNING NAV
+// ══════════════════════════════════════════════
+let S={nL:null,tL:null,level:null,chap:null,gType:null,qs:[],qi:0,score:0,cor:0,wr:0,ts:{quiz:{c:0,w:0},fill:{c:0,w:0},match:{c:0,w:0},sort:{c:0,w:0}},timer:null,tLeft:0,mPairs:[],mSel:null,mDone:0,mTotal:0,mEmbed:false,sortArr:[],curType:null,curQ:null};
+
+function buildGrids(){
+  ['native-grid','target-grid'].forEach(gid=>{
+    const g=$(gid);g.innerHTML='';
+    Object.entries(LANGS).forEach(([code,l])=>{
+      const d=document.createElement('div');d.className='lang-card';d.dataset.code=code;
+      d.innerHTML=`<span class="flag">${l.flag}</span><span class="lname">${l.name}</span><span class="lnative">${l.native}</span>`;
+      d.onclick=()=>pickLang(gid,code);g.appendChild(d);
+    });
+  });
+}
+function pickLang(gid,code){
+  const nat=gid==='native-grid';
+  if(nat&&code===S.tL){S.tL=null;clrSel('target-grid');}
+  if(!nat&&code===S.nL){S.nL=null;clrSel('native-grid');}
+  if(nat) S.nL=code; else S.tL=code;
+  document.querySelectorAll(`#${gid} .lang-card`).forEach(c=>c.classList.toggle('selected',c.dataset.code===code));
+  if(nat){$('target-section').style.opacity='1';$('lang-arrow').style.opacity='1';}
+  syncPair();syncDots();
+}
+function clrSel(gid){document.querySelectorAll(`#${gid} .lang-card`).forEach(c=>c.classList.remove('selected'));}
+function swapLangs(){const t=S.nL;S.nL=S.tL;S.tL=t;clrSel('native-grid');clrSel('target-grid');if(S.nL)document.querySelector(`#native-grid [data-code="${S.nL}"]`)?.classList.add('selected');if(S.tL)document.querySelector(`#target-grid [data-code="${S.tL}"]`)?.classList.add('selected');syncPair();}
+function syncPair(){const ok=S.nL&&S.tL&&S.nL!==S.tL;$('pair-summary').style.display=ok?'flex':'none';if(ok){const N=LANGS[S.nL],T=LANGS[S.tL];$('pair-native').innerHTML=`<span style="font-size:1.2rem">${N.flag}</span> ${N.name}`;$('pair-target').innerHTML=`<span style="font-size:1.2rem">${T.flag}</span> ${T.name}`;}$('btn-start').disabled=!ok;}
+function syncDots(){const s1=!!S.nL,s2=!!(S.nL&&S.tL&&S.nL!==S.tL);$('dot1').className='step-dot '+(s1?'done':'active');$('dot2').className='step-dot '+(s2?'done':s1?'active':'pending');$('dot3').className='step-dot '+(s2?'active':'pending');$('line1').className='step-line'+(s1?' done':'');$('line2').className='step-line'+(s2?' done':'');}
+
+function goToLevels(){
+  if(!S.nL||!S.tL){navTo('learn');return;}
+  if(!LANGS[S.nL]||!LANGS[S.tL]){navTo('learn');return;}
+  // Save language pair
+  if(U && !U.isGuest){ U.lastNL=S.nL; U.lastTL=S.tL; saveU(); }
+  const N=LANGS[S.nL], T=LANGS[S.tL];
+  const pair=`${N.flag} → ${T.flag} ${T.name}`;
+  sT('bc-pair',pair); sT('bc-pair2',pair);
+  sT('levels-title',`${T.flag} ${T.name} — Niveaux`);
+  // Update XP bar
+  if(typeof updateXPBar==='function') updateXPBar();
+  renderLevels();
+  goTo('levels');
+}
+
+function lvDone(id){const cs=CHAPTERS[id]||[];return cs.length>0&&cs.every(c=>U?.progress[pk(c.id)]?.completed);}
+function lvStars(id){const cs=CHAPTERS[id]||[];if(!cs.length)return 0;return Math.round(cs.reduce((a,c)=>a+(U?.progress[pk(c.id)]?.stars||0),0)/cs.length);}
+function pk(cid){return`${S.nL}-${S.tL}-${cid}`;}
+function stHTML(n){return[0,1,2].map(i=>`<span style="color:${i<n?'var(--accent4)':'rgba(255,255,255,.1)'}">★</span>`).join('');}
+
+function renderLevels(){
+  const g=$('dungeon-zones')||$('levels-grid');
+  if(!g)return;
+  g.innerHTML='';
+  if(!U.unlockedLevels) U.unlockedLevels=['A1'];
+  LEVELS.forEach((lv,li)=>{
+    const dz=DUNGEON[lv.id];if(!dz)return;
+    const has=!!CHAPTERS[lv.id];
+    const unlocked=U.unlockedLevels.includes(lv.id)||(li===0);
+    const done=lvDone(lv.id);
+    const chaps=CHAPTERS[lv.id]||[];
+    const total=chaps.length;
+    const completed=chaps.filter(ch=>U?.progress[pk(ch.id)]?.completed).length;
+    const pct=total?Math.round((completed/total)*100):0;
+    const canAfford=Math.floor(U.coins)>=(lv.price||0);
+
+    const el=document.createElement('div');
+    el.className='dungeon-zone'+(unlocked?'':' locked');
+    el.style.cssText='border-color:'+(done?'rgba(16,185,129,.4)':'rgba(255,255,255,.1)');
+
+    const starsHtml=done?'<span style="font-size:.8rem;">'+stHTML(lvStars(lv.id))+'</span>':'';
+
+    if(!unlocked){
+      const btnClass = canAfford ? 'can-afford' : 'cant-afford';
+      const btnLabel = (canAfford ? '🔓 Débloquer — ' : '🔒 ') + (lv.price||0) + ' 🪙';
+      el.innerHTML =
+        '<div class="dungeon-zone-banner" style="background:'+dz.color+';opacity:.5;">'
+        +'<div class="dungeon-zone-emoji">'+dz.emoji+'</div>'
+        +'<div class="dungeon-zone-info">'
+        +'<div class="dungeon-zone-name">'+dz.name+'</div>'
+        +'<div class="dungeon-zone-sub">'+lv.id+' · '+dz.desc+'</div></div>'
+        +'<div class="dungeon-zone-badge">🔒 '+lv.id+'</div></div>'
+        +'<div class="dungeon-zone-footer">'
+        +'<button class="btn-unlock-level '+btnClass+'" style="width:100%;">'
+        +btnLabel+'</button></div>';
+      el.querySelector('.btn-unlock-level').addEventListener('click', function(ev){
+        ev.stopPropagation(); buyLevel(lv.id);
+      });
+        } else {
+      el.innerHTML=
+        '<div class="dungeon-zone-banner" style="background:'+dz.color+'">'
+        +'<div class="dungeon-zone-emoji">'+dz.emoji+'</div>'
+        +'<div class="dungeon-zone-info">'
+        +'<div class="dungeon-zone-name">'+dz.name+'</div>'
+        +'<div class="dungeon-zone-sub">'+lv.id+' · '+dz.desc+'</div></div>'
+        +'<div>'+(done?'<div style="font-size:1.6rem;">🏆</div>':'<div class="dungeon-zone-badge" style="color:'+dz.accent+';">'+pct+'% clair</div>')+'</div></div>'
+        +'<div class="dungeon-zone-footer">'
+        +'<span style="font-size:.75rem;color:rgba(255,255,255,.6);">'+completed+'/'+total+' salles</span>'
+        +'<div class="dungeon-prog-bar"><div class="dungeon-prog-fill" style="width:'+pct+'%;background:'+dz.accent+';"></div></div>'
+        +starsHtml+'</div>';
+      el.onclick=()=>goToChaps(lv.id);
+    }
+    g.appendChild(el);
+  });
+}
+function buyLevel(lvId){
+  if(!U.unlockedLevels) U.unlockedLevels=['A1'];
+  if(U.unlockedLevels.includes(lvId)) return;
+  const lv=LEVELS.find(l=>l.id===lvId);
+  if(!lv) return;
+  if(Math.floor(U.coins)<lv.price){ toast('Pas assez de pièces !'); return; }
+  if(!confirm(t('level_unlock_confirm').replace('{id}',lvId).replace('{n}',lv.price))) return;
+  U.coins-=lv.price; U.unlockedLevels.push(lvId); saveU();
+  toast(t('level_unlocked').replace('{id}',lvId));
+  renderLevels(); updateTopBar();
+}
+
+function renderTopicTabs(){
+  const wrap=$('topic-tabs'); if(!wrap) return;
+  const lang=S.nL||'fr';
+  const allCs=CHAPTERS[S.level]||[];
+  const diyCs=(U.diyLessons||[]).filter(d=>d.level===S.level);
+  const counts={};
+  allCs.forEach(c=>{ counts[c.topic]=(counts[c.topic]||0)+1; });
+  if(diyCs.length) counts['diy']=diyCs.length;
+  wrap.innerHTML='';
+  (typeof TOPIC_DEFS!=='undefined'?TOPIC_DEFS:[]).forEach(tp=>{
+    const n=counts[tp.id]||0;
+    const btn=document.createElement('button');
+    btn.className='topic-tab'+(S._activeTopic===tp.id?' active':'')+(n===0?' empty':'');
+    btn.innerHTML=`${tp.icon} ${tp.label[lang]||tp.label.fr}${n?` <span class="topic-count">${n}</span>`:''}`;
+    btn.onclick=()=>{ S._activeTopic=tp.id; renderTopicTabs(); renderChaps(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function goToChaps(lvId){
+  S.level=lvId;S._activeTopic='conv';
+  const T=LANGS[S.tL];
+  const dz=DUNGEON&&DUNGEON[lvId];
+  sT('bc-level2',lvId);
+  if(dz){
+    const banner=$('dungeon-zone-banner-inner');
+    if(banner)banner.style.background=dz.color;
+    sT('dungeon-zone-emoji2',dz.emoji);
+    sT('dungeon-zone-name2',dz.name);
+    sT('dungeon-zone-desc2',T.flag+' '+lvId+' · '+dz.desc);
+  }
+  renderTopicTabs();renderChaps();goTo('chapters');
+}
+
+function renderChaps(){
+  const list=$('chapters-list'); list.innerHTML='';
+  const topic=S._activeTopic||'conv';
+  const lang=S.nL||'fr';
+
+  // DIY tab
+  if(topic==='diy'){
+    const diys=(U.diyLessons||[]).filter(d=>d.level===S.level);
+    if(!diys.length){
+      list.innerHTML=`<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">${t('diy_no_lessons')}</div>`;
+      return;
+    }
+    diys.forEach((d,i)=>{
+      const el=document.createElement('div');
+      el.className='chapter-item available diy-chapter';
+      el.innerHTML=`<div class="chapter-num">✨</div>
+        <div style="flex:1">
+          <div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${d.title}</div>
+          <div style="font-size:.74rem;color:var(--muted);">${d.pairs.length} paires · Ma leçon</div>
+        </div>
+        <button class="diy-del-btn" onclick="event.stopPropagation();deleteDIY(${i})" title=""+t('diy_delete_btn')+"">🗑</button>`;
+      el.onclick=()=>startDIYLesson(d);
+      list.appendChild(el);
+    });
+    return;
+  }
+
+  // Normal chapters filtered by topic
+  const allCs=CHAPTERS[S.level]||[];
+  const cs=allCs.filter(c=>c.topic===topic);
+  if(!cs.length){
+    list.innerHTML=`<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">${t('content_coming')}</div>`;
+    return;
+  }
+  const dz=DUNGEON&&DUNGEON[S.level];
+  const monsters=(dz&&dz.monsters)||['⚔️','🛡','🧙','🗡','🪄','💀','🏹','🔮','🗝','👑'];
+  const boss=dz&&dz.boss;
+
+  cs.forEach((ch,i)=>{
+    const p=U?.progress[pk(ch.id)],done=p?.completed;
+    const locked=i>0&&!U?.progress[pk(cs[i-1].id)]?.completed;
+    const isLast=i===cs.length-1;
+    const title=ch.title[lang]||ch.title.fr;
+    const sub=ch.subtitle[lang]||ch.subtitle.fr;
+    const monster=monsters[i%monsters.length];
+    const stars=stHTML(p?.stars||0);
+
+    // Connector dot
+    if(i>0){
+      const conn=document.createElement('div');
+      conn.className='room-connector'+(done?' done':'');
+      list.appendChild(conn);
+    }
+
+    const d=document.createElement('div');
+    d.className='dungeon-room'+(locked?' locked':done?' done':isLast?' boss':' available');
+
+    if(isLast && boss){
+      // Boss room
+      d.innerHTML='<div class="boss-label">BOSS</div>'
+        +'<div class="room-monster" style="background:rgba(239,68,68,.15);font-size:2rem;">'+boss.sprite+'</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:900;font-size:.95rem;color:#f87171;">'+boss.name+'</div>'
+        +'<div style="font-size:.73rem;color:var(--muted);margin-top:2px;">Affronte le boss du niveau '+S.level+'</div>'
+        +'</div>'
+        +(done?'<span style="font-size:1.2rem;">🏆</span>':'<span style="color:#ef4444;font-size:1.2rem;">⚔️</span>');
+      if(!locked) d.onclick=()=>startBossFight(ch.id, boss);
+    } else {
+      d.innerHTML='<div class="room-monster">'+monster+'</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:800;font-size:.9rem;">Salle '+(i+1)+' · '+title+'</div>'
+        +'<div style="font-size:.72rem;color:var(--muted);margin-top:2px;">'+sub+'</div>'
+        +'</div>'
+        +'<div style="text-align:right;flex-shrink:0;">'
+        +(done?stars:'<span style="font-size:.7rem;color:var(--muted);">Non clair</span>')
+        +(locked?'':'<br><button class="btn-qr" style="margin-top:4px;" data-qr-id="'+ch.id+'">📱</button>')
+        +'</div>';
+      if(!locked) d.onclick=()=>goToSel(ch.id);
+    }
+    list.appendChild(d);
+    if(!locked){
+      const qrBtn = d.querySelector('[data-qr-id]');
+      if(qrBtn) qrBtn.addEventListener('click', function(ev){
+        ev.stopPropagation(); openQR(this.dataset.qrId);
+      });
+    }
+  });
+}
+
+// ── DIY Lessons ──────────────────────────────────
+let _diyPairs=[];
+function openDIY(){
+  _diyPairs=[{native:'',target:'',imgUrl:''}];
+  $('diy-title').value='';
+  renderDIYPairs();
+  $('diy-modal').style.display='flex';
+  setTimeout(()=>$('diy-title').focus(),50);
+}
+function closeDIY(){ $('diy-modal').style.display='none'; }
+function renderDIYPairs(){
+  const el=$('diy-pairs-list');if(!el)return;
+  el.innerHTML=_diyPairs.map((p,i)=>{
+    const imgPart=p.imgUrl
+      ? '<img src="'+p.imgUrl+'" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;">'
+      : '<div style="width:44px;height:44px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;flex-shrink:0;">IMG</div>';
+    return '<div style="border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;margin-bottom:8px;">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;margin-bottom:7px;">'
+      +'<input class="diy-input" placeholder="Mot natif" value="'+(p.native||'').replace(/"/g,"&quot;")+'" oninput="_diyPairs['+i+'].native=this.value" style="font-size:.84rem;">'
+      +'<input class="diy-input" placeholder="Traduction" value="'+(p.target||'').replace(/"/g,"&quot;")+'" oninput="_diyPairs['+i+'].target=this.value" style="font-size:.84rem;">'
+      +'<button class="diy-del-btn" onclick="_diyPairs.splice('+i+',1);renderDIYPairs()">✕</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;align-items:center;">'
+      +imgPart
+      +'<input class="diy-input" placeholder="URL image (optionnel)" value="'+(p.imgUrl||'').replace(/"/g,"&quot;")+'" oninput="_diyPairs['+i+'].imgUrl=this.value;renderDIYPairs()" style="font-size:.73rem;flex:1;">'
+      +'<button onclick="searchImgFor('+i+')" style="background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);border-radius:8px;padding:6px 9px;color:#22d3ee;font-family:inherit;font-weight:800;font-size:.7rem;cursor:pointer;white-space:nowrap;">🔍</button>'
+      +'</div>'
+      +'<div id="img-results-'+i+'" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;"></div>'
+      +'</div>';
   }).join('');
-  const pct = Math.round(earned.length / TROPHIES.length * 100);
-  const prog = document.getElementById('trophy-progress');
+}
+function addDIYPair(){ _diyPairs.push({native:'',target:'',imgUrl:''});renderDIYPairs(); }
+async function searchImgFor(idx){
+  const p=_diyPairs[idx];
+  const q=(p.native||p.target||'').trim();
+  if(!q){toast('Entre un mot dabord');return;}
+  const el=document.getElementById('img-results-'+idx);
+  if(!el)return;
+  el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">Recherche...</span>';
+  try{
+    const apiUrl='https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(q)+'&gsrnamespace=6&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=120&format=json&origin=*&gsrlimit=9';
+    const r=await fetch(apiUrl);const d=await r.json();
+    let imgs=Object.values(d?.query?.pages||{}).map(pg=>pg?.imageinfo?.[0]).filter(i=>i&&i.thumburl&&!/\.svg$/i.test(i.url)).slice(0,6);
+    if(!imgs.length){
+      const wr=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(q));
+      const wd=await wr.json();const th=wd?.thumbnail?.source;
+      if(th)imgs=[{thumburl:th,url:wd?.originalimage?.source||th}];
+    }
+    if(!imgs.length){el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">Aucune image</span>';return;}
+    el.innerHTML='';
+    imgs.forEach(function(img){
+      const im=document.createElement('img');
+      im.src=img.thumburl;
+      im.title='Cliquer pour choisir';
+      im.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:border-color .15s;';
+      im.addEventListener('mouseover',function(){this.style.borderColor='#22d3ee';});
+      im.addEventListener('mouseout',function(){this.style.borderColor='transparent';});
+      im.addEventListener('click',function(){pickDIYImg(idx,img.url||img.thumburl);});
+      im.addEventListener('error',function(){this.remove();});
+      el.appendChild(im);
+    });
+  }catch(e){el.innerHTML='<span style="font-size:.72rem;color:var(--muted)">Erreur — colle une URL</span>';}
+}
+function pickDIYImg(idx,url){ _diyPairs[idx].imgUrl=url; renderDIYPairs(); }
+function saveDIY(){
+  const title=($('diy-title').value||'').trim();
+  if(!title){ toast(t('diy_title_required')); return; }
+  const pairs=_diyPairs.filter(p=>p.native&&p.target).map(p=>({native:p.native.trim(),target:p.target.trim(),imgUrl:(p.imgUrl||'').trim()||undefined}));
+  if(pairs.length<2){ toast(t('diy_min_pairs')); return; }
+  if(!U.diyLessons) U.diyLessons=[];
+  U.diyLessons.push({title, level:S.level||'A1', pairs, created:Date.now()});
+  saveU();closeDIY();S._activeTopic='diy';renderTopicTabs();renderChaps();
+  toast('✨ "'+title+'" '+t('diy_created').replace('{n}',pairs.length));
+}
+function deleteDIY(idx){
+  if(!confirm(t('diy_delete_confirm'))) return;
+  U.diyLessons.splice(idx,1);
+  saveU(); renderTopicTabs(); renderChaps();
+}
+function startDIYLesson(d){
+  // Inject as temporary chapter and launch game select
+  S._diyLesson=d;
+  sT('gsel-title', d.title);
+  sT('gsel-sub', `${d.pairs.length} paires · Ma leçon`);
+  sT('bc-p3','DIY'); sT('bc-l3',d.level||''); sT('bc-c3',d.title);
+  goTo('game-select');
+}
+function goToSel(cid){S._diyLesson=null;S.chap=cid;const cs=CHAPTERS[S.level]||[],ch=cs.find(c=>c.id===cid);const N=LANGS[S.nL],T=LANGS[S.tL];sT('bc-p3',`${N.flag}→${T.flag}`);sT('bc-l3',S.level);sT('bc-c3',ch?.title?.[S.nL]||cid);sT('gsel-title',ch?.title?.[S.nL]||cid);sT('gsel-sub',ch?.subtitle?.[S.nL]||'');goTo('game-select');}
+
+// ══════════════════════════════════════════════
+// QR
+// ══════════════════════════════════════════════
+function openQR(cid){const ch=(CHAPTERS[S.level]||[]).find(c=>c.id===cid)||{};const title=ch.title?.[S.nL]||cid;const N=LANGS[S.nL],T=LANGS[S.tL];const base=location.href.split('?')[0].split('#')[0];const url=`${base}?n=${S.nL}&t=${S.tL}&l=${S.level}&c=${cid}`;sT('qr-sub',`${N.flag} → ${T.flag} · ${S.level} · ${title}`);sT('qr-url',url);const cont=$('qr-container');cont.innerHTML='';try{new QRCode(cont,{text:url,width:180,height:180,colorDark:'#1e1e35',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}catch(e){cont.innerHTML=`<div style="padding:14px;font-size:.74rem;color:var(--muted)">${url}</div>`;}$('qr-modal').style.display='flex';S._shareUrl=url;}
+function closeQR(e){if(!e||e.target===$('qr-modal'))$('qr-modal').style.display='none';}
+
+function openFlappyQR(){
+  const N=LANGS[S.nL],T=LANGS[S.tL];
+  const base=location.href.split('?')[0].replace('app.html','')+'flappy-game.html';
+  const name=encodeURIComponent((U&&U.name)||'Joueur');
+  const level=S.level||'any';
+  const topic=S._activeTopic||'any';
+  const url=base+'?nL='+S.nL+'&tL='+S.tL+'&name='+name+'&level='+level+'&topic='+topic;
+  sT('lbl-qr-title','🐦 FlappyLingo — Rejoins !');
+  sT('qr-sub',N.flag+' → '+T.flag+' · Niveau '+level);
+  sT('qr-url',url);
+  const cont=$('qr-container');cont.innerHTML='';
+  try{new QRCode(cont,{text:url,width:180,height:180,colorDark:'#16a34a',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});}
+  catch(e){cont.innerHTML='<div style="padding:14px;font-size:.74rem;word-break:break-all;">'+url+'</div>';}
+  $('qr-modal').style.display='flex';S._shareUrl=url;
+}
+function copyUrl(){navigator.clipboard?.writeText(S._shareUrl||'').then(()=>{const btn=event.target;btn.textContent='✅ Copié !';setTimeout(()=>btn.textContent='📋 Copier',2000);}).catch(()=>prompt('Lien :',S._shareUrl));}
+
+// ══════════════════════════════════════════════
+// LANGUAGE CHANGE MODAL
+// ══════════════════════════════════════════════
+let _lpNative=null, _lpTarget=null;
+
+function openLangModal(){
+  _lpNative=S.nL||null;
+  _lpTarget=S.tL||null;
+  buildLangPicker();
+  $('lang-modal').style.display='flex';
+}
+
+function closeLangModal(e){
+  if(!e||e.target===$('lang-modal')) $('lang-modal').style.display='none';
+}
+
+function buildLangPicker(){
+  ['lp-native','lp-target'].forEach((gid,side)=>{
+    const g=$(gid); g.innerHTML='';
+    Object.entries(LANGS).forEach(([code,l])=>{
+      const active=side===0?(code===_lpNative):(code===_lpTarget);
+      const d=document.createElement('div');
+      d.className='lang-picker-item'+(active?' active':'');
+      d.innerHTML=`<span class="lp-flag">${l.flag}</span><span class="lp-name">${l.name}</span>`;
+      d.onclick=()=>{
+        if(side===0){
+          _lpNative=code;
+          if(_lpTarget===code) _lpTarget=null;
+        } else {
+          _lpTarget=code;
+          if(_lpNative===code) _lpNative=null;
+        }
+        buildLangPicker();
+        updateLpPair();
+      };
+      g.appendChild(d);
+    });
+  });
+  updateLpPair();
+}
+
+function updateLpPair(){
+  const el=$('lp-pair');
+  if(_lpNative&&_lpTarget&&_lpNative!==_lpTarget){
+    const N=LANGS[_lpNative],T=LANGS[_lpTarget];
+    el.innerHTML=`${N.flag} ${N.name} &rarr; ${T.flag} ${T.name}`;
+    el.style.color='var(--accent3)';
+  } else if(_lpNative===_lpTarget&&_lpNative){
+    el.textContent=t('choose_two_langs');
+    el.style.color='var(--red)';
+  } else {
+    el.textContent='';
+  }
+}
+
+function applyLangChange(){
+  if(!_lpNative||!_lpTarget||_lpNative===_lpTarget){
+    toast(t('choose_two_langs')+'!');
+    return;
+  }
+  S.nL=_lpNative; S.tL=_lpTarget;
+  // Reset level/chapter selection
+  S.level=null; S.chap=null;
+  // Update native/target grids on learn screen
+  clrSel('native-grid'); clrSel('target-grid');
+  const nn=document.querySelector('#native-grid [data-code="'+S.nL+'"]');
+  const tn=document.querySelector('#target-grid [data-code="'+S.tL+'"]');
+  if(nn) nn.classList.add('selected');
+  if(tn) tn.classList.add('selected');
+  $('target-section').style.opacity='1';
+  syncPair(); syncDots();
+  $('lang-modal').style.display='none';
+  const N=LANGS[S.nL],T=LANGS[S.tL];
+  toast(N.flag+' '+N.name+' → '+T.flag+' '+T.name+' sélectionné !');
+  navTo('learn');
+}
+
+// ══════════════════════════════════════════════
+// TARGET / TIME SIMULATOR
+// ══════════════════════════════════════════════
+function updateTarget(){
+  const slider=$('target-slider');
+  if(!slider) return;
+  const target=parseInt(slider.value);
+
+  // Format target value
+  $('target-val').innerHTML=target.toLocaleString()+' <span class="coin"></span>';
+
+  const coins=Math.floor(U?U.coins:0);
+  const daily=getDailyDividend();
+  const wealth=getTotalWealth();
+  const missing=Math.max(0, target-wealth);
+  const pct=Math.min(100, Math.round(wealth/target*100));
+
+  // Missing
+  const misEl=$('tr-missing');
+  if(misEl) misEl.innerHTML=(missing>0?missing.toLocaleString()+' <span class="coin"></span>':'<span style="color:var(--green)">Objectif atteint !</span>');
+
+  // Daily
+  const dEl=$('tr-daily');
+  if(dEl) dEl.innerHTML=daily>0?daily.toFixed(1)+' <span class="coin"></span>':'<span style="color:var(--muted)">Aucun actif</span>';
+
+  // Time
+  const tEl=$('tr-time');
+  if(tEl){
+    if(missing<=0){
+      tEl.innerHTML='<span style="color:var(--green)">&#10003; Atteint !</span>';
+    } else if(daily<=0){
+      tEl.textContent=t('invest_first');
+      tEl.style.color='var(--muted)';
+    } else {
+      const days=missing/daily;
+      if(days<1) tEl.textContent=Math.round(days*24)+'h';
+      else if(days<30) tEl.textContent=Math.round(days)+' jours';
+      else if(days<365) tEl.textContent=Math.round(days/30.4)+' mois';
+      else tEl.textContent=(days/365).toFixed(1)+' ans';
+      tEl.style.color='var(--accent3)';
+    }
+  }
+
+  // Percent
+  const pEl=$('tr-pct');
+  if(pEl) pEl.textContent=pct+'%';
+
+  // Timeline
+  const fill=$('tl-fill');
+  const cursor=$('tl-cursor');
+  const nowLbl=$('tl-now');
+  if(fill) fill.style.width=pct+'%';
+  if(cursor){ cursor.style.left=pct+'%'; }
+  if(nowLbl){ nowLbl.style.left=pct+'%'; }
+}
+
+// updateTarget is now called inside the market data wrapper below
+
+
+// ══════════════════════════════════════════════
+// RANK / LEADERBOARD TABS
+// ══════════════════════════════════════════════
+
+// ── Social tab switching ──────────────────────────────────────
+function switchSocialTab(tab) {
+  const isFriends = tab === 'friends';
+  $('social-sub-friends').style.display = isFriends ? '' : 'none';
+  $('social-sub-rooms').style.display   = isFriends ? 'none' : '';
+  $('social-tab-friends').classList.toggle('active', isFriends);
+  $('social-tab-rooms').classList.toggle('active', !isFriends);
+  if (!isFriends && typeof loadPracticeRooms === 'function') loadPracticeRooms();
+}
+
+function selectRoomTopic(btn) {
+  document.querySelectorAll('#room-topic-select .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function switchRankTab(tab) {
+  const zones = ['lb','duels','practice','friends','flappy','car','compost'];
+  zones.forEach(z => {
+    const el = $('rank-'+z+'-zone');
+    if (el) el.style.display = z===tab ? '' : 'none';
+    const btn = $('rank-tab-'+z);
+    if (btn) btn.classList.toggle('active', z===tab);
+  });
+  if (tab==='lb')       renderLeaderboard();
+  if (tab==='duels')    renderDuelsScreen();
+  if (tab==='friends')  renderFriendsScreen();
+  if (tab==='practice') { if(typeof renderPracticeModes==='function') renderPracticeModes(); }
+}
+
+// ══════════════════════════════════════════════
+// TROPHIES PREVIEW (profile screen — top 5 earned)
+// ══════════════════════════════════════════════
+function renderTrophiesPreview() {
+  const el = $('trophies-preview');
+  const prog = $('trophy-progress');
+  if (!el || !U) return;
+  const earned = U.trophies || [];
+  const total  = typeof TROPHIES !== 'undefined' ? TROPHIES.length : 0;
+  const pct    = total ? Math.round(earned.length / total * 100) : 0;
+
   if (prog) prog.innerHTML = `
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">${earned.length} / ${TROPHIES.length} — ${pct}%</div>
-    <div style="background:var(--card2);border-radius:8px;height:8px;overflow:hidden;">
-      <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:8px;transition:width .6s;"></div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:5px;">${earned.length} / ${total} trophées — ${pct}%</div>
+    <div style="background:var(--card2);border-radius:8px;height:7px;overflow:hidden;">
+      <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));border-radius:8px;transition:width .6s;"></div>
     </div>`;
+
+  if (!earned.length) { el.innerHTML = '<div style="font-size:.75rem;color:var(--muted);">Joue pour débloquer des trophées 🏆</div>'; return; }
+
+  const recentTrophies = typeof TROPHIES !== 'undefined'
+    ? TROPHIES.filter(t => earned.includes(t.id)).slice(-6)
+    : [];
+  el.innerHTML = recentTrophies.map(t =>
+    `<div title="${t.name}: ${t.desc}" style="font-size:1.5rem;cursor:default;">${t.icon}</div>`
+  ).join('') + (earned.length > 6 ? `<div style="font-size:.72rem;color:var(--muted);align-self:center;">+${earned.length-6} autres</div>` : '');
 }
 
-// ── THEMED EVENTS ────────────────────────────────────────────────
-const EVENTS = [
-  {
-    id: 'ninja',
-    name: '🥷 Ninja Academy',
-    desc: 'Maîtrise le vocabulaire des guerriers de l\'ombre',
-    color: '#1a1a2e',
-    accent: '#e94560',
-    endDate: null, // set dynamically (always active for demo)
-    bonusXP: 2,
-    words: {
-      sword:    {fr:'Épée',    en:'Sword',    es:'Espada',  de:'Schwert',  cs:'Meč'},
-      shield:   {fr:'Bouclier',en:'Shield',   es:'Escudo',  de:'Schild',   cs:'Štít'},
-      shadow:   {fr:'Ombre',   en:'Shadow',   es:'Sombra',  de:'Schatten', cs:'Stín'},
-      master:   {fr:'Maître',  en:'Master',   es:'Maestro', de:'Meister',  cs:'Mistr'},
-      honor:    {fr:'Honneur', en:'Honor',    es:'Honor',   de:'Ehre',     cs:'Čest'},
-      mission:  {fr:'Mission', en:'Mission',  es:'Misión',  de:'Mission',  cs:'Mise'},
-      warrior:  {fr:'Guerrier',en:'Warrior',  es:'Guerrero',de:'Krieger',  cs:'Bojovník'},
-      temple:   {fr:'Temple',  en:'Temple',   es:'Templo',  de:'Tempel',   cs:'Chrám'},
-    },
-    trophyId: 'event_win',
-  },
-  {
-    id: 'space',
-    name: '🚀 Space Station Omega',
-    desc: 'Explore le vocabulaire de l\'espace et de la science',
-    color: '#0a0a2a',
-    accent: '#00d4ff',
-    bonusXP: 2,
-    words: {
-      star:     {fr:'Étoile',  en:'Star',     es:'Estrella',de:'Stern',    cs:'Hvězda'},
-      rocket:   {fr:'Fusée',   en:'Rocket',   es:'Cohete',  de:'Rakete',   cs:'Raketa'},
-      planet:   {fr:'Planète', en:'Planet',   es:'Planeta', de:'Planet',   cs:'Planeta'},
-      galaxy:   {fr:'Galaxie', en:'Galaxy',   es:'Galaxia', de:'Galaxie',  cs:'Galaxie'},
-      gravity:  {fr:'Gravité', en:'Gravity',  es:'Gravedad',de:'Schwerkraft',cs:'Gravitace'},
-      orbit:    {fr:'Orbite',  en:'Orbit',    es:'Órbita',  de:'Umlaufbahn',cs:'Oběžná dráha'},
-      universe: {fr:'Univers', en:'Universe', es:'Universo',de:'Universum', cs:'Vesmír'},
-      astronaut:{fr:'Astronaute',en:'Astronaut',es:'Astronauta',de:'Astronaut',cs:'Kosmonaut'},
-    },
-    trophyId: 'event_win',
-  },
-  {
-    id: 'detective',
-    name: '🕵️ Détective Agency',
-    desc: 'Résous des affaires en apprenant le vocabulaire du mystère',
-    color: '#1a0a0a',
-    accent: '#f59e0b',
-    bonusXP: 2,
-    words: {
-      clue:     {fr:'Indice',  en:'Clue',     es:'Pista',   de:'Hinweis',  cs:'Stopa'},
-      mystery:  {fr:'Mystère', en:'Mystery',  es:'Misterio',de:'Geheimnis',cs:'Záhada'},
-      suspect:  {fr:'Suspect', en:'Suspect',  es:'Sospechoso',de:'Verdächtiger',cs:'Podezřelý'},
-      evidence: {fr:'Preuve',  en:'Evidence', es:'Evidencia',de:'Beweis',  cs:'Důkaz'},
-      witness:  {fr:'Témoin',  en:'Witness',  es:'Testigo', de:'Zeuge',    cs:'Svědek'},
-      crime:    {fr:'Crime',   en:'Crime',    es:'Crimen',  de:'Verbrechen',cs:'Zločin'},
-      detective:{fr:'Détective',en:'Detective',es:'Detective',de:'Detektiv',cs:'Detektiv'},
-      truth:    {fr:'Vérité',  en:'Truth',    es:'Verdad',  de:'Wahrheit', cs:'Pravda'},
-    },
-    trophyId: 'event_win',
-  },
-];
+// ── COMPOST LEVEL/TOPIC SELECTORS ────────────────────────────
+let _compostLevel = 'any';
+let _compostTopic = 'any';
 
-// Returns the current active event (rotates weekly)
-function getCurrentEvent() {
-  const week = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
-  return EVENTS[week % EVENTS.length];
+function selectCompostLevel(btn, lv) {
+  _compostLevel = lv;
+  document.querySelectorAll('#compost-level-btns .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
-function startEventQuiz() {
-  const ev = getCurrentEvent();
-  if (!S.nL || !S.tL) { toast(t('duel_no_lang')); navTo('learn'); return; }
-  // Temporarily add event words to WD
-  const ids = Object.keys(ev.words);
-  ids.forEach(id => { if (!WD[id]) WD[id] = ev.words[id]; });
-  S.qs = ids.flatMap(id => [mkQQ(id, ids), mkFQ(id)]).slice(0, 12);
-  S.isEventQuiz = true;
-  S._eventId = ev.id;
-  S.qi = 0; S.score = 0; S.cor = 0; S.wr = 0;
-  S.ts = { quiz:{c:0,w:0}, fill:{c:0,w:0}, sort:{c:0,w:0}, match:{c:0,w:0} };
-  S.gType = 'mixed';
-  goTo('game');
-  setTypePill('quiz');
-  sT('g-score', 0); sT('xp-count', (U.xp||0)+' XP');
-  $('g-progress').style.width = '0%';
-  renderQ();
-  toast(`${ev.name} — ${t('event_bonus',{n:ev.bonusXP})}`);
+function selectCompostTopic(btn, topic) {
+  _compostTopic = topic;
+  document.querySelectorAll('#compost-topic-btns .duel-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
-function renderEventBanner() {
-  const ev = getCurrentEvent();
-  const html = `
-    <div class="event-card" onclick="startEventQuiz()" style="--ev-accent:${ev.accent};--ev-bg:${ev.color};">
-      <button class="event-close" onclick="event.stopPropagation();document.getElementById('event-float').style.display='none'">✕</button>
-      <div class="event-tab">EVENT</div>
-      <div class="event-body">
-        <div class="event-badge">ÉVÉNEMENT</div>
-        <div class="event-name">${ev.name}</div>
-        <div class="event-desc">${ev.desc}</div>
-        <div class="event-bonus">XP ×${ev.bonusXP} · Trophée exclusif</div>
-        <div class="event-btn">Jouer →</div>
-      </div>
-    </div>
-  `;
-  // Hide old inline slot
-  const el = document.getElementById('event-banner');
-  if (el) el.innerHTML = '';
-  // Floating side widget — visible on all screens
-  const fl = document.getElementById('event-float');
-  if (fl) { fl.innerHTML = html; fl.style.display = 'block'; }
+function openCompostFromGames() {
+  if (typeof openCompostGame === 'function') {
+    openCompostGame({ level: _compostLevel, topic: _compostTopic });
+  }
+}
+
+// ── MINI-GAME LAUNCHER ────────────────────────────────────────
+function openGame(type) {
+  const nL    = S.nL   || 'fr';
+  const tL    = S.tL   || 'en';
+  const name  = encodeURIComponent((U&&U.name) || 'Joueur');
+  const email = encodeURIComponent((U&&U.email)|| 'guest@local');
+  const skin  = encodeURIComponent((U&&U['compostSkin'])||'sprout');
+  const fSkin = encodeURIComponent((U&&U['flappySkin'])||'bluebird');
+  const cSkin = encodeURIComponent((U&&U['carSkin'])||'red');
+
+  const overlay = document.getElementById('minigame-overlay');
+  const iframe  = document.getElementById('minigame-iframe');
+  if(!overlay||!iframe) return;
+
+  const src = type==='flappy'
+    ? `flappy-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&flappySkin=${fSkin}`
+    : `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}`;
+
+  iframe.src = src;
+  overlay.style.display = 'flex';
+
+  window._minigameListener = function(e) {
+    if(e.data==='close'||e.data?.type==='close'){closeMiniGame();return;}
+    if(!e.data||typeof e.data!=='object') return;
+    if(e.data.type==='getWordData') {
+      iframe.contentWindow.postMessage({
+        type:'wordData',
+        words:typeof WD!=='undefined'?WD:{},
+        chapters:typeof CHAPTERS!=='undefined'?CHAPTERS:null,
+      },'*');
+    }
+    if(e.data.type==='saveFlappySkin'&&U&&!U.isGuest){U.flappySkin=e.data.skin;saveU();}
+    if(e.data.type==='saveCarSkin'&&U&&!U.isGuest){U.carSkin=e.data.skin;saveU();}
+    if(e.data.type==='gameResult'&&e.data.won&&U&&!U.isGuest){
+      const bonus=e.data.game==='car'?80:60;
+      U.coins=(U.coins||0)+bonus; saveU(); updateTopBar();
+      if(typeof checkTrophies==='function') checkTrophies();
+      toast('🎉 Victoire ! +'+bonus+' 🪙');
+    }
+  };
+  window.addEventListener('message', window._minigameListener);
+}
+
+function closeMiniGame() {
+  const overlay=document.getElementById('minigame-overlay');
+  const iframe=document.getElementById('minigame-iframe');
+  if(overlay) overlay.style.display='none';
+  if(iframe) iframe.src='';
+  if(window._minigameListener){
+    window.removeEventListener('message',window._minigameListener);
+    window._minigameListener=null;
+  }
+}
+
+
+// ══════════════════════════════════════════════════════
+//  WORD TRANSLATION TOOLTIP (right-click / long-press)
+// ══════════════════════════════════════════════════════
+
+let _tooltipTarget = null;
+
+function showWordTooltip(word, x, y) {
+  const tooltip = document.getElementById('word-tooltip');
+  if(!tooltip || !word) return;
+
+  // Find the word in WD (case-insensitive, strip punctuation)
+  const clean = word.toLowerCase().replace(/[.,!?;:'"()]/g,'').trim();
+  const nL = S.nL || 'fr';
+  const tL = S.tL || 'en';
+
+  // Find matching word entry
+  let found = null, foundId = null;
+  for(const [id, entry] of Object.entries(WD)) {
+    const nativeVal = (entry[nL]||'').toLowerCase();
+    const targetVal = (entry[tL]||'').toLowerCase();
+    if(nativeVal === clean || targetVal === clean ||
+       nativeVal.includes(clean) || targetVal.includes(clean)) {
+      found = entry;
+      foundId = id;
+      break;
+    }
+  }
+
+  if(!found) {
+    // Try partial match
+    for(const [id, entry] of Object.entries(WD)) {
+      for(const lang of ['fr','en','es','de','cs']) {
+        const val = (entry[lang]||'').toLowerCase();
+        if(val && val.includes(clean) && clean.length >= 3) {
+          found = entry; foundId = id; break;
+        }
+      }
+      if(found) break;
+    }
+  }
+
+  if(!found) return; // Word not in our dictionary
+
+  const LANGS_CFG = {
+    fr:{flag:'🇫🇷',name:'Français'},
+    en:{flag:'🇬🇧',name:'Anglais'},
+    es:{flag:'🇪🇸',name:'Espagnol'},
+    de:{flag:'🇩🇪',name:'Allemand'},
+    cs:{flag:'🇨🇿',name:'Tchèque'},
+  };
+
+  // Fill tooltip content
+  const native = found[nL] || word;
+  const trans  = found[tL] || '?';
+
+  document.getElementById('wt-word').textContent = native;
+  document.getElementById('wt-trans').textContent = trans;
+
+  // Other languages
+  const langsEl = document.getElementById('wt-langs');
+  if(langsEl) {
+    langsEl.innerHTML = Object.entries(LANGS_CFG)
+      .filter(([l]) => l !== nL && l !== tL && found[l])
+      .map(([l,cfg]) => `<span class="wt-lang-pill">${cfg.flag} ${found[l]}</span>`)
+      .join('');
+  }
+
+  // Find a context sentence containing this word
+  const ctxEl = document.getElementById('wt-context');
+  const ctxText = document.getElementById('wt-context-text');
+  let contextFound = false;
+
+  if(ctxEl && ctxText) {
+    // Search chapters for a sentence containing this word
+    for(const lvChaps of Object.values(CHAPTERS||{})) {
+      for(const ch of lvChaps) {
+        const sents = ch.sents?.[nL] || [];
+        for(const sent of sents) {
+          const sentLower = sent.toLowerCase();
+          const wordVariants = [native.toLowerCase(), clean];
+          if(wordVariants.some(v => sentLower.includes(v))) {
+            // Highlight the word in the sentence
+            // Simple word highlighting - bold the match
+            const re = new RegExp('\\b(' + native.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&') + ')\\b', 'gi');
+            const highlighted = sent.replace(re, '<span class="wt-highlight">$1</span>');
+            // Also show translation
+            const transSents = ch.sents?.[tL] || [];
+            const sentIdx = sents.indexOf(sent);
+            const transSent = transSents[sentIdx] || '';
+            ctxText.innerHTML = highlighted
+              + (transSent ? '<br><span style="color:#64748b;font-style:italic;">' + transSent + '</span>' : '');
+            ctxEl.style.display = 'block';
+            contextFound = true;
+            break;
+          }
+        }
+        if(contextFound) break;
+      }
+      if(contextFound) break;
+    }
+    if(!contextFound) ctxEl.style.display = 'none';
+  }
+
+  // Position tooltip
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const TW = 280, TH = 200;
+  let tx = x + 14, ty = y + 14;
+  if(tx + TW > vw - 10) tx = x - TW - 8;
+  if(ty + TH > vh - 10) ty = y - TH - 8;
+  tooltip.style.left = Math.max(8, tx) + 'px';
+  tooltip.style.top  = Math.max(8, ty) + 'px';
+  tooltip.style.display = 'block';
+}
+
+function hideWordTooltip() {
+  const t = document.getElementById('word-tooltip');
+  if(t) t.style.display = 'none';
+  if(_tooltipTarget) { _tooltipTarget.classList.remove('active-lookup'); _tooltipTarget = null; }
+}
+
+// ── Make text selectable for word lookup ────────────────
+function wrapWordsForLookup(el) {
+  if(!el || el.dataset.wrapped) return;
+  el.dataset.wrapped = '1';
+  const text = el.textContent;
+  if(!text.trim() || text.length < 2) return;
+
+  // Wrap each word in a span
+  el.innerHTML = text.split(/(\s+)/).map(part => {
+    if(/^\s+$/.test(part) || !part.trim()) return part;
+    const clean = part.replace(/[.,!?;:'"()]/g,'');
+    if(clean.length < 2) return part;
+    return `<span class="word-lookup" data-word="${clean}">${part}</span>`;
+  }).join('');
+}
+
+// ── Install context menu listeners ──────────────────────
+(function installWordLookup(){
+  // Right-click / contextmenu on word spans
+  document.addEventListener('contextmenu', function(e) {
+    const span = e.target.closest('.word-lookup');
+    if(!span) { hideWordTooltip(); return; }
+    e.preventDefault();
+    if(_tooltipTarget) _tooltipTarget.classList.remove('active-lookup');
+    _tooltipTarget = span;
+    span.classList.add('active-lookup');
+    showWordTooltip(span.dataset.word || span.textContent, e.clientX, e.clientY);
+  });
+
+  // Long-press on touch devices
+  let _lpTimer = null;
+  document.addEventListener('touchstart', function(e) {
+    const span = e.target.closest('.word-lookup');
+    if(!span) return;
+    _lpTimer = setTimeout(()=>{
+      if(_tooltipTarget) _tooltipTarget.classList.remove('active-lookup');
+      _tooltipTarget = span;
+      span.classList.add('active-lookup');
+      const t = e.touches[0];
+      showWordTooltip(span.dataset.word || span.textContent, t.clientX, t.clientY);
+    }, 500);
+  }, {passive:true});
+  document.addEventListener('touchend', ()=>clearTimeout(_lpTimer), {passive:true});
+  document.addEventListener('touchmove', ()=>clearTimeout(_lpTimer), {passive:true});
+
+  // Click elsewhere = hide
+  document.addEventListener('click', function(e) {
+    if(!e.target.closest('#word-tooltip') && !e.target.closest('.word-lookup')) {
+      hideWordTooltip();
+    }
+  });
+})();
+
+// ── Wrap words whenever a question is rendered ──────────
+const _origRenderQ = typeof renderQ !== 'undefined' ? renderQ : null;
+function patchWordLookup() {
+  // Called after each question render — wrap the question text
+  setTimeout(()=>{
+    const el = document.getElementById('g-text');
+    if(el) wrapWordsForLookup(el);
+    document.querySelectorAll('.answer-btn span:last-child, .word-token, .match-item').forEach(wrapWordsForLookup);
+    const speakPhrase = document.getElementById('speak-phrase');
+    if(speakPhrase) wrapWordsForLookup(speakPhrase);
+  }, 50);
 }
