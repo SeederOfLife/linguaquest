@@ -141,6 +141,12 @@ function migrateUser(){
 
 let _appReady = false;
 function afterLogin(){
+  // Ensure a default language pair if none saved
+  if(!S.nL || !S.tL || S.nL===S.tL){
+    S.nL = U.lastNL || 'fr';
+    S.tL = U.lastTL || 'en';
+    if(S.nL===S.tL) S.tL = 'en';
+  }
   migrateUser();
   showChrome();
   calcDividends();
@@ -162,6 +168,7 @@ function afterLogin(){
         if(typeof goToLevels==='function'
            && typeof LANGS!=='undefined'
            && LANGS && LANGS[S.nL] && LANGS[S.tL]){
+          if(typeof updateLangPill==='function') updateLangPill();
           goToLevels();
         } else {
           navTo('learn');

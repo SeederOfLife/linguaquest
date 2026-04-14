@@ -1091,3 +1091,156 @@ input, textarea, [contenteditable="true"] {
 }
 /* Kill outline on focused buttons */
 button:focus, button:focus-visible { outline: none; }
+
+/* ══════════════════════════════════════════════
+   WINDING PATH — dungeon chapter journey
+═══════════════════════════════════════════════ */
+
+/* Language flag pill hover */
+#lang-flag-pill:hover{
+  background:rgba(124,58,237,.2)!important;
+  border-color:rgba(124,58,237,.5)!important;
+}
+
+/* The path container */
+#chapters-list{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+}
+
+/* Path node wrapper — alternates left/right */
+.path-node-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  max-width:420px;
+  padding:0 24px;
+}
+.path-node-wrap.left  .path-node{ margin-right:auto; }
+.path-node-wrap.right .path-node{ margin-left:auto; }
+.path-node-wrap.center .path-node{ margin:0 auto; }
+
+/* Curved connector between nodes */
+.path-curve{
+  width:100%;
+  max-width:420px;
+  height:48px;
+  position:relative;
+  overflow:visible;
+  flex-shrink:0;
+}
+.path-curve svg{
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+
+/* Individual dungeon room node */
+.path-node{
+  position:relative;
+  width:220px;
+  background:var(--card2);
+  border:2px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:14px 16px;
+  cursor:pointer;
+  transition:transform .2s, box-shadow .2s, border-color .2s;
+  display:flex;align-items:center;gap:12px;
+}
+.path-node:hover:not(.locked){
+  transform:scale(1.04);
+  box-shadow:0 8px 30px rgba(0,0,0,.5);
+}
+.path-node.done{
+  border-color:rgba(16,185,129,.35);
+  background:linear-gradient(135deg,rgba(16,185,129,.08),var(--card2));
+}
+.path-node.active-node{
+  border-color:var(--accent);
+  background:linear-gradient(135deg,rgba(124,58,237,.15),var(--card2));
+  box-shadow:0 0 0 4px rgba(124,58,237,.15),0 8px 30px rgba(0,0,0,.4);
+  animation:node-pulse 2s ease-in-out infinite;
+}
+@keyframes node-pulse{
+  0%,100%{box-shadow:0 0 0 4px rgba(124,58,237,.15),0 8px 30px rgba(0,0,0,.4);}
+  50%     {box-shadow:0 0 0 8px rgba(124,58,237,.08),0 8px 30px rgba(0,0,0,.5);}
+}
+.path-node.locked{
+  opacity:.45;cursor:not-allowed;filter:grayscale(.6);
+}
+.path-node.boss-node{
+  width:260px;
+  border-color:rgba(239,68,68,.4);
+  background:linear-gradient(135deg,rgba(239,68,68,.1),var(--card2));
+  box-shadow:0 0 30px rgba(239,68,68,.15);
+}
+.path-node.boss-node:not(.locked):hover{
+  border-color:#ef4444;
+  box-shadow:0 0 50px rgba(239,68,68,.3);
+}
+
+/* Node icon */
+.path-node-icon{
+  width:44px;height:44px;border-radius:14px;
+  background:rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;flex-shrink:0;
+}
+.boss-node .path-node-icon{
+  background:rgba(239,68,68,.15);
+  font-size:2rem;
+}
+.done .path-node-icon{
+  background:rgba(16,185,129,.15);
+}
+
+/* Node text */
+.path-node-text{ flex:1;min-width:0; }
+.path-node-title{
+  font-weight:900;font-size:.88rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.path-node-sub{
+  font-size:.68rem;color:var(--muted);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Stars / lock badge */
+.path-node-badge{
+  flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.path-stars{ font-size:.75rem;letter-spacing:1px; }
+.path-lock{ font-size:1rem;color:var(--muted); }
+
+/* Completion ring around icon */
+.done .path-node-icon::after{
+  content:'✓';
+  position:absolute;
+  top:-4px;right:-4px;
+  background:#10b981;border-radius:50%;
+  width:18px;height:18px;
+  font-size:.6rem;font-weight:900;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.path-node-icon{ position:relative; }
+
+/* BOSS label */
+.path-boss-label{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:#ef4444;color:#fff;border-radius:6px;
+  padding:2px 8px;font-size:.6rem;font-weight:900;
+  letter-spacing:1.5px;text-transform:uppercase;
+  white-space:nowrap;
+}
+
+/* Vocab carry-over tag */
+.carry-tag{
+  display:inline-block;
+  background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);
+  color:var(--accent3);border-radius:10px;
+  padding:1px 7px;font-size:.6rem;font-weight:800;
+  margin-top:3px;
+}

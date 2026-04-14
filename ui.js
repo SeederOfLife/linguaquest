@@ -170,10 +170,12 @@ function pickLang(gid,code){
 }
 function clrSel(gid){document.querySelectorAll(`#${gid} .lang-card`).forEach(c=>c.classList.remove('selected'));}
 function swapLangs(){const t=S.nL;S.nL=S.tL;S.tL=t;clrSel('native-grid');clrSel('target-grid');if(S.nL)document.querySelector(`#native-grid [data-code="${S.nL}"]`)?.classList.add('selected');if(S.tL)document.querySelector(`#target-grid [data-code="${S.tL}"]`)?.classList.add('selected');syncPair();}
-function syncPair(){const ok=S.nL&&S.tL&&S.nL!==S.tL;$('pair-summary').style.display=ok?'flex':'none';if(ok){const N=LANGS[S.nL],T=LANGS[S.tL];$('pair-native').innerHTML=`<span style="font-size:1.2rem">${N.flag}</span> ${N.name}`;$('pair-target').innerHTML=`<span style="font-size:1.2rem">${T.flag}</span> ${T.name}`;}$('btn-start').disabled=!ok;}
+function syncPair(){
+  if(typeof updateLangPill==='function') updateLangPill();const ok=S.nL&&S.tL&&S.nL!==S.tL;$('pair-summary').style.display=ok?'flex':'none';if(ok){const N=LANGS[S.nL],T=LANGS[S.tL];$('pair-native').innerHTML=`<span style="font-size:1.2rem">${N.flag}</span> ${N.name}`;$('pair-target').innerHTML=`<span style="font-size:1.2rem">${T.flag}</span> ${T.name}`;}$('btn-start').disabled=!ok;}
 function syncDots(){const s1=!!S.nL,s2=!!(S.nL&&S.tL&&S.nL!==S.tL);$('dot1').className='step-dot '+(s1?'done':'active');$('dot2').className='step-dot '+(s2?'done':s1?'active':'pending');$('dot3').className='step-dot '+(s2?'active':'pending');$('line1').className='step-line'+(s1?' done':'');$('line2').className='step-line'+(s2?' done':'');}
 
 function goToLevels(){
+  if(typeof updateLangPill==='function') updateLangPill();
   if(!S.nL||!S.tL){navTo('learn');return;}
   if(!LANGS[S.nL]||!LANGS[S.tL]){navTo('learn');return;}
   // Save language pair
@@ -296,92 +298,159 @@ function goToChaps(lvId){
 
 function renderChaps(){
   const list=$('chapters-list'); list.innerHTML='';
-  const topic=S._activeTopic||'conv';
   const lang=S.nL||'fr';
-
-  // DIY tab
-  if(topic==='diy'){
-    const diys=(U.diyLessons||[]).filter(d=>d.level===S.level);
-    if(!diys.length){
-      list.innerHTML=`<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">${t('diy_no_lessons')}</div>`;
-      return;
-    }
-    diys.forEach((d,i)=>{
-      const el=document.createElement('div');
-      el.className='chapter-item available diy-chapter';
-      el.innerHTML=`<div class="chapter-num">✨</div>
-        <div style="flex:1">
-          <div style="font-weight:800;margin-bottom:2px;font-size:.92rem;">${d.title}</div>
-          <div style="font-size:.74rem;color:var(--muted);">${d.pairs.length} paires · Ma leçon</div>
-        </div>
-        <button class="diy-del-btn" onclick="event.stopPropagation();deleteDIY(${i})" title=""+t('diy_delete_btn')+"">🗑</button>`;
-      el.onclick=()=>startDIYLesson(d);
-      list.appendChild(el);
-    });
-    return;
-  }
-
-  // Normal chapters filtered by topic
   const allCs=CHAPTERS[S.level]||[];
-  const cs=allCs.filter(c=>c.topic===topic);
-  if(!cs.length){
-    list.innerHTML=`<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">${t('content_coming')}</div>`;
-    return;
-  }
   const dz=DUNGEON&&DUNGEON[S.level];
   const monsters=(dz&&dz.monsters)||['⚔️','🛡','🧙','🗡','🪄','💀','🏹','🔮','🗝','👑'];
   const boss=dz&&dz.boss;
 
+  // Show DIY float button
+  const diyBtn=$('btn-diy-float');
+  if(diyBtn) diyBtn.style.display='flex';
+
+  // DIY tab special handling
+  if(S._activeTopic==='diy'){
+    const diys=(U.diyLessons||[]).filter(d=>d.level===S.level);
+    if(!diys.length){
+      list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">'+t('diy_no_lessons')+'</div>';
+      return;
+    }
+    diys.forEach((d,i)=>{
+      const wrap=document.createElement('div');
+      wrap.className='path-node-wrap center'; wrap.style.marginTop=i?'6px':'0';
+      const node=document.createElement('div');
+      node.className='path-node available';
+      node.innerHTML='<div class="path-node-icon">✨</div>'
+        +'<div class="path-node-text"><div class="path-node-title">'+d.title+'</div>'
+        +'<div class="path-node-sub">'+d.pairs.length+' paires · Ma leçon</div></div>'
+        +'<button onclick="event.stopPropagation();deleteDIY('+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;">🗑</button>';
+      node.onclick=()=>startDIYLesson(d);
+      wrap.appendChild(node);
+      list.appendChild(wrap);
+    });
+    return;
+  }
+
+  // Filter chapters by topic (or show all if 'all')
+  let cs = S._activeTopic && S._activeTopic!=='all'
+    ? allCs.filter(c=>c.topic===S._activeTopic)
+    : allCs;
+
+  // Count completed for progress bar
+  const totalAll=allCs.length;
+  const doneAll=allCs.filter(c=>U?.progress[pk(c.id)]?.completed).length;
+  const pct=totalAll?Math.round(doneAll/totalAll*100):0;
+  const progBar=$('zone-progress-bar');
+  const progBadge=$('zone-progress-badge');
+  if(progBar) progBar.style.width=pct+'%';
+  if(progBadge) progBadge.textContent=doneAll+'/'+totalAll;
+
+  if(!cs.length){
+    list.innerHTML='<div style="color:var(--muted);text-align:center;padding:36px;font-size:.88rem;">'+t('content_coming')+'</div>';
+    return;
+  }
+
+  // Positions: alternate left / right / center for winding path feel
+  const SIDES=['left','right','left','right','left','right','center'];
+
   cs.forEach((ch,i)=>{
-    const p=U?.progress[pk(ch.id)],done=p?.completed;
-    const locked=i>0&&!U?.progress[pk(cs[i-1].id)]?.completed;
-    const isLast=i===cs.length-1;
-    const title=ch.title[lang]||ch.title.fr;
-    const sub=ch.subtitle[lang]||ch.subtitle.fr;
-    const monster=monsters[i%monsters.length];
-    const stars=stHTML(p?.stars||0);
+    const p=U?.progress[pk(ch.id)], done=!!p?.completed;
+    // A chapter is unlocked if: it's first, or previous chapter (in allCs) is done
+    const myIdxInAll=allCs.indexOf(ch);
+    const prevCh=myIdxInAll>0?allCs[myIdxInAll-1]:null;
+    const locked=prevCh&&!U?.progress[pk(prevCh.id)]?.completed;
+    const isActive=!done&&!locked;
+    const isLast=(i===cs.length-1);
+    const isBoss=ch.id.endsWith('-boss')||(isLast&&boss&&cs.length>=3);
+    const title=ch.title[lang]||ch.title.fr||ch.id;
+    const sub=ch.subtitle?.[lang]||ch.subtitle?.fr||'';
+    const monster=isBoss?boss?.sprite:monsters[i%monsters.length];
+    const stars=p?.stars||0;
 
-    // Connector dot
+    // Figure out how many vocab words from previous chapters are carried
+    const carryCount=myIdxInAll>0
+      ? [...new Set(allCs.slice(0,myIdxInAll).flatMap(c=>c.wids||[]).filter(w=>WD[w]))].length
+      : 0;
+
+    // Curved SVG connector from previous node
     if(i>0){
-      const conn=document.createElement('div');
-      conn.className='room-connector'+(done?' done':'');
-      list.appendChild(conn);
+      const prev=SIDES[(i-1)%SIDES.length];
+      const curr=SIDES[i%SIDES.length];
+      const wrap=document.createElement('div');
+      wrap.className='path-curve';
+      // Simple S-curve SVG path
+      const fromX=prev==='left'?110:prev==='right'?310:210;
+      const toX=curr==='left'?110:curr==='right'?310:210;
+      const col=done?'rgba(16,185,129,.5)':'rgba(255,255,255,.1)';
+      wrap.innerHTML=`<svg viewBox="0 0 420 48" preserveAspectRatio="none">
+        <path d="M\${fromX},0 C\${fromX},24 \${toX},24 \${toX},48"
+          stroke="\${col}" stroke-width="3" fill="none" stroke-dasharray="\${done?'none':'8,6'}"/>
+        \${done?'<circle cx="'+toX+'" cy="48" r="5" fill="#10b981"/>':''}
+      </svg>`;
+      list.appendChild(wrap);
     }
 
-    const d=document.createElement('div');
-    d.className='dungeon-room'+(locked?' locked':done?' done':isLast?' boss':' available');
+    const side=SIDES[i%SIDES.length];
+    const outerWrap=document.createElement('div');
+    outerWrap.className='path-node-wrap '+side;
 
-    if(isLast && boss){
-      // Boss room
-      d.innerHTML='<div class="boss-label">BOSS</div>'
-        +'<div class="room-monster" style="background:rgba(239,68,68,.15);font-size:2rem;">'+boss.sprite+'</div>'
-        +'<div style="flex:1">'
-        +'<div style="font-weight:900;font-size:.95rem;color:#f87171;">'+boss.name+'</div>'
-        +'<div style="font-size:.73rem;color:var(--muted);margin-top:2px;">Affronte le boss du niveau '+S.level+'</div>'
-        +'</div>'
-        +(done?'<span style="font-size:1.2rem;">🏆</span>':'<span style="color:#ef4444;font-size:1.2rem;">⚔️</span>');
-      if(!locked) d.onclick=()=>startBossFight(ch.id, boss);
-    } else {
-      d.innerHTML='<div class="room-monster">'+monster+'</div>'
-        +'<div style="flex:1">'
-        +'<div style="font-weight:800;font-size:.9rem;">Salle '+(i+1)+' · '+title+'</div>'
-        +'<div style="font-size:.72rem;color:var(--muted);margin-top:2px;">'+sub+'</div>'
-        +'</div>'
-        +'<div style="text-align:right;flex-shrink:0;">'
-        +(done?stars:'<span style="font-size:.7rem;color:var(--muted);">Non clair</span>')
-        +(locked?'':'<br><button class="btn-qr" style="margin-top:4px;" data-qr-id="'+ch.id+'">📱</button>')
-        +'</div>';
-      if(!locked) d.onclick=()=>goToSel(ch.id);
+    const node=document.createElement('div');
+    node.className='path-node'
+      +(locked?' locked':'')
+      +(done?' done':'')
+      +(!locked&&!done?' active-node':'')
+      +(isBoss?' boss-node':'');
+
+    // Boss label
+    let bossLabel='';
+    if(isBoss) bossLabel='<div class="path-boss-label">⚔ BOSS</div>';
+
+    // Stars display
+    let starsHtml='';
+    if(done){
+      starsHtml=[0,1,2].map(n=>'<span style="color:'+(n<stars?'var(--accent4)':'rgba(255,255,255,.15)')+'">★</span>').join('');
     }
-    list.appendChild(d);
+
+    // Carry-over tag
+    let carryHtml='';
+    if(carryCount>0&&!done&&!locked){
+      carryHtml='<div class="carry-tag">+'+carryCount+' mots connus</div>';
+    }
+
+    node.innerHTML=bossLabel
+      +'<div class="path-node-icon">'+monster+'</div>'
+      +'<div class="path-node-text">'
+        +'<div class="path-node-title">'+(isBoss?boss?.name||title:title)+'</div>'
+        +'<div class="path-node-sub">'+(isBoss?'Boss final — '+S.level:sub)+'</div>'
+        +carryHtml
+      +'</div>'
+      +'<div class="path-node-badge">'
+        +(done?'<div class="path-stars">'+starsHtml+'</div>':'')
+        +(locked?'<span class="path-lock">🔒</span>':'')
+        +(isActive&&!isBoss?'<span style="font-size:1.2rem;">›</span>':'')
+        +(isActive&&isBoss?'<span style="color:#ef4444;font-size:1.4rem;">⚔️</span>':'')
+      +'</div>';
+
     if(!locked){
-      const qrBtn = d.querySelector('[data-qr-id]');
-      if(qrBtn) qrBtn.addEventListener('click', function(ev){
-        ev.stopPropagation(); openQR(this.dataset.qrId);
-      });
+      if(isBoss){
+        node.onclick=()=>startBossFight(ch.id, boss);
+      } else {
+        // Direct start — no game-select screen, always mixed mode
+        // Pass accumulated wids from all previous chapters + this one
+        node.onclick=()=>startChapterDirect(ch);
+      }
+    }
+
+    outerWrap.appendChild(node);
+    list.appendChild(outerWrap);
+
+    // Scroll active node into view
+    if(isActive&&!isBoss){
+      setTimeout(()=>node.scrollIntoView({behavior:'smooth',block:'center'}),300);
     }
   });
 }
+
 
 // ── DIY Lessons ──────────────────────────────────
 let _diyPairs=[];
@@ -1032,4 +1101,53 @@ function renderPracticeModes() {
     };
     wrap.appendChild(card);
   });
+}
+
+
+// ══════════════════════════════════════════════════════
+//  DIRECT CHAPTER START — merged exercises, vocab carry
+// ══════════════════════════════════════════════════════
+function startChapterDirect(ch){
+  S.chap=ch.id;
+  const N=LANGS[S.nL], T=LANGS[S.tL];
+  sT('bc-p3',N.flag+'→'+T.flag);
+  sT('bc-l3',S.level);
+  sT('bc-c3',ch.title?.[S.nL]||ch.id);
+
+  // Accumulate wids: current chapter + all completed chapters in this level
+  const allCs=CHAPTERS[S.level]||[];
+  const completedWids=[...new Set(
+    allCs
+      .filter(c=>U?.progress[pk(c.id)]?.completed && c.id!==ch.id)
+      .flatMap(c=>c.wids||[])
+      .filter(id=>WD[id])
+  )];
+  const currentWids=(ch.wids||[]).filter(id=>WD[id]);
+
+  // Merge: current chapter words first, sprinkle in 3-4 carry-over words
+  const carryWids=completedWids.slice().sort(()=>Math.random()-.5).slice(0,4);
+  const allWids=[...new Set([...currentWids,...carryWids])];
+
+  // Build a mixed session
+  startGame('mixed');
+  // Override qs with our merged wid set
+  setTimeout(()=>{
+    if(typeof buildMixed==='function' && CHAPTERS[S.level]){
+      S.qs=buildMixed({...ch, wids:allWids});
+      S.qi=0;
+      if(typeof renderQ==='function') renderQ();
+    }
+  },50);
+}
+
+// ══════════════════════════════════════════════════════
+//  UPDATE LANG FLAG PILL in top-bar
+// ══════════════════════════════════════════════════════
+function updateLangPill(){
+  const nFlag=LANGS[S.nL]?.flag||'🌐';
+  const tFlag=LANGS[S.tL]?.flag||'🌐';
+  const nEl=document.getElementById('pill-nL-flag');
+  const tEl=document.getElementById('pill-tL-flag');
+  if(nEl) nEl.textContent=nFlag;
+  if(tEl) tEl.textContent=tFlag;
 }
