@@ -736,6 +736,14 @@ function openGame(type) {
 
   window._minigameListener = function(e) {
     if(e.data==='close'||e.data?.type==='close'){closeMiniGame();return;}
+    if(e.data?.type==='studyChapter'){
+      closeMiniGame();
+      // Go to game-select screen for current chapter
+      if(S.chap) goToSel(S.chap);
+      else if(S.level) goToChaps(S.level);
+      else goToLevels();
+      return;
+    }
     if(!e.data||typeof e.data!=='object') return;
     if(e.data.type==='getWordData') {
       iframe.contentWindow.postMessage({
@@ -952,4 +960,76 @@ function patchWordLookup() {
     const speakPhrase = document.getElementById('speak-phrase');
     if(speakPhrase) wrapWordsForLookup(speakPhrase);
   }, 50);
+}
+
+
+// ════════════════════════════════════════════════════════
+//  PRACTICE MODE (SRS review + weak words)
+// ════════════════════════════════════════════════════════
+function renderPracticeModes() {
+  const wrap = document.getElementById('practice-container') || document.getElementById('rank-practice');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+
+  const modes = [
+    { icon:'🔁', title:'Révision SRS', desc:'Révise les mots au bon moment selon la répétition espacée.', fn:'startSRSReview', color:'#7c3aed' },
+    { icon:'💪', title:'Mots difficiles', desc:'Rejoue uniquement les mots où tu as échoué récemment.', fn:'startWeakWordPractice', color:'#ef4444' },
+    { icon:'⚡', title:'Sprint 60s', desc:'Autant de mots que possible en 60 secondes.', fn:'startSprintMode', color:'#f59e0b' },
+    { icon:'🎯', title:'Par chapitre', desc:'Choisis un chapitre spécifique à réviser.', fn:'goToLevels', color:'#10b981' },
+  ];
+
+  modes.forEach(m => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px 16px;cursor:pointer;transition:all .2s;margin-bottom:10px;display:flex;align-items:center;gap:14px;';
+    card.innerHTML = `
+      <div style="font-size:2rem;width:44px;text-align:center;flex-shrink:0;">${m.icon}</div>
+      <div style="flex:1;">
+        <div style="font-weight:900;font-size:.95rem;color:var(--text);">${m.title}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">${m.desc}</div>
+      </div>
+      <div style="font-size:1.2rem;color:var(--muted);">›</div>
+    `;
+    card.style.borderLeft = '3px solid '+m.color;
+    card.onmouseenter = () => card.style.transform='translateX(4px)';
+    card.onmouseleave = () => card.style.transform='';
+    card.onclick = () => {
+      if(typeof window[m.fn]==='function') window[m.fn]();
+      else if(m.fn==='startSRSReview' && typeof startGame==='function') {
+        // Build SRS-based session
+        if(!U) { toast('Connecte-toi !'); return; }
+        const due = Object.entries(U.progress||{})
+          .filter(([k,v]) => v && v.nextReview && Date.now() >= v.nextReview)
+          .map(([k]) => k.split('-').slice(2).join('-'));
+        if(!due.length) { toast('Aucune révision due pour le moment ! 🎉'); return; }
+        S.level = S.level || 'A1';
+        const wids = [...new Set(due.slice(0,15))].filter(id=>WD[id]);
+        if(!wids.length) { toast('Lance un chapitre !'); return; }
+        S.qs = wids.flatMap(id=>[mkQQ(id,wids),mkFQ(id,wids)]).slice(0,20);
+        S.qi=0;S.score=0;S.cor=0;S.wr=0;S.isSRSReview=true;
+        goTo('game');renderQ();
+      } else if(m.fn==='startWeakWordPractice') {
+        if(!U) { toast('Connecte-toi'); return; }
+        const weak = Object.entries(U.progress||{})
+          .filter(([k,v])=>v && v.wrong > 0)
+          .sort((a,b)=>(b[1].wrong||0)-(a[1].wrong||0))
+          .slice(0,15)
+          .map(([k])=>k.split('-').slice(2).join('-'))
+          .filter(id=>WD[id]);
+        if(!weak.length) { toast('Aucun mot difficile trouvé — tu gères ! 💪'); return; }
+        S.level = S.level||'A1';
+        S.qs = weak.flatMap(id=>[mkQQ(id,weak),mkFQ(id,weak)]).slice(0,20);
+        S.qi=0;S.score=0;S.cor=0;S.wr=0;
+        goTo('game');renderQ();
+      } else if(m.fn==='startSprintMode') {
+        if(!S.level) { toast('Sélectionne un niveau !'); goToLevels(); return; }
+        const chaps = CHAPTERS[S.level]||[];
+        const wids = [...new Set(chaps.flatMap(c=>c.wids||[]))].filter(id=>WD[id]).slice(0,30);
+        if(!wids.length) { toast('Lance un chapitre !'); return; }
+        S.qs = shuf(wids.flatMap(id=>[mkQQ(id,wids)])).slice(0,40);
+        S.qi=0;S.score=0;S.cor=0;S.wr=0;
+        goTo('game');startTimer(60);renderQ();
+      }
+    };
+    wrap.appendChild(card);
+  });
 }

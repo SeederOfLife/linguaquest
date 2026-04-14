@@ -283,11 +283,14 @@
     <span class="mix-badge" id="lbl-mix-badge">🎲 Mode Mixte recommandé</span>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:12px;width:100%;max-width:700px;">
-    <button class="btn-qr" onclick="openFlappyQR()" style="flex:1;justify-content:center;">
-      🐦 QR Flappy Bird
+    <button class="btn-qr" onclick="openGame('flappy')" style="flex:1;justify-content:center;">
+      🐦 Jouer Flappy
     </button>
-    <button class="btn-qr" onclick="openQR(S.chap)" style="flex:1;justify-content:center;">
-      📱 QR Exercices
+    <button class="btn-qr" onclick="openGame('car')" style="flex:1;justify-content:center;">
+      🚗 Course de mots
+    </button>
+    <button class="btn-qr" onclick="openFlappyQR()" style="flex:1;justify-content:center;font-size:.7rem;">
+      📱 QR Partage
     </button>
   </div>
   <div class="game-types">

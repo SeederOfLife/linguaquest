@@ -80,6 +80,8 @@ canvas{display:block;max-width:100%;}
   <div id="res-sub" style="color:#94a3b8;font-size:.82rem;margin-bottom:14px;"></div>
   <button class="btn btn-primary" onclick="restartGame()">🔄 Rejouer</button>
   <button class="btn btn-gray" style="margin-top:6px;" onclick="window.parent.postMessage('close','*')">← Menu</button>
+  <button class="btn" style="margin-top:6px;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;border:none;"
+    onclick="window.parent.postMessage({type:'studyChapter'},'*')">📚 Réviser ce chapitre</button>
 </div>
 
 <script>
