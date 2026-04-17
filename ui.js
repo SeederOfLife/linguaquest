@@ -271,18 +271,28 @@ function renderTopicTabs(){
   allCs.forEach(c=>{ counts[c.topic]=(counts[c.topic]||0)+1; });
   if(diyCs.length) counts['diy']=diyCs.length;
   wrap.innerHTML='';
+
+  // "All" tab first
+  const allBtn=document.createElement('button');
+  const isAll=!S._topicTabSelected||S._activeTopic==='all';
+  allBtn.className='topic-tab'+(isAll?' active':'');
+  allBtn.innerHTML='🗺 Tout <span class="topic-count">'+allCs.length+'</span>';
+  allBtn.onclick=()=>{ S._activeTopic='all'; S._topicTabSelected=false; renderTopicTabs(); renderChaps(); };
+  wrap.appendChild(allBtn);
+
   (typeof TOPIC_DEFS!=='undefined'?TOPIC_DEFS:[]).forEach(tp=>{
     const n=counts[tp.id]||0;
+    if(n===0) return; // hide empty topics
     const btn=document.createElement('button');
-    btn.className='topic-tab'+(S._activeTopic===tp.id?' active':'')+(n===0?' empty':'');
-    btn.innerHTML=`${tp.icon} ${tp.label[lang]||tp.label.fr}${n?` <span class="topic-count">${n}</span>`:''}`;
-    btn.onclick=()=>{ S._activeTopic=tp.id; renderTopicTabs(); renderChaps(); };
+    btn.className='topic-tab'+(S._activeTopic===tp.id&&S._topicTabSelected?' active':'');
+    btn.innerHTML=tp.icon+' '+(tp.label[lang]||tp.label.fr)+' <span class="topic-count">'+n+'</span>';
+    btn.onclick=()=>{ S._activeTopic=tp.id; S._topicTabSelected=true; renderTopicTabs(); renderChaps(); };
     wrap.appendChild(btn);
   });
 }
 
 function goToChaps(lvId){
-  S.level=lvId;S._activeTopic='conv';
+  S.level=lvId;S._activeTopic='all';S._topicTabSelected=false;
   const T=LANGS[S.tL];
   const dz=DUNGEON&&DUNGEON[lvId];
   sT('bc-level2',lvId);
@@ -332,9 +342,15 @@ function renderChaps(){
   }
 
   // Filter chapters by topic (or show all if 'all')
-  let cs = S._activeTopic && S._activeTopic!=='all'
-    ? allCs.filter(c=>c.topic===S._activeTopic)
-    : allCs;
+  // Show ALL chapters in the path — topic tabs just highlight/filter visually
+  let cs = allCs;
+  // If a specific topic is selected via tabs, filter — but default shows all
+  if(S._activeTopic && S._activeTopic!=='all' && S._activeTopic!=='conv' && S._activeTopic) {
+    // Only filter if user explicitly chose a topic tab other than first load
+    if(S._topicTabSelected) {
+      cs = allCs.filter(c=>c.topic===S._activeTopic);
+    }
+  }
 
   // Count completed for progress bar
   const totalAll=allCs.length;

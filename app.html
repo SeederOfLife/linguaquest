@@ -230,7 +230,7 @@
 <!-- ══════════════════ CHAPTERS / PATH ══════════════════ -->
 <div class="screen" id="screen-chapters" style="padding:0;overflow-x:hidden;">
   <!-- Sticky zone header -->
-  <div id="dungeon-zone-header" style="position:sticky;top:0;z-index:10;
+  <div id="dungeon-zone-header" style="position:sticky;top:64px;z-index:10;
     overflow:hidden;flex-shrink:0;">
     <div id="dungeon-zone-banner-inner" style="padding:14px 18px;display:flex;
       align-items:center;gap:12px;backdrop-filter:blur(12px);">
@@ -256,8 +256,12 @@
     </div>
   </div>
 
+  <!-- Topic tabs (restored) -->
+  <div style="width:100%;max-width:420px;margin:0 auto;padding:8px 16px 0;">
+    <div class="topic-tabs" id="topic-tabs" style="margin-bottom:4px;"></div>
+  </div>
   <!-- The winding path -->
-  <div id="chapters-list" style="padding:20px 0 100px;width:100%;"></div>
+  <div id="chapters-list"  style="padding:20px 0 100px;width:100%;margin-top:0;"></div>
 
   <!-- DIY floating button -->
   <button onclick="openDIY()" style="
