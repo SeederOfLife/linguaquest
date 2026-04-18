@@ -835,6 +835,11 @@ function openGame(type) {
         type:'wordData',
         words:typeof WD!=='undefined'?WD:{},
         chapters:typeof CHAPTERS!=='undefined'?CHAPTERS:null,
+        chapId: S.chap||null,
+        level:  S.level||null,
+        nL:     S.nL||'fr',
+        tL:     S.tL||'en',
+        practiceWids: (S._practiceWids&&S._practiceWids.length)?S._practiceWids:null,
       },'*');
     }
     if(e.data.type==='saveFlappySkin'&&U&&!U.isGuest){U.flappySkin=e.data.skin;saveU();}

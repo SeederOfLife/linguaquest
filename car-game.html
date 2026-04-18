@@ -115,7 +115,8 @@ let WD={}, CHAPTERS=null;
 const nL=new URLSearchParams(location.search).get('nL')||'fr';
 const tL=new URLSearchParams(location.search).get('tL')||'en';
 window.addEventListener('message',e=>{
-  if(e.data?.type==='wordData'){WD=e.data.words||{};CHAPTERS=e.data.chapters||null;}
+  if(e.data?.type==='wordData'){
+    if(e.data.practiceWids&&e.data.practiceWids.length) _practiceWids=e.data.practiceWids;WD=e.data.words||{};CHAPTERS=e.data.chapters||null;}
 });
 window.parent.postMessage({type:'getWordData'},'*');
 const FALLBACK={hello:{fr:'Bonjour',en:'Hello',es:'Hola',de:'Hallo',cs:'Ahoj'},

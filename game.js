@@ -311,7 +311,11 @@ function showResults(){
   goTo('results');
   if(stars>=2) confetti();
   if(coinsEarned>0) floatCoin($('coin-reward-amount'),`+${coinsEarned} <span class="coin"></span>`);
-  // result speech removed
+  // Launch both post-exercise features
+  setTimeout(()=>{
+    renderResultGames();
+    generateResultPhrase();
+  }, 400);
 }
 function playAgain(){startGame(S.gType);}
 
@@ -816,3 +820,150 @@ function renderRepeatBtn(){
   // Insert inside the feedback banner
   fb.appendChild(btn);
 }
+
+
+// ══════════════════════════════════════════════════════════
+//  POST-EXERCISE GAME LIBRARY
+// ══════════════════════════════════════════════════════════
+function renderResultGames(){
+  const sect = document.getElementById('r-games-section');
+  const grid = document.getElementById('r-games-grid');
+  if(!sect || !grid) return;
+
+  // Collect word IDs from the just-played session
+  const sessionWids = [...new Set(
+    (S.qs||[])
+      .map(q => q.wordId || Object.keys(WD).find(id=>WD[id][S.tL]===q.correct))
+      .filter(Boolean)
+  )];
+  if(!sessionWids.length){ sect.style.display='none'; return; }
+  sect.style.display='block';
+  grid.innerHTML='';
+
+  const GAMES = [
+    { id:'flappy', icon:'🐦', name:'FlappyLingo',  desc:'Vole à travers les mots', color:'linear-gradient(135deg,#7c3aed,#06b6d4)' },
+    { id:'car',    icon:'🚗', name:'LinguaRace',   desc:'Course de traductions',   color:'linear-gradient(135deg,#f97316,#ef4444)' },
+    { id:'compost',icon:'🪱', name:'Compost Snake',desc:'Mange les bons mots',     color:'linear-gradient(135deg,#10b981,#065f46)' },
+  ];
+
+  GAMES.forEach(g => {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 16px;'
+      +'border-radius:14px;border:1px solid rgba(255,255,255,.1);cursor:pointer;'
+      +'background:var(--card2);font-family:inherit;transition:all .2s;flex:1;min-width:140px;';
+    btn.innerHTML = '<div style="font-size:1.6rem;">'+g.icon+'</div>'
+      +'<div style="text-align:left;">'
+      +'<div style="font-weight:900;font-size:.85rem;color:#fff;">'+g.name+'</div>'
+      +'<div style="font-size:.68rem;color:var(--muted);">'+g.desc+'</div>'
+      +'</div>';
+    btn.onmouseenter = ()=>{ btn.style.borderColor='rgba(124,58,237,.5)'; btn.style.transform='translateY(-2px)'; };
+    btn.onmouseleave = ()=>{ btn.style.borderColor='rgba(255,255,255,.1)'; btn.style.transform=''; };
+    btn.onclick = ()=>{
+      // Store the word list so the game can pre-load them
+      S._practiceWids = sessionWids;
+      openGame(g.id);
+    };
+    grid.appendChild(btn);
+  });
+}
+
+
+// ══════════════════════════════════════════════════════════
+//  PHRASE GENERATOR
+//  Uses at least one word from each question of the exercise
+// ══════════════════════════════════════════════════════════
+function generateResultPhrase(){
+  const card  = document.getElementById('r-phrase-card');
+  const textEl= document.getElementById('r-phrase-text');
+  const transEl=document.getElementById('r-phrase-trans');
+  const wordsEl=document.getElementById('r-phrase-words');
+  if(!card||!textEl) return;
+
+  const nL = S.nL||'fr';
+  const tL = S.tL||'en';
+
+  // Gather one word per question from the session
+  const qs = S.qs||[];
+  const perQ = qs.map(q=>{
+    // Find word ID for this question
+    const wid = q.wordId
+      || Object.keys(WD).find(id=>{
+           const v=WD[id][tL]||'';
+           return v.toLowerCase()===(q.correct||'').toLowerCase();
+         });
+    if(!wid||!WD[wid]) return null;
+    return { wid, native:WD[wid][nL]||q.correct, target:WD[wid][tL]||q.correct };
+  }).filter(Boolean);
+
+  // Deduplicate, cap at 8 words
+  const seen=new Set();
+  const words=perQ.filter(w=>{ if(seen.has(w.wid))return false; seen.add(w.wid); return true; }).slice(0,8);
+
+  if(words.length<2){ card.style.display='none'; return; }
+  card.style.display='block';
+
+  // ── Build phrase using template patterns ──────────────────
+  const TEMPLATES_FR = [
+    (ws)=>`${cap(ws[0].native)} et ${ws[1]?.native||ws[0].native} sont essentiels dans la vie quotidienne.`,
+    (ws)=>`J ai appris ${ws[0].native}${ws[1]?', '+ws[1].native:''}${ws[2]?' et '+ws[2].native:''} aujourd hui.`,
+    (ws)=>`Quand je pense à ${ws[0].native}, je pense aussi à ${ws[1]?.native||ws[0].native}.`,
+    (ws)=>`Le${ws.length>1?'s':''} mot${ws.length>1?'s':''} ${ws.slice(0,3).map(w=>w.native).join(', ')} font partie de mon vocabulaire.`,
+    (ws)=>`Grâce à cet exercice, je connais maintenant ${ws.slice(0,4).map(w=>w.native).join(', ')}.`,
+    (ws)=>`${cap(ws[0].native)} ${ws[1]?'et '+ws[1].native+' sont deux concepts liés':'est un mot important'}.`,
+    (ws)=>`Dans ma vie, ${ws[0].native} ${ws[1]?'et '+ws[1].native+' jouent':'joue'} un rôle important.`,
+    (ws)=>`Aujourd hui j ai pratiqué: ${words.map(w=>w.native).join(' · ')}.`,
+  ];
+  const TEMPLATES_EN = [
+    (ws)=>`${cap(ws[0].target)} and ${ws[1]?.target||ws[0].target} are essential in daily life.`,
+    (ws)=>`Today I learned ${ws[0].target}${ws[1]?', '+ws[1].target:''}${ws[2]?' and '+ws[2].target:''}.`,
+    (ws)=>`When I think of ${ws[0].target}, I also think of ${ws[1]?.target||ws[0].target}.`,
+    (ws)=>`The word${ws.length>1?'s':''} ${ws.slice(0,3).map(w=>w.target).join(', ')} are now part of my vocabulary.`,
+    (ws)=>`Thanks to this exercise, I now know ${ws.slice(0,4).map(w=>w.target).join(', ')}.`,
+    (ws)=>`${cap(ws[0].target)} ${ws[1]?'and '+ws[1].target+' are two related concepts':'is an important word'}.`,
+    (ws)=>`In my life, ${ws[0].target} ${ws[1]?'and '+ws[1].target+' play':'plays'} an important role.`,
+    (ws)=>`Today I practiced: ${words.map(w=>w.target).join(' · ')}.`,
+  ];
+
+  // ALSO try to pull a real sentence from chapter sents that contains one of these words
+  let realSent='', realTrans='';
+  const chap = getCh();
+  if(chap&&chap.sents){
+    const sents=chap.sents[nL]||[];
+    const transArr=chap.sents[tL]||[];
+    for(let i=0;i<sents.length;i++){
+      const s=sents[i].toLowerCase();
+      if(words.some(w=>s.includes((w.native||'').toLowerCase()))){
+        realSent=sents[i]; realTrans=transArr[i]||''; break;
+      }
+    }
+  }
+
+  // Pick a random template or use real sentence
+  const useReal = realSent && Math.random()>.4;
+  const tidx = Math.floor(Math.random()*TEMPLATES_FR.length);
+  const nativePhraseRaw  = useReal ? realSent  : TEMPLATES_FR[tidx](words);
+  const targetPhraseRaw  = useReal ? realTrans : TEMPLATES_EN[tidx](words);
+
+  // Highlight the words used in the phrase
+  let nativePhrase = nativePhraseRaw;
+  let targetPhrase = targetPhraseRaw;
+  words.forEach(w=>{
+    const rn=new RegExp('\\b'+escRe(w.native)+'\\b','gi');
+    const rt=new RegExp('\\b'+escRe(w.target)+'\\b','gi');
+    nativePhrase=nativePhrase.replace(rn,'<mark style="background:rgba(6,182,212,.2);border-radius:4px;padding:0 3px;color:var(--accent3);font-weight:900;">$&</mark>');
+    targetPhrase=targetPhrase.replace(rt,'<mark style="background:rgba(124,58,237,.2);border-radius:4px;padding:0 3px;color:#c4b5fd;font-weight:900;">$&</mark>');
+  });
+
+  textEl.innerHTML = nativePhrase;
+  transEl.innerHTML = targetPhrase;
+
+  // Word pills
+  wordsEl.innerHTML = words.map(w=>
+    '<span style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);'
+    +'border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:800;color:var(--muted);">'
+    +w.native+' → '+w.target+'</span>'
+  ).join('');
+}
+
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+function escRe(s){ return (s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }

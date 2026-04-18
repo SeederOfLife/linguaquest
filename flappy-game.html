@@ -124,7 +124,13 @@ let WD={}, CHAPTERS=null;
 let _flappyLevel='any', _flappyTopic='any';
 
 window.addEventListener('message',e=>{
-  if(e.data?.type==='wordData'){WD=e.data.words||{};CHAPTERS=e.data.chapters||null;}
+  if(e.data?.type==='wordData'){
+    WD=e.data.words||{};
+    CHAPTERS=e.data.chapters||null;
+    if(e.data.practiceWids&&e.data.practiceWids.length) _practiceWids=e.data.practiceWids;
+    if(e.data.nL) currentNL=e.data.nL;
+    if(e.data.tL) currentTL=e.data.tL;
+  }
 });
 window.parent.postMessage({type:'getWordData'},'*');
 
