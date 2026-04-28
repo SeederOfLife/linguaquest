@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Bataille Navale Linguistique</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#060612;--card:#0d0d1e;--card2:#13132a;
+  --accent:#7c3aed;--accent2:#ec4899;--accent3:#06b6d4;--accent4:#fbbf24;
+  --green:#10b981;--red:#ef4444;--muted:#64748b;--text:#f1f5f9;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Cinzel+Decorative:wght@700&display=swap');
+
+/* ── SCREENS ── */
+.scr{display:none;flex-direction:column;align-items:center;
+  justify-content:center;width:100%;flex:1;padding:20px;}
+.scr.on{display:flex;}
+
+/* ── TOP BAR ── */
+.top-bar{position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(6,6,18,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(124,58,237,.2);
+  display:flex;align-items:center;gap:12px;padding:10px 16px;}
+.top-title{font-family:'Cinzel Decorative',serif;font-size:.9rem;font-weight:700;
+  background:linear-gradient(135deg,#fbbf24,#f97316);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.top-bar-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.btn-close{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:6px 12px;color:#fff;cursor:pointer;font-size:.8rem;font-weight:800;}
+
+/* ── LOBBY ── */
+.lobby-card{background:var(--card);border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:28px;width:100%;max-width:440px;margin-top:56px;}
+.lobby-title{font-family:'Cinzel Decorative',serif;font-size:1.6rem;
+  text-align:center;margin-bottom:6px;
+  background:linear-gradient(135deg,#fbbf24,#f97316);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.lobby-sub{text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:22px;}
+.mode-btn{width:100%;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.1);
+  background:var(--card2);color:#fff;font-family:'Nunito';font-weight:900;
+  font-size:.95rem;cursor:pointer;display:flex;align-items:center;gap:12px;
+  margin-bottom:10px;transition:all .2s;}
+.mode-btn:hover{border-color:var(--accent);background:rgba(124,58,237,.1);}
+.mode-btn .mb-icon{font-size:1.8rem;width:44px;flex-shrink:0;}
+.mode-btn .mb-text{text-align:left;}
+.mode-btn .mb-label{font-size:.95rem;}
+.mode-btn .mb-desc{font-size:.72rem;color:var(--muted);}
+.divider{text-align:center;color:var(--muted);font-size:.75rem;margin:14px 0;}
+.category-picker{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;}
+.cat-btn{padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.12);
+  background:var(--card2);color:var(--muted);font-family:'Nunito';font-weight:800;
+  font-size:.75rem;cursor:pointer;transition:all .15s;}
+.cat-btn.active{border-color:var(--accent3);color:var(--accent3);background:rgba(6,182,212,.1);}
+
+/* ── GAME BOARD ── */
+#scr-game{padding:60px 8px 8px;justify-content:flex-start;}
+.game-wrap{display:flex;gap:12px;width:100%;max-width:900px;
+  flex-direction:column;align-items:center;}
+
+/* Boards */
+.boards-row{display:flex;gap:16px;width:100%;justify-content:center;flex-wrap:wrap;}
+.board-panel{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.board-title{font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);}
+.board-wrap{position:relative;}
+
+/* Grid */
+.bn-grid{display:grid;border:1px solid rgba(255,255,255,.15);border-radius:10px;overflow:hidden;}
+.bn-grid .header-row{background:rgba(255,255,255,.05);font-size:.65rem;font-weight:900;
+  color:var(--muted);display:flex;align-items:center;justify-content:center;
+  padding:4px;}
+.bn-cell{width:44px;height:44px;border:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;font-weight:800;cursor:pointer;
+  transition:all .15s;position:relative;color:var(--muted);}
+.bn-cell:hover{background:rgba(124,58,237,.15);}
+.bn-cell.ship{background:rgba(124,58,237,.2)!important;}
+.bn-cell.ship-selected{background:rgba(124,58,237,.4)!important;border-color:var(--accent);}
+.bn-cell.hit{background:rgba(239,68,68,.3);color:#ef4444;}
+.bn-cell.miss{background:rgba(100,116,139,.1);color:rgba(255,255,255,.2);}
+.bn-cell.hit::after{content:'💥';font-size:1.1rem;}
+.bn-cell.miss::after{content:'·';font-size:1.4rem;}
+.bn-cell.sunk{background:rgba(239,68,68,.5)!important;border-color:#ef4444;}
+
+/* Question panel */
+.question-panel{background:var(--card);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:16px;width:100%;max-width:500px;}
+.qp-label{font-size:.65rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent3);margin-bottom:8px;}
+.qp-word{font-size:1.4rem;font-weight:900;margin-bottom:12px;color:#fff;}
+.qp-coord{font-size:.78rem;color:var(--muted);margin-bottom:10px;}
+
+/* Answer modes */
+.ans-fill input{width:100%;background:rgba(255,255,255,.06);
+  border:1.5px solid rgba(255,255,255,.12);border-radius:10px;
+  padding:10px 14px;font-family:'Nunito';font-size:.95rem;font-weight:700;
+  color:var(--text);outline:none;}
+.ans-fill input:focus{border-color:var(--accent3);}
+.ans-drag{min-height:50px;border:2px dashed rgba(255,255,255,.15);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);font-size:.82rem;transition:all .2s;}
+.ans-drag.drag-over{border-color:var(--accent3);background:rgba(6,182,212,.08);}
+.drag-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.drag-chip{padding:8px 16px;background:var(--card2);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;font-weight:800;font-size:.82rem;cursor:grab;
+  transition:all .15s;user-select:none;}
+.drag-chip:active{cursor:grabbing;transform:scale(1.05);}
+.drag-chip.used{opacity:.3;cursor:not-allowed;}
+.ans-speak .mic-btn{width:64px;height:64px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  font-size:1.6rem;cursor:pointer;margin:0 auto;display:block;
+  box-shadow:0 0 0 0 rgba(124,58,237,.4);transition:all .2s;}
+.ans-speak .mic-btn.listening{animation:micPulse 1s ease-in-out infinite;
+  background:linear-gradient(135deg,#ef4444,#f97316);}
+@keyframes micPulse{
+  0%{box-shadow:0 0 0 0 rgba(239,68,68,.5);}
+  70%{box-shadow:0 0 0 18px rgba(239,68,68,0);}
+  100%{box-shadow:0 0 0 0 rgba(239,68,68,0);}
+}
+.speak-status{text-align:center;font-size:.78rem;color:var(--muted);margin-top:8px;min-height:20px;}
+.ans-btns{display:flex;gap:8px;margin-top:10px;}
+.btn-primary{flex:1;padding:10px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-family:'Nunito';font-weight:900;cursor:pointer;transition:all .15s;}
+.btn-primary:hover{filter:brightness(1.1);}
+.btn-skip{padding:10px 16px;border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;background:transparent;color:var(--muted);
+  font-family:'Nunito';font-weight:800;cursor:pointer;}
+
+/* HP / status bar */
+.status-bar{display:flex;gap:16px;align-items:center;
+  background:var(--card2);border-radius:12px;padding:10px 16px;
+  width:100%;max-width:500px;}
+.hp-block{display:flex;flex-direction:column;gap:4px;flex:1;}
+.hp-label{font-size:.65rem;font-weight:900;color:var(--muted);}
+.hp-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);}
+.hp-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+.hp-fill.player{background:linear-gradient(90deg,#10b981,#06b6d4);}
+.hp-fill.enemy{background:linear-gradient(90deg,#ef4444,#f97316);}
+
+/* Result overlay */
+.result-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+  z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.result-overlay.show{display:flex;}
+.result-emoji{font-size:5rem;}
+.result-title{font-family:'Cinzel Decorative',serif;font-size:1.6rem;text-align:center;}
+.result-sub{color:var(--muted);font-size:.85rem;}
+.result-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px;}
+
+/* Ship placement UI */
+.placement-info{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);
+  border-radius:12px;padding:10px 14px;font-size:.78rem;color:var(--muted);
+  margin-bottom:10px;width:100%;max-width:500px;text-align:center;}
+.ships-to-place{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;}
+.ship-chip{padding:6px 14px;border-radius:20px;background:var(--card2);
+  border:1px solid rgba(124,58,237,.3);font-size:.75rem;font-weight:800;cursor:pointer;}
+.ship-chip.active{background:rgba(124,58,237,.3);border-color:var(--accent);}
+.ship-chip.placed{border-color:var(--green);color:var(--green);}
+</style>
+</head>
+<body>
+
+<!-- ══ TOP BAR ══ -->
+<div class="top-bar">
+  <div class="top-title">⚓ Bataille Navale</div>
+  <div class="top-bar-right">
+    <div id="tb-mode" style="font-size:.72rem;color:var(--muted);font-weight:800;"></div>
+    <button class="btn-close" onclick="window.parent.postMessage('close','*')">✕ Quitter</button>
+  </div>
+</div>
+
+<!-- ══ LOBBY ══ -->
+<div class="scr on" id="scr-lobby">
+  <div class="lobby-card">
+    <div class="lobby-title">⚓ Bataille Navale</div>
+    <div class="lobby-sub">Coule la flotte de l'ennemi en trouvant les bonnes traductions</div>
+
+    <!-- Category picker -->
+    <div style="font-size:.7rem;font-weight:900;color:var(--muted);letter-spacing:1.5px;
+      text-transform:uppercase;margin-bottom:8px;">Catégorie de mots</div>
+    <div class="category-picker" id="cat-picker"></div>
+
+    <!-- Answer mode -->
+    <div style="font-size:.7rem;font-weight:900;color:var(--muted);letter-spacing:1.5px;
+      text-transform:uppercase;margin-bottom:8px;margin-top:4px;">Mode de réponse</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;" id="mode-picker">
+      <button class="cat-btn active" data-mode="fill" onclick="setAnsMode('fill',this)">✏️ Frappe</button>
+      <button class="cat-btn" data-mode="drag" onclick="setAnsMode('drag',this)">🖐 Glisse</button>
+      <button class="cat-btn" data-mode="speak" onclick="setAnsMode('speak',this)">🎤 Vocal</button>
+    </div>
+
+    <div class="divider">— Choisis un mode —</div>
+    <button class="mode-btn" onclick="startVsBot()">
+      <div class="mb-icon">🤖</div>
+      <div class="mb-text">
+        <div class="mb-label">Contre le Bot</div>
+        <div class="mb-desc">IA adaptative · 3 niveaux de difficulté</div>
+      </div>
+    </button>
+    <button class="mode-btn" onclick="startVsFriend()">
+      <div class="mb-icon">👥</div>
+      <div class="mb-text">
+        <div class="mb-label">Multijoueur</div>
+        <div class="mb-desc">Crée une salle et partage le code</div>
+      </div>
+    </button>
+    <button class="mode-btn" onclick="openLibrary()">
+      <div class="mb-icon">📚</div>
+      <div class="mb-text">
+        <div class="mb-label">Bibliothèque BN</div>
+        <div class="mb-desc">Batailles sauvegardées · Reprendre une partie</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ══ PLACEMENT ══ -->
+<div class="scr" id="scr-placement">
+  <div style="margin-top:56px;width:100%;max-width:520px;">
+    <div style="font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+      color:var(--accent);margin-bottom:8px;text-align:center;">Positionne ta flotte</div>
+    <div class="placement-info">Clique sur une cellule pour placer un bateau.
+      Clique sur un bateau placé pour le retirer.</div>
+    <div class="ships-to-place" id="ships-to-place"></div>
+    <div class="board-panel" style="margin-bottom:12px;">
+      <div class="board-title">🗺 Ta Grille</div>
+      <div id="my-placement-grid"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn-primary" onclick="autoPlace()">🎲 Placement Auto</button>
+      <button class="btn-primary" style="background:linear-gradient(135deg,var(--green),var(--accent3));"
+        id="btn-ready" onclick="confirmPlacement()" disabled>✓ Prêt !</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div class="scr" id="scr-game">
+  <div class="game-wrap">
+    <div class="status-bar">
+      <div class="hp-block">
+        <div class="hp-label">🧙 Toi</div>
+        <div class="hp-bar"><div class="hp-fill player" id="hp-player" style="width:100%;"></div></div>
+      </div>
+      <div style="font-size:.7rem;font-weight:900;color:var(--muted);" id="turn-indicator">Ton tour</div>
+      <div class="hp-block">
+        <div class="hp-label">🤖 Ennemi</div>
+        <div class="hp-bar"><div class="hp-fill enemy" id="hp-enemy" style="width:100%;"></div></div>
+      </div>
+    </div>
+
+    <div class="boards-row">
+      <!-- Enemy grid (player attacks here) -->
+      <div class="board-panel">
+        <div class="board-title">⚔️ Attaque</div>
+        <div id="enemy-grid"></div>
+      </div>
+      <!-- Player grid (bot attacks here) -->
+      <div class="board-panel">
+        <div class="board-title">🛡 Ta Flotte</div>
+        <div id="player-grid"></div>
+      </div>
+    </div>
+
+    <!-- Question panel -->
+    <div class="question-panel">
+      <div class="qp-label">🎯 Cible sélectionnée</div>
+      <div id="qp-coord" class="qp-coord">Clique sur une case ennemie pour attaquer</div>
+      <div id="qp-word" class="qp-word" style="display:none;"></div>
+
+      <!-- Fill mode -->
+      <div id="ans-fill" class="ans-fill" style="display:none;">
+        <input id="fill-input" placeholder="Tape la traduction..." onkeydown="if(event.key==='Enter')submitAnswer()">
+      </div>
+
+      <!-- Drag mode -->
+      <div id="ans-drag" style="display:none;">
+        <div class="drag-chips" id="drag-chips"></div>
+        <div class="ans-drag" id="drag-target"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleDrop(event)">
+          Dépose la bonne traduction ici
+        </div>
+      </div>
+
+      <!-- Speak mode -->
+      <div id="ans-speak" class="ans-speak" style="display:none;">
+        <button class="mic-btn" id="mic-btn" onclick="startListening()">🎤</button>
+        <div class="speak-status" id="speak-status">Appuie sur le micro</div>
+      </div>
+
+      <div class="ans-btns" id="ans-btns" style="display:none;">
+        <button class="btn-primary" onclick="submitAnswer()">Tirer !</button>
+        <button class="btn-skip" onclick="skipAttack()">Passer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LIBRARY ══ -->
+<div class="scr" id="scr-library">
+  <div style="margin-top:56px;width:100%;max-width:520px;">
+    <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center;">
+      <button class="btn-skip" onclick="show('scr-lobby')">‹ Retour</button>
+      <div style="font-family:'Cinzel Decorative',serif;font-size:1rem;
+        background:linear-gradient(135deg,#fbbf24,#f97316);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;">Bibliothèque BN</div>
+    </div>
+    <div id="library-list"></div>
+    <button onclick="generateBN()" style="width:100%;margin-top:12px;"
+      class="mode-btn">
+      <div class="mb-icon">⚡</div>
+      <div class="mb-text">
+        <div class="mb-label">Générer une Bataille</div>
+        <div class="mb-desc">Crée une nouvelle grille depuis les mots actuels</div>
+      </div>
+    </button>
+  </div>
+</div>
+
+<!-- ══ RESULT OVERLAY ══ -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-emoji" id="res-emoji">🏆</div>
+  <div class="result-title" id="res-title">Victoire !</div>
+  <div class="result-sub" id="res-sub"></div>
+  <div class="result-btns">
+    <button class="btn-primary" onclick="restartGame()">🔄 Rejouer</button>
+    <button class="btn-primary" style="background:linear-gradient(135deg,var(--green),var(--accent3));"
+      onclick="saveBattle()">💾 Sauvegarder</button>
+    <button class="btn-skip" onclick="window.parent.postMessage({type:'studyChapter'},'*')">📚 Réviser</button>
+    <button class="btn-skip" onclick="window.parent.postMessage('close','*')">✕ Quitter</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  BATAILLE NAVALE LINGUISTIQUE — v1.0
+// ══════════════════════════════════════════════════════════
+
+const COLS=7, ROWS=6;
+// X-axis = word categories, Y-axis = word index within category
+const CATEGORIES=[
+  {id:'noun',   label:'Noms',         icon:'📦', color:'#7c3aed'},
+  {id:'verb',   label:'Verbes',       icon:'⚡', color:'#06b6d4'},
+  {id:'adj',    label:'Adjectifs',    icon:'🎨', color:'#10b981'},
+  {id:'adv',    label:'Adverbes',     icon:'💫', color:'#fbbf24'},
+  {id:'pron',   label:'Pronoms',      icon:'👤', color:'#f97316'},
+  {id:'phrase', label:'Phrases',      icon:'💬', color:'#ec4899'},
+  {id:'mixed',  label:'Mixte',        icon:'🎲', color:'#64748b'},
+];
+const ROW_LABELS=['1','2','3','4','5','6'];
+const COL_LABELS=CATEGORIES.map(c=>c.icon);
+
+const SHIP_CONFIG=[
+  {name:'Cuirassé',   size:4, icon:'🚢', count:1},
+  {name:'Croiseur',   size:3, icon:'⛵', count:2},
+  {name:'Destroyer',  size:2, icon:'🛥',  count:3},
+  {name:'Sous-marin', size:1, icon:'🔵', count:2},
+];
+
+let WD={}, CHAPTERS=null, nL='fr', tL='en';
+let _practiceWids=null, currentCat='mixed';
+let ansMode='fill';
+
+// Game state
+let G={
+  playerBoard: [],   // 6x7 grid
+  enemyBoard:  [],
+  playerShips: [],
+  enemyShips:  [],
+  pendingCell:  null,
+  turn:        'player', // 'player' | 'enemy'
+  mode:        'bot',    // 'bot' | 'friend'
+  botDiff:     1,        // 0=easy,1=med,2=hard
+  pHP: 100, eHP: 100,
+  wordMap:     {},       // col→[words for that category]
+  activeQ:     null,
+};
+
+// ── Word data from parent ──────────────────────────────────
+window.addEventListener('message', e=>{
+  if(e.data?.type==='wordData'){
+    WD=e.data.words||{};
+    CHAPTERS=e.data.chapters||null;
+    if(e.data.nL) nL=e.data.nL;
+    if(e.data.tL) tL=e.data.tL;
+    if(e.data.practiceWids) _practiceWids=e.data.practiceWids;
+    buildCatPicker();
+    buildWordMap();
+  }
+});
+window.parent.postMessage({type:'getWordData'},'*');
+
+// Fallback if no parent
+setTimeout(()=>{
+  if(Object.keys(WD).length===0){
+    WD={hello:{fr:'Bonjour',en:'Hello',es:'Hola'},
+        cat:{fr:'Chat',en:'Cat',es:'Gato'},
+        dog:{fr:'Chien',en:'Dog',es:'Perro'},
+        house:{fr:'Maison',en:'House',es:'Casa'},
+        book:{fr:'Livre',en:'Book',es:'Libro'},
+        eat:{fr:'Manger',en:'Eat',es:'Comer'},
+        run:{fr:'Courir',en:'Run',es:'Correr'},
+        big:{fr:'Grand',en:'Big',es:'Grande'},
+        small:{fr:'Petit',en:'Small',es:'Petit'},
+        happy:{fr:'Heureux',en:'Happy',es:'Feliz'}};
+    buildCatPicker(); buildWordMap();
+  }
+},1500);
+
+// ── Helpers ───────────────────────────────────────────────
+function show(id){ document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+function mkGrid(){ return Array.from({length:ROWS},()=>Array(COLS).fill(0)); }
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+// ── Build word map per category ────────────────────────────
+// Rough categorization from word IDs
+const CAT_RULES={
+  verb: /^(eat|run|swim|cook|draw|sing|dance|paint|hike|travel|plan|dream|suggest|explain|describe|compare|prefer|remember|forget|succeed|fail|agree|disagree|argue|analyze|evaluate|debate|negotiate|persuade|prove|assume|imply|claim|promise|rest|speak|build|find|know|think|believe|live|make|use|read|write|study|buy|sell|help|ask|say|tell|answer|fear|doubt|wish|can|need|want)$/,
+  adj:  /^(big|small|fast|slow|good|bad|happy|sad|tired|hot|cold_adj|important|necessary|precise|subtle|coherent|ambiguous|abstract_adj|formal|informal|excited|bored|scared|surprised|angry|cheap|expensive)$/,
+  adv:  /^(always|sometimes|never|before|after|during|although|however|therefore|moreover|nevertheless|because|already|just|yet|today|tomorrow)$/,
+  pron: /^(yes|no|one|two|three|four|five|ten|twenty|hundred)$/,
+};
+function catOfWord(id){
+  if(CAT_RULES.verb.test(id)) return 'verb';
+  if(CAT_RULES.adj.test(id))  return 'adj';
+  if(CAT_RULES.adv.test(id))  return 'adv';
+  if(CAT_RULES.pron.test(id)) return 'pron';
+  return 'noun';
+}
+
+function buildWordMap(){
+  const pool=_practiceWids||Object.keys(WD).filter(id=>WD[id][nL]&&WD[id][tL]);
+  G.wordMap={noun:[],verb:[],adj:[],adv:[],pron:[],phrase:[],mixed:[]};
+  pool.forEach(id=>{
+    const cat=catOfWord(id);
+    G.wordMap[cat].push({id,native:WD[id][nL],target:WD[id][tL]});
+    G.wordMap.mixed.push({id,native:WD[id][nL],target:WD[id][tL]});
+  });
+  // Add chapter sentences as phrases
+  if(CHAPTERS){
+    Object.values(CHAPTERS).flat().forEach(ch=>{
+      const sN=ch.sents?.[nL]||[], sT=ch.sents?.[tL]||[];
+      sN.forEach((s,i)=>{ if(s&&sT[i]) G.wordMap.phrase.push({id:'sent_'+i,native:s,target:sT[i]}); });
+    });
+  }
+}
+
+function buildCatPicker(){
+  const el=document.getElementById('cat-picker'); if(!el) return;
+  el.innerHTML='';
+  CATEGORIES.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='cat-btn'+(c.id===currentCat?' active':'');
+    btn.innerHTML=c.icon+' '+c.label;
+    btn.onclick=()=>{
+      currentCat=c.id; buildWordMap();
+      document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+    el.appendChild(btn);
+  });
+}
+
+function setAnsMode(mode,btn){
+  ansMode=mode;
+  document.querySelectorAll('#mode-picker .cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Draw grid ──────────────────────────────────────────────
+function drawGrid(containerId, board, clickable, showShips){
+  const el=document.getElementById(containerId); if(!el) return;
+  const cellSize=44;
+  el.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:grid;grid-template-columns:repeat('+(COLS+1)+','+(cellSize)+'px);gap:1px;';
+
+  // Corner
+  const corner=document.createElement('div');
+  corner.style.cssText='width:'+cellSize+'px;height:'+cellSize+'px;display:flex;align-items:center;justify-content:center;';
+  wrap.appendChild(corner);
+
+  // Col headers (categories)
+  CATEGORIES.forEach((c,ci)=>{
+    const h=document.createElement('div');
+    h.style.cssText='width:'+cellSize+'px;height:'+cellSize+'px;display:flex;align-items:center;justify-content:center;font-size:.85rem;background:rgba(255,255,255,.04);';
+    h.title=c.label;
+    h.textContent=c.icon;
+    wrap.appendChild(h);
+  });
+
+  // Rows
+  for(let r=0;r<ROWS;r++){
+    // Row header
+    const rh=document.createElement('div');
+    rh.style.cssText='width:'+cellSize+'px;height:'+cellSize+'px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;color:var(--muted);background:rgba(255,255,255,.04);';
+    rh.textContent=ROW_LABELS[r];
+    wrap.appendChild(rh);
+
+    for(let c=0;c<COLS;c++){
+      const cell=document.createElement('div');
+      cell.className='bn-cell';
+      const state=board[r][c];
+      if(state==='hit')  {cell.classList.add('hit');}
+      else if(state==='miss') {cell.classList.add('miss');}
+      else if(state==='sunk') {cell.classList.add('sunk');}
+      else if(showShips&&state==='ship') {cell.classList.add('ship');}
+      else if(showShips&&state==='selected') {cell.classList.add('ship-selected');}
+
+      if(clickable&&state!=='hit'&&state!=='miss'&&state!=='sunk'){
+        cell.onclick=()=>selectCell(r,c);
+        cell.style.cursor='pointer';
+      }
+      cell.dataset.r=r; cell.dataset.c=c;
+      wrap.appendChild(cell);
+    }
+  }
+  el.appendChild(wrap);
+}
+
+// ── Ship placement ─────────────────────────────────────────
+let placementState={ships:[],selectedShipIdx:0,orientation:'h'};
+
+function startPlacement(){
+  show('scr-placement');
+  G.playerBoard=mkGrid();
+  placementState={ships:[],selectedShipIdx:0,orientation:'h'};
+
+  // Build ship list
+  const shipsToPlace=[];
+  SHIP_CONFIG.forEach(cfg=>{
+    for(let i=0;i<cfg.count;i++) shipsToPlace.push({...cfg,placed:false});
+  });
+  placementState.shipsToPlace=shipsToPlace;
+
+  renderShipChips();
+  drawGrid('my-placement-grid',G.playerBoard,true,true);
+
+  // Placement click handler
+  document.querySelectorAll('#my-placement-grid .bn-cell').forEach(cell=>{
+    cell.onclick=()=>placeShipAt(+cell.dataset.r,+cell.dataset.c);
+  });
+}
+
+function renderShipChips(){
+  const el=document.getElementById('ships-to-place'); if(!el) return;
+  el.innerHTML='';
+  placementState.shipsToPlace.forEach((s,i)=>{
+    const chip=document.createElement('span');
+    chip.className='ship-chip'+(s.placed?' placed':'')+(i===placementState.selectedShipIdx&&!s.placed?' active':'');
+    chip.textContent=s.icon+' '+s.name+' ('+s.size+')';
+    chip.onclick=()=>{ if(!s.placed) placementState.selectedShipIdx=i; renderShipChips(); };
+    el.appendChild(chip);
+  });
+  // Check if all placed
+  const allPlaced=placementState.shipsToPlace.every(s=>s.placed);
+  document.getElementById('btn-ready').disabled=!allPlaced;
+}
+
+function placeShipAt(r,c){
+  const ships=placementState.shipsToPlace;
+  const idx=placementState.selectedShipIdx;
+  const ship=ships[idx]; if(!ship||ship.placed) return;
+  const size=ship.size;
+  const orient=placementState.orientation;
+
+  // Check bounds and empty
+  const cells=[];
+  for(let i=0;i<size;i++){
+    const nr=orient==='h'?r:r+i, nc=orient==='h'?c+i:c;
+    if(nr>=ROWS||nc>=COLS||G.playerBoard[nr][nc]!==0) return;
+    cells.push([nr,nc]);
+  }
+  cells.forEach(([nr,nc])=>G.playerBoard[nr][nc]='ship');
+  ship.placed=true;
+  G.playerShips.push({...ship,cells});
+
+  // Auto-select next unplaced
+  const nextIdx=ships.findIndex((s,i)=>!s.placed&&i>idx);
+  placementState.selectedShipIdx=nextIdx>=0?nextIdx:idx;
+
+  renderShipChips();
+  drawGrid('my-placement-grid',G.playerBoard,true,true);
+  // Re-attach placement clicks
+  document.querySelectorAll('#my-placement-grid .bn-cell').forEach(cell=>{
+    cell.onclick=()=>placeShipAt(+cell.dataset.r,+cell.dataset.c);
+  });
+}
+
+function autoPlace(){
+  G.playerBoard=mkGrid(); G.playerShips=[];
+  placementState.shipsToPlace.forEach((ship,idx)=>{
+    let placed=false,tries=0;
+    while(!placed&&tries<200){
+      tries++;
+      const orient=Math.random()>.5?'h':'v';
+      const r=rnd(0,ROWS-1-(orient==='v'?ship.size-1:0));
+      const c=rnd(0,COLS-1-(orient==='h'?ship.size-1:0));
+      const cells=[];
+      let ok=true;
+      for(let i=0;i<ship.size;i++){
+        const nr=orient==='h'?r:r+i, nc=orient==='h'?c+i:c;
+        if(nr>=ROWS||nc>=COLS||G.playerBoard[nr][nc]!==0){ok=false;break;}
+        cells.push([nr,nc]);
+      }
+      if(ok){
+        cells.forEach(([nr,nc])=>G.playerBoard[nr][nc]='ship');
+        G.playerShips.push({...ship,cells,sunk:false});
+        placementState.shipsToPlace[idx].placed=true;
+        placed=true;
+      }
+    }
+  });
+  renderShipChips();
+  drawGrid('my-placement-grid',G.playerBoard,true,true);
+  document.getElementById('btn-ready').disabled=false;
+}
+
+function confirmPlacement(){
+  startGameRound();
+}
+
+// ── Start game ─────────────────────────────────────────────
+function startVsBot(){
+  G.mode='bot'; G.pHP=100; G.eHP=100;
+  document.getElementById('tb-mode').textContent='🤖 vs Bot';
+  buildWordMap();
+  startPlacement();
+}
+function startVsFriend(){
+  toast('Mode multijoueur — bientôt disponible !'); // Coming soon
+}
+
+function startGameRound(){
+  // Build enemy board with auto-placed ships
+  G.enemyBoard=mkGrid(); G.enemyShips=[];
+  const shipsCopy=JSON.parse(JSON.stringify(SHIP_CONFIG));
+  shipsCopy.forEach(cfg=>{
+    for(let i=0;i<cfg.count;i++){
+      let placed=false,tries=0;
+      while(!placed&&tries<200){
+        tries++;
+        const orient=Math.random()>.5?'h':'v';
+        const r=rnd(0,ROWS-1-(orient==='v'?cfg.size-1:0));
+        const c=rnd(0,COLS-1-(orient==='h'?cfg.size-1:0));
+        const cells=[];let ok=true;
+        for(let k=0;k<cfg.size;k++){
+          const nr=orient==='h'?r:r+k, nc=orient==='h'?c+k:c;
+          if(nr>=ROWS||nc>=COLS||G.enemyBoard[nr][nc]!==0){ok=false;break;}
+          cells.push([nr,nc]);
+        }
+        if(ok){
+          cells.forEach(([nr,nc])=>G.enemyBoard[nr][nc]='ship');
+          G.enemyShips.push({...cfg,cells,sunk:false});
+          placed=true;
+        }
+      }
+    }
+  });
+
+  G.turn='player'; G.pendingCell=null; G.activeQ=null;
+  show('scr-game');
+  renderBoards();
+  updateHP();
+  document.getElementById('qp-word').style.display='none';
+  document.getElementById('ans-btns').style.display='none';
+  document.getElementById('qp-coord').textContent='Clique sur une case ennemie pour attaquer';
+}
+
+function renderBoards(){
+  // Enemy grid — clickable (attack)
+  drawGrid('enemy-grid',G.enemyBoard,true,false);
+  document.querySelectorAll('#enemy-grid .bn-cell').forEach(cell=>{
+    const r=+cell.dataset.r, c=+cell.dataset.c;
+    const state=G.enemyBoard[r][c];
+    if(state!=='hit'&&state!=='miss'&&state!=='sunk'&&G.turn==='player'){
+      cell.onclick=()=>selectCell(r,c);
+    }
+  });
+
+  // Player grid — show ships, not clickable
+  drawGrid('player-grid',G.playerBoard,false,true);
+}
+
+function selectCell(r,c){
+  if(G.turn!=='player') return;
+  if(G.enemyBoard[r][c]==='hit'||G.enemyBoard[r][c]==='miss'||G.enemyBoard[r][c]==='sunk') return;
+
+  G.pendingCell={r,c};
+  const catIcon=CATEGORIES[c].icon;
+  const catLabel=CATEGORIES[c].label;
+  document.getElementById('qp-coord').textContent=`Attaque: ${catIcon} ${catLabel} — Ligne ${ROW_LABELS[r]}`;
+
+  // Pick a word from this category
+  const words=(G.wordMap[CATEGORIES[c].id]||G.wordMap.mixed||[]);
+  const word=words[r%words.length]||words[0];
+  G.activeQ=word;
+
+  if(!word){ submitAnswer(); return; }
+
+  document.getElementById('qp-word').textContent=word.native;
+  document.getElementById('qp-word').style.display='block';
+
+  // Show answer UI
+  showAnsMode();
+  document.getElementById('ans-btns').style.display='flex';
+
+  // Highlight selected cell
+  document.querySelectorAll('#enemy-grid .bn-cell').forEach(cell=>cell.classList.remove('ship-selected'));
+  const targetCell=document.querySelector(`#enemy-grid .bn-cell[data-r="${r}"][data-c="${c}"]`);
+  if(targetCell) targetCell.classList.add('ship-selected');
+}
+
+function showAnsMode(){
+  document.getElementById('ans-fill').style.display='none';
+  document.getElementById('ans-drag').style.display='none';
+  document.getElementById('ans-speak').style.display='none';
+  document.getElementById('ans-'+ansMode).style.display='block';
+
+  if(ansMode==='fill'){
+    const inp=document.getElementById('fill-input');
+    if(inp){ inp.value=''; setTimeout(()=>inp.focus(),100); }
+  }
+  if(ansMode==='drag'){
+    // Build chips: 1 correct + 3 distractors
+    const correct=G.activeQ?.target||'';
+    const all=(G.wordMap[currentCat]||G.wordMap.mixed||[]).map(w=>w.target).filter(t=>t!==correct);
+    const distractors=all.sort(()=>Math.random()-.5).slice(0,3);
+    const opts=[correct,...distractors].sort(()=>Math.random()-.5);
+    const chips=document.getElementById('drag-chips');
+    chips.innerHTML=opts.map((o,i)=>
+      `<span class="drag-chip" draggable="true"
+        ondragstart="event.dataTransfer.setData('text',this.textContent)">${o}</span>`
+    ).join('');
+    document.getElementById('drag-target').textContent='Dépose la bonne traduction ici';
+    document.getElementById('drag-target').classList.remove('drag-over');
+  }
+  if(ansMode==='speak'){
+    document.getElementById('speak-status').textContent='Appuie sur le micro';
+    const btn=document.getElementById('mic-btn');
+    if(btn){ btn.textContent='🎤'; btn.classList.remove('listening'); }
+  }
+}
+
+function handleDrop(event){
+  event.preventDefault();
+  const val=event.dataTransfer.getData('text');
+  event.target.textContent=val;
+  event.target.classList.remove('drag-over');
+  // Immediately validate
+  const correct=(G.activeQ?.target||'').toLowerCase().trim();
+  const given=val.toLowerCase().trim();
+  processResult(correct===given||correct.includes(given)||given.includes(correct));
+}
+
+function startListening(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ processResult(true); return; } // fallback: auto-succeed
+  const rec=new SR();
+  const langMap={fr:'fr-FR',en:'en-GB',es:'es-ES',de:'de-DE',cs:'cs-CZ'};
+  rec.lang=langMap[nL]||'fr-FR';
+  rec.onstart=()=>{
+    document.getElementById('speak-status').textContent='🔴 Je vous écoute...';
+    document.getElementById('mic-btn').classList.add('listening');
+  };
+  rec.onresult=(e)=>{
+    const heard=e.results[0][0].transcript.toLowerCase().trim();
+    document.getElementById('speak-status').textContent='Entendu: '+heard;
+    document.getElementById('mic-btn').classList.remove('listening');
+    const correct=(G.activeQ?.native||'').toLowerCase();
+    processResult(heard.includes(correct)||correct.includes(heard));
+  };
+  rec.onerror=()=>{
+    document.getElementById('mic-btn').classList.remove('listening');
+    document.getElementById('speak-status').textContent='Erreur — réessaie';
+  };
+  rec.start();
+}
+
+function submitAnswer(){
+  const mode=ansMode;
+  let correct=(G.activeQ?.target||'').toLowerCase().trim();
+  if(!G.activeQ){ processResult(true); return; }
+
+  if(mode==='fill'){
+    const val=(document.getElementById('fill-input').value||'').toLowerCase().trim();
+    processResult(val===correct||correct.includes(val)||val.includes(correct));
+  } else if(mode==='drag'){
+    const val=(document.getElementById('drag-target').textContent||'').toLowerCase().trim();
+    processResult(val===correct||correct.includes(val)||val.includes(correct));
+  }
+  // speak is handled by startListening()
+}
+
+function processResult(success){
+  const {r,c}=G.pendingCell||{r:0,c:0};
+  const isShip=G.enemyBoard[r][c]==='ship';
+
+  document.getElementById('ans-btns').style.display='none';
+  document.getElementById('qp-word').style.display='none';
+
+  if(success&&isShip){
+    G.enemyBoard[r][c]='hit';
+    G.eHP=Math.max(0,G.eHP-Math.round(100/totalShipCells(G.enemyShips)));
+    checkSunk(G.enemyShips,G.enemyBoard);
+    showMsg('💥 Touché !','#ef4444');
+  } else if(success&&!isShip){
+    G.enemyBoard[r][c]='miss';
+    showMsg('💧 À l\'eau !','#06b6d4');
+  } else {
+    G.enemyBoard[r][c]=G.enemyBoard[r][c]==='ship'?'ship':'miss';
+    showMsg('❌ Raté — la case est saine','#64748b');
+  }
+
+  updateHP();
+  renderBoards();
+  G.pendingCell=null; G.activeQ=null;
+  document.getElementById('qp-coord').textContent='Clique sur une case ennemie pour attaquer';
+
+  if(G.eHP<=0){ setTimeout(()=>endGame(true),800); return; }
+  if(G.pHP<=0){ setTimeout(()=>endGame(false),800); return; }
+
+  // Bot turn
+  setTimeout(botTurn, 1200);
+}
+
+function skipAttack(){
+  document.getElementById('ans-btns').style.display='none';
+  document.getElementById('qp-word').style.display='none';
+  G.pendingCell=null; G.activeQ=null;
+  document.getElementById('qp-coord').textContent='Clique sur une case ennemie pour attaquer';
+}
+
+function totalShipCells(ships){ return ships.reduce((a,s)=>a+s.size,0)||10; }
+
+function checkSunk(ships,board){
+  ships.forEach(ship=>{
+    if(!ship.sunk&&ship.cells.every(([r,c])=>board[r][c]==='hit')){
+      ship.sunk=true;
+      ship.cells.forEach(([r,c])=>board[r][c]='sunk');
+      showMsg('🔥 '+ship.name+' coulé !','#f97316');
+    }
+  });
+}
+
+function showMsg(msg,color){
+  document.getElementById('turn-indicator').style.color=color;
+  document.getElementById('turn-indicator').textContent=msg;
+  setTimeout(()=>{
+    document.getElementById('turn-indicator').style.color='var(--muted)';
+    document.getElementById('turn-indicator').textContent='Ton tour';
+  },2000);
+}
+
+// ── Bot AI ─────────────────────────────────────────────────
+let botMemory={hits:[],nextTargets:[]};
+
+function botTurn(){
+  let r,c;
+  if(botMemory.nextTargets.length){
+    [r,c]=botMemory.nextTargets.shift();
+    // Skip if already attacked
+    if(G.playerBoard[r][c]==='hit'||G.playerBoard[r][c]==='miss'){botTurn();return;}
+  } else {
+    // Random untouched cell
+    const avail=[];
+    for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++)
+      if(G.playerBoard[rr][cc]==='0'||G.playerBoard[rr][cc]===0||G.playerBoard[rr][cc]==='ship')
+        avail.push([rr,cc]);
+    if(!avail.length) return;
+    [r,c]=avail[Math.floor(Math.random()*avail.length)];
+  }
+
+  const isShip=G.playerBoard[r][c]==='ship';
+  if(isShip){
+    G.playerBoard[r][c]='hit';
+    G.pHP=Math.max(0,G.pHP-Math.round(100/totalShipCells(G.playerShips)));
+    checkSunk(G.playerShips,G.playerBoard);
+    // Queue adjacent cells
+    [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&G.playerBoard[nr][nc]!=='hit'&&G.playerBoard[nr][nc]!=='miss')
+        botMemory.nextTargets.push([nr,nc]);
+    });
+    document.getElementById('turn-indicator').textContent='🤖 Touché !';
+  } else {
+    G.playerBoard[r][c]='miss';
+    document.getElementById('turn-indicator').textContent='🤖 À l\'eau...';
+  }
+
+  updateHP();
+  renderBoards();
+
+  if(G.pHP<=0){ setTimeout(()=>endGame(false),800); return; }
+  setTimeout(()=>{
+    document.getElementById('turn-indicator').textContent='Ton tour';
+  },1500);
+}
+
+// ── HP ─────────────────────────────────────────────────────
+function updateHP(){
+  document.getElementById('hp-player').style.width=G.pHP+'%';
+  document.getElementById('hp-enemy').style.width=G.eHP+'%';
+}
+
+// ── End game ───────────────────────────────────────────────
+function endGame(win){
+  document.getElementById('res-emoji').textContent=win?'🏆':'💀';
+  document.getElementById('res-title').textContent=win?'Victoire !':'Défaite...';
+  document.getElementById('res-sub').textContent=win?
+    'Tu as coulé toute la flotte ennemie ! 🎉':
+    'Ta flotte a été détruite... Réessaie !';
+  document.getElementById('result-overlay').classList.add('show');
+  lastResult={win, date:new Date().toISOString(), nL, tL, cat:currentCat};
+}
+
+function restartGame(){ document.getElementById('result-overlay').classList.remove('show'); startVsBot(); }
+
+// ── Library ─────────────────────────────────────────────────
+let savedBattles=JSON.parse(localStorage.getItem('lq_bn_library')||'[]');
+let lastResult=null;
+
+function saveBattle(){
+  if(!lastResult) return;
+  savedBattles.unshift({...lastResult, id:Date.now()});
+  if(savedBattles.length>20) savedBattles.pop();
+  localStorage.setItem('lq_bn_library',JSON.stringify(savedBattles));
+  toast('💾 Partie sauvegardée !');
+  document.getElementById('result-overlay').classList.remove('show');
+}
+
+function openLibrary(){
+  show('scr-library');
+  renderLibrary();
+}
+
+function renderLibrary(){
+  const el=document.getElementById('library-list'); if(!el) return;
+  savedBattles=JSON.parse(localStorage.getItem('lq_bn_library')||'[]');
+  if(!savedBattles.length){
+    el.innerHTML='<div style="color:var(--muted);text-align:center;padding:28px;font-size:.85rem;">Aucune partie sauvegardée</div>';
+    return;
+  }
+  el.innerHTML=savedBattles.map((b,i)=>`
+    <div style="background:var(--card2);border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;
+      align-items:center;gap:12px;">
+      <div style="font-size:1.4rem;">${b.win?'🏆':'💀'}</div>
+      <div style="flex:1;">
+        <div style="font-weight:900;font-size:.85rem;">${b.win?'Victoire':'Défaite'} — ${b.cat||'mixte'}</div>
+        <div style="font-size:.7rem;color:var(--muted);">${new Date(b.date).toLocaleDateString()}</div>
+      </div>
+      <button onclick="deleteBattle(${i})"
+        style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;">🗑</button>
+    </div>`
+  ).join('');
+}
+
+function deleteBattle(i){
+  savedBattles.splice(i,1);
+  localStorage.setItem('lq_bn_library',JSON.stringify(savedBattles));
+  renderLibrary();
+}
+
+function generateBN(){
+  // Jump to a fresh game with current word set
+  show('scr-lobby');
+  setTimeout(startVsBot,100);
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function toast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);'
+    +'background:rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.15);'
+    +'border-radius:10px;padding:8px 18px;font-size:.82rem;font-weight:800;'
+    +'color:#fff;z-index:999;white-space:nowrap;';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+</script>
+</body>
+</html>

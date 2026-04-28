@@ -360,6 +360,28 @@
     <div class="q-text-wrap"><div class="q-text" id="g-text"></div></div>
     <div class="q-hint" id="g-hint"></div>
   </div>
+  <!-- Phrase Review Zone (last exercise step) -->
+  <div id="zone-phrase-review" style="display:none;width:100%;max-width:700px;">
+    <div style="background:linear-gradient(135deg,rgba(6,182,212,.1),rgba(124,58,237,.07));
+      border:1px solid rgba(6,182,212,.2);border-radius:18px;padding:20px;margin-bottom:10px;">
+      <div style="font-size:.68rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+        color:var(--accent3);margin-bottom:12px;">✨ Construis-toi une phrase avec tes mots</div>
+      <!-- Native phrase -->
+      <div id="pr-phrase-native" style="font-size:1.05rem;font-weight:800;line-height:1.7;
+        color:var(--text);margin-bottom:8px;"></div>
+      <!-- Target translation -->
+      <div id="pr-phrase-target" style="font-size:.88rem;color:var(--muted);font-style:italic;
+        line-height:1.6;border-top:1px solid rgba(255,255,255,.07);padding-top:8px;
+        margin-bottom:12px;"></div>
+      <!-- Word pills -->
+      <div id="pr-word-pills" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>
+      <!-- Re-roll button -->
+      <button onclick="rerollPhrase()" style="background:transparent;
+        border:1px solid rgba(6,182,212,.3);border-radius:10px;padding:6px 14px;
+        font-family:inherit;font-size:.75rem;font-weight:800;color:var(--accent3);
+        cursor:pointer;">🔄 Autre phrase</button>
+    </div>
+  </div>
   <div id="zone-gram-tip" style="display:none;width:100%;max-width:700px;">
     <div style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(6,182,212,.08));
       border:1px solid rgba(124,58,237,.25);border-radius:18px;padding:20px;margin-bottom:14px;">

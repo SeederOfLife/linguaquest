@@ -812,10 +812,21 @@ function openGame(type) {
   const iframe  = document.getElementById('minigame-iframe');
   if(!overlay||!iframe) return;
 
+  // Route to the right game file
+  if(type==='compost'){
+    // Compost uses its own overlay + openCompostGame()
+    if(typeof openCompostGame==='function'){ openCompostGame(); return; }
+  }
+
   const src = type==='flappy'
     ? `flappy-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&flappySkin=${fSkin}`
-    : `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}`;
+    : type==='car'
+    ? `car-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}&carSkin=${cSkin}`
+    : type==='bn'
+    ? `bn-game.html?nL=${nL}&tL=${tL}&name=${name}&email=${email}`
+    : null;
 
+  if(!src){ console.warn('openGame: unknown type', type); return; }
   iframe.src = src;
   overlay.style.display = 'flex';
 

@@ -152,7 +152,11 @@ function startGame(type){
 }
 function buildMixed(ch){
   const gramIntro = buildGramIntro(ch);
-  const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','quiz','fill','match4','photo','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));return qs;}
+  const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','quiz','fill','match4','photo','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));
+  // Add phrase-review as last step
+  const sessionWids=[...new Set(ids.slice(0,8))];
+  qs.push({type:'phrase_review', wids:sessionWids, ch:ch});
+  return qs;}
 function buildQuizOnly(ch){return shuf([...ch.wids]).slice(0,8).map(id=>mkQQ(id,ch.wids));}
 function buildFillOnly(ch){return shuf([...ch.wids]).slice(0,6).map(id=>mkFQ(id));}
 function mkQQ(id,all){const q=wt(id,S.nL),cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));const imgUrl=WD[id]?._img||undefined;return{type:'quiz',q,correct:cor,choices:shuf([cor,...wr]),imgUrl};}
@@ -167,6 +171,7 @@ function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi
 const imgWrap=$('g-img-wrap'),imgEl=$('g-img');
 if(imgWrap&&imgEl){if(q.imgUrl){imgEl.src=q.imgUrl;imgWrap.style.display='block';imgEl.onerror=()=>{imgWrap.style.display='none';};}else{imgWrap.style.display='none';imgEl.src='';}}
 if(q.type==='gram_tip')renderGramTip(q);else if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='write')renderWriteQ(q);else if(q.type==='speak')renderSpeakQ(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);
+  if(q.type==='phrase_review')renderPhraseReview(q);
   if(typeof patchWordLookup==='function') patchWordLookup();}
 function renderQuiz(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
 function renderFill(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
@@ -844,6 +849,7 @@ function renderResultGames(){
     { id:'flappy', icon:'🐦', name:'FlappyLingo',  desc:'Vole à travers les mots', color:'linear-gradient(135deg,#7c3aed,#06b6d4)' },
     { id:'car',    icon:'🚗', name:'LinguaRace',   desc:'Course de traductions',   color:'linear-gradient(135deg,#f97316,#ef4444)' },
     { id:'compost',icon:'🪱', name:'Compost Snake',desc:'Mange les bons mots',     color:'linear-gradient(135deg,#10b981,#065f46)' },
+    { id:'bn',     icon:'⚓', name:'Bataille Navale',desc:'Coule la flotte ennemie', color:'linear-gradient(135deg,#1e40af,#7c3aed)' },
   ];
 
   GAMES.forEach(g => {
@@ -967,3 +973,109 @@ function generateResultPhrase(){
 
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 function escRe(s){ return (s||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+
+// ════════════════════════════════════════════════════════════
+//  PHRASE REVIEW — final step of each exercise
+//  Shows a generated sentence + allows re-roll + speaks it
+// ════════════════════════════════════════════════════════════
+function renderPhraseReview(q){
+  // Hide all zones, show custom phrase zone
+  document.querySelectorAll('[id^="zone-"]').forEach(z=>z.style.display='none');
+  const pz=$('zone-phrase-review');
+  if(pz) pz.style.display='block';
+
+  sT('g-text','');
+  sT('g-dir','');
+  setTypePill('fill');
+  $('g-type-pill').textContent='✨ Phrase';
+  $('g-type-pill').style.cssText='background:rgba(6,182,212,.13);color:var(--accent3);border:1px solid rgba(6,182,212,.2);display:inline-flex;';
+
+  hideFB();
+  buildAndShowPhrase(q.wids, q.ch);
+
+  hideAllBtns();
+  showBtn('btn-next');
+  const nb=$('btn-next');
+  if(nb){ nb.textContent='Terminer ✓'; nb.disabled=false; }
+}
+
+function buildAndShowPhrase(wids, ch){
+  const nL=S.nL||'fr', tL=S.tL||'en';
+
+  // Gather one word per wid
+  const words=wids
+    .filter(id=>WD[id])
+    .map(id=>({wid:id, native:WD[id][nL]||id, target:WD[id][tL]||id}))
+    .slice(0,8);
+
+  if(!words.length) return;
+
+  // Try real sentence from chapter first
+  let nativePhrase='', targetPhrase='';
+  if(ch&&ch.sents){
+    const sN=ch.sents[nL]||[], sT2=ch.sents[tL]||[];
+    for(let i=0;i<sN.length;i++){
+      if(words.some(w=>sN[i].toLowerCase().includes(w.native.toLowerCase()))){
+        nativePhrase=sN[i]; targetPhrase=sT2[i]||''; break;
+      }
+    }
+  }
+
+  // Fallback: template-based sentence
+  if(!nativePhrase){
+    const TPLS=[
+      (ws)=>`${cap2(ws[0].native)} et ${ws[1]?.native||ws[0].native} sont des mots que je connais maintenant.`,
+      (ws)=>`J ai appris ${ws.slice(0,3).map(w=>w.native).join(', ')} dans cet exercice.`,
+      (ws)=>`Grâce à cet exercice, je connais ${ws.map(w=>w.native).join(', ')}.`,
+      (ws)=>`${cap2(ws[0].native)} est un mot important, comme ${ws.slice(1,3).map(w=>w.native).join(' et ')}.`,
+      (ws)=>`Dans ma vie quotidienne, j utilise ${ws.slice(0,3).map(w=>w.native).join(', ')}.`,
+    ];
+    const TPLS_T=[
+      (ws)=>`${cap2(ws[0].target)} and ${ws[1]?.target||ws[0].target} are words I now know.`,
+      (ws)=>`I learned ${ws.slice(0,3).map(w=>w.target).join(', ')} in this exercise.`,
+      (ws)=>`Thanks to this exercise, I know ${ws.map(w=>w.target).join(', ')}.`,
+      (ws)=>`${cap2(ws[0].target)} is important, like ${ws.slice(1,3).map(w=>w.target).join(' and ')}.`,
+      (ws)=>`In my daily life, I use ${ws.slice(0,3).map(w=>w.target).join(', ')}.`,
+    ];
+    const ti=Math.floor(Math.random()*TPLS.length);
+    nativePhrase=TPLS[ti](words);
+    targetPhrase=TPLS_T[ti](words);
+  }
+
+  // Highlight words
+  let nHL=nativePhrase, tHL=targetPhrase;
+  words.forEach(w=>{
+    const escN=w.native.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const escT=w.target.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    nHL=nHL.replace(new RegExp('\\b'+escN+'\\b','gi'),'<mark class="ph-hl-n">$&</mark>');
+    tHL=tHL.replace(new RegExp('\\b'+escT+'\\b','gi'),'<mark class="ph-hl-t">$&</mark>');
+  });
+
+  const el=$('pr-phrase-native'); if(el) el.innerHTML=nHL;
+  const el2=$('pr-phrase-target'); if(el2) el2.innerHTML=tHL;
+
+  // Word pills
+  const pills=$('pr-word-pills');
+  if(pills) pills.innerHTML=words.map(w=>
+    '<span class="pr-pill">'+w.native+' <span style="color:var(--accent3)">→</span> '+w.target+'</span>'
+  ).join('');
+
+  // Speak the phrase
+  setTimeout(()=>_speakClick(nativePhrase, nL), 300);
+
+  // Store for re-roll
+  $('zone-phrase-review').dataset.wids=JSON.stringify(wids);
+}
+
+function cap2(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
+
+function rerollPhrase(){
+  const el=$('zone-phrase-review');
+  if(!el) return;
+  try{
+    const wids=JSON.parse(el.dataset.wids||'[]');
+    const ch=getCh();
+    buildAndShowPhrase(wids,ch);
+  }catch(e){}
+}
