@@ -736,7 +736,7 @@ function selectRoomTopic(btn) {
 }
 
 function switchRankTab(tab) {
-  const zones = ['lb','duels','practice','friends','flappy','car','compost'];
+  const zones = ['lb','duels','practice','friends','flappy','car','compost','bn'];
   zones.forEach(z => {
     const el = $('rank-'+z+'-zone');
     if (el) el.style.display = z===tab ? '' : 'none';
