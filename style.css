@@ -294,6 +294,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .type-pill.fill{background:rgba(6,182,212,.13);color:var(--accent3);border:1px solid rgba(6,182,212,.2);}
 .type-pill.match{background:rgba(16,185,129,.13);color:var(--green);border:1px solid rgba(16,185,129,.2);}
 .type-pill.sort{background:rgba(236,72,153,.13);color:var(--accent2);border:1px solid rgba(236,72,153,.2);}
+.type-pill.audio{background:rgba(124,58,237,.13);color:var(--accent);border:1px solid rgba(124,58,237,.2);}
 .question-card{width:100%;max-width:700px;background:var(--card);border-radius:var(--r);padding:20px;text-align:center;margin-bottom:12px;border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden;}
 .question-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));}
 .q-dir{font-size:.64rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}

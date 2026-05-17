@@ -917,6 +917,8 @@ function endGame(win){
     'Ta flotte a été détruite... Réessaie !';
   document.getElementById('result-overlay').classList.add('show');
   lastResult={win, date:new Date().toISOString(), nL, tL, cat:currentCat};
+  // Send result to parent app — coins awarded there
+  window.parent.postMessage({type:'gameResult', won:win, myScore: win?1:0, game:'bn'},'*');
 }
 
 function restartGame(){ document.getElementById('result-overlay').classList.remove('show'); startVsBot(); }

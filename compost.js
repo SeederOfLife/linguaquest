@@ -38,11 +38,17 @@ function openCompostGame(opts) {
 
     if (e.data.type === 'gameResult' && e.data.won && U && !U.isGuest) {
       const bonus = opts.level && opts.level !== 'any' ? 100 : 50;
+      const xpBonus = 20;
       U.coins = (U.coins || 0) + bonus;
-      U.duelsWon = (U.duelsWon || 0) + 1;
+      U.xp = (U.xp || 0) + xpBonus;
+      U._compostWins = (U._compostWins || 0) + 1;
       saveU(); updateTopBar();
       if (typeof checkTrophies === 'function') checkTrophies();
-      toast(`🪱 Victoire ! +${bonus} 🪙`);
+      toast(`🪱 Victoire ! +${bonus} 🪙  +${xpBonus} XP`);
+      if (!U.hasSeenPortfolioNudge && Math.floor(U.coins) >= 50) {
+        U.hasSeenPortfolioNudge = true; saveU();
+        setTimeout(() => { if (typeof showPortfolioNudge === 'function') showPortfolioNudge(); }, 1200);
+      }
     }
   };
   window.addEventListener('message', window._compostListener);

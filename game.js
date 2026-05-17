@@ -152,7 +152,7 @@ function startGame(type){
 }
 function buildMixed(ch){
   const gramIntro = buildGramIntro(ch);
-  const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','quiz','fill','match4','photo','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));
+  const ids=shuf([...ch.wids]),sents=ch.sents[S.tL]||[],nSents=ch.sents[S.nL]||ch.sents.fr||[],qs=[],pat=['quiz','photo','fill','sort','audio','quiz','fill','match4','photo','audio','quiz','fill','sort','quiz'];ids.slice(0,8).forEach((id,i)=>{const tp=pat[i%pat.length];if(tp==='quiz')qs.push(mkQQ(id,ch.wids));else if(tp==='audio')qs.push(mkAQ(id,ch.wids));else if(tp==='fill')qs.push(mkFQ(id));else if(tp==='match4')qs.push(mkMQ(ch.wids.slice(0,4)));else if(tp==='sort'&&sents.length)qs.push(mkSQ(sents[i%sents.length],nSents[i%nSents.length]||sents[i%sents.length]));else qs.push(mkQQ(id,ch.wids));});if(sents.length)qs.push(mkSQ(sents[0],nSents[0]||sents[0]));
   // Add phrase-review as last step
   const sessionWids=[...new Set(ids.slice(0,8))];
   qs.push({type:'phrase_review', wids:sessionWids, ch:ch});
@@ -160,6 +160,7 @@ function buildMixed(ch){
 function buildQuizOnly(ch){return shuf([...ch.wids]).slice(0,8).map(id=>mkQQ(id,ch.wids));}
 function buildFillOnly(ch){return shuf([...ch.wids]).slice(0,6).map(id=>mkFQ(id));}
 function mkQQ(id,all){const q=wt(id,S.nL),cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));const imgUrl=WD[id]?._img||undefined;return{type:'quiz',q,correct:cor,choices:shuf([cor,...wr]),imgUrl};}
+function mkAQ(id,all){const cor=wt(id,S.tL),wr=shuf(all.filter(x=>x!==id)).slice(0,3).map(x=>wt(x,S.tL));return{type:'audio',wordId:id,q:wt(id,S.nL),correct:cor,choices:shuf([cor,...wr])};}
 function mkFQ(id){const imgUrl=WD[id]?._img||undefined;return{type:'fill',q:wt(id,S.nL),correct:wt(id,S.tL),imgUrl};}
 function mkSQ(sent,nSent){return{type:'sort',q:nSent,correct:sent,words:sent.split(' ')};}
 function mkMQ(ids){return{type:'match',ids};}
@@ -170,9 +171,37 @@ function renderQ(){if(S.qi>=S.qs.length){showResults();return;}const q=S.qs[S.qi
 // Show image if available (DIY lessons with imgUrl)
 const imgWrap=$('g-img-wrap'),imgEl=$('g-img');
 if(imgWrap&&imgEl){if(q.imgUrl){imgEl.src=q.imgUrl;imgWrap.style.display='block';imgEl.onerror=()=>{imgWrap.style.display='none';};}else{imgWrap.style.display='none';imgEl.src='';}}
-if(q.type==='gram_tip')renderGramTip(q);else if(q.type==='quiz')renderQuiz(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='write')renderWriteQ(q);else if(q.type==='speak')renderSpeakQ(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);
+if(q.type==='gram_tip')renderGramTip(q);else if(q.type==='quiz')renderQuiz(q);else if(q.type==='audio')renderAudioQ(q);else if(q.type==='photo')renderPhotoQ(q);else if(q.type==='fill')renderFill(q);else if(q.type==='write')renderWriteQ(q);else if(q.type==='speak')renderSpeakQ(q);else if(q.type==='match')renderEmbMatch(q);else if(q.type==='sort')renderSort(q);
   if(q.type==='phrase_review')renderPhraseReview(q);
   if(typeof patchWordLookup==='function') patchWordLookup();}
+function renderAudioQ(q){
+  // Show audio zone — reuse quiz zone with a speaker button instead of text
+  showZone('audio');
+  sT('g-dir', dirLbl());
+  sT('g-num', `${S.qi+1} / ${S.qs.length}`);
+  const zone = document.getElementById('zone-audio');
+  if(!zone) { showZone('quiz'); renderQuiz({...q, type:'quiz'}); return; }
+  zone.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:.78rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--accent3);margin-bottom:14px;">🎧 Écoute et traduis</div>
+      <button onclick="_speakClick('${q.q.replace(/'/g,"\\'")}','${S.nL}')" style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;font-size:2.5rem;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;transition:all .15s;box-shadow:0 6px 24px rgba(124,58,237,.4);" onmousedown="this.style.transform='scale(.93)'" onmouseup="this.style.transform='scale(1)'">🔊</button>
+      <div style="font-size:.75rem;color:var(--muted);">Appuie pour réécouter</div>
+    </div>
+    <div class="answers-grid" id="audio-answers"></div>
+  `;
+  const grid = document.getElementById('audio-answers');
+  ['A','B','C','D'].forEach((l,i)=>{
+    if(!q.choices[i]) return;
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `<span class="al">${l}</span><span>${q.choices[i]}</span>`;
+    btn.onclick = () => { pickQ(q.choices[i], btn, q); };
+    grid.appendChild(btn);
+  });
+  // Auto-speak after short delay
+  setTimeout(() => _speakClick(q.q, S.nL), 400);
+  startTimer(20);
+}
 function renderQuiz(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const grid=$('answers-grid');grid.innerHTML='';['A','B','C','D'].forEach((l,i)=>{if(!q.choices[i])return;const btn=document.createElement('button');btn.className='answer-btn';btn.innerHTML=`<span class="al">${l}</span><span>${q.choices[i]}</span>`;btn.onclick=()=>{pickQ(q.choices[i],btn,q);};grid.appendChild(btn);});startTimer(15);}
 function renderFill(q){sT('g-text',q.q);setTimeout(()=>_speakClick(q.q,S.nL),200);const inp=$('fill-input');inp.value='';inp.className='fill-input';inp.disabled=false;setTimeout(()=>inp.focus(),70);showBtn('btn-check');startTimer(20);}
 function renderEmbMatch(q){S.mPairs=q.ids;S.mSel=null;S.mDone=0;S.mTotal=q.ids.length;S.mEmbed=true;sT('g-text',t('game_match_title'));sT('mcl-l',LANGS[S.nL].native);sT('mcl-r',LANGS[S.tL].native);renderMatchCols(q.ids);sT('match-prog-txt',`0/${S.mTotal}`);showBtn('btn-skip');startTimer(40);}
@@ -222,8 +251,8 @@ function onTimeout(){const q=S.curQ;if(S.curType==='quiz'){S.wr++;S.ts.quiz.w++;
 
 function showFB(ok,title,detail){const b=$('g-fb'),cls=ok===true?'correct-fb':ok==='close'?'close-fb':'wrong-fb';b.className=`feedback-banner show ${cls}`;sT('g-fb-icon',ok===true?'✅':ok==='close'?'✨':'❌');sT('g-fb-title',title);sT('g-fb-detail',detail);}
 function hideFB(){const b=$('g-fb');if(b)b.className='feedback-banner';}
-function showZone(type){['quiz','fill','match','sort'].forEach(z=>{const el=document.getElementById('zone-'+z);if(el)el.style.display=z===type?'block':'none';});}
-function setTypePill(type){const labels={quiz:'⚡ Quiz',fill:t('game_type_fill'),match:t('game_type_match'),sort:t('game_type_sort')};const p=$('g-type-pill');p.className=`type-pill ${type}`;p.textContent=labels[type]||type;}
+function showZone(type){['quiz','fill','match','sort','audio'].forEach(z=>{const el=document.getElementById('zone-'+z);if(el)el.style.display=z===type?'block':'none';});}
+function setTypePill(type){const labels={quiz:'⚡ Quiz',audio:'🎧 Audio',fill:t('game_type_fill'),match:t('game_type_match'),sort:t('game_type_sort')};const p=$('g-type-pill');p.className=`type-pill ${type}`;p.textContent=labels[type]||type;}
 function hideAllBtns(){['btn-check','btn-reset','btn-next','btn-skip'].forEach(id=>hideBtn(id));}
 function showBtn(id){const e=$(id);if(e)e.style.display='inline-flex';}
 function hideBtn(id){const e=$(id);if(e)e.style.display='none';}

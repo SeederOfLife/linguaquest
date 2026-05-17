@@ -387,6 +387,7 @@
     </div>
   </div>
   <div id="zone-quiz" style="width:100%;max-width:700px;"><div class="answers-grid" id="answers-grid"></div></div>
+  <div id="zone-audio" style="display:none;width:100%;max-width:700px;"></div>
   <!-- Writing exercise zone -->
   <div id="zone-write" style="display:none;width:100%;max-width:700px;">
     <div style="font-size:.74rem;color:var(--muted);font-weight:800;text-transform:uppercase;
@@ -1184,6 +1185,82 @@
   </div>
   <iframe id="compost-iframe" src="" style="flex:1;border:none;width:100%;height:100%;"></iframe>
 </div>
+<!-- ══════════════════ ONBOARDING MODAL ══════════════════ -->
+<div id="onboarding-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:24px;max-width:400px;width:100%;padding:28px 24px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));"></div>
+
+    <!-- Steps -->
+    <div id="ob-step-1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:3rem;margin-bottom:8px;">🌍</div>
+        <div style="font-family:'Fredoka One';font-size:1.6rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Bienvenue !</div>
+        <div style="color:var(--muted);font-size:.85rem;margin-top:4px;">LinguaQuest apprend les langues différemment</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;">
+        <div style="display:flex;align-items:center;gap:12px;background:var(--card2);border-radius:12px;padding:12px 14px;">
+          <span style="font-size:1.4rem;flex-shrink:0;">⚔️</span>
+          <div><div style="font-weight:800;font-size:.88rem;">Donjons & Boss</div><div style="font-size:.75rem;color:var(--muted);">Affronte des monstres pour maîtriser le vocabulaire</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;background:var(--card2);border-radius:12px;padding:12px 14px;">
+          <span style="font-size:1.4rem;flex-shrink:0;">🎮</span>
+          <div><div style="font-weight:800;font-size:.88rem;">Mini-jeux connectés</div><div style="font-size:.75rem;color:var(--muted);">Flappy, course, snake — tes pièces sont partagées</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;background:var(--card2);border-radius:12px;padding:12px 14px;">
+          <span style="font-size:1.4rem;flex-shrink:0;">📈</span>
+          <div><div style="font-weight:800;font-size:.88rem;">Investis tes pièces</div><div style="font-size:.75rem;color:var(--muted);">Portfolio, dividendes — apprends la finance en jouant</div></div>
+        </div>
+      </div>
+      <button onclick="_obNext(2)" class="btn btn-primary btn-lg" style="width:100%;">Commencer l'aventure →</button>
+      <button onclick="_obSkip()" style="width:100%;background:none;border:none;color:var(--muted);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;margin-top:10px;padding:6px;">Passer l'intro</button>
+    </div>
+
+    <div id="ob-step-2" style="display:none;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:3rem;margin-bottom:8px;">🗣️</div>
+        <div style="font-weight:900;font-size:1.2rem;">Quelle langue veux-tu apprendre ?</div>
+        <div style="color:var(--muted);font-size:.82rem;margin-top:4px;">Tu pourras changer à tout moment</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;" id="ob-lang-grid">
+        <div class="ob-lang-btn" onclick="_obPickLang('en')" style="background:var(--card2);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;">
+          <div style="font-size:1.6rem;">🇬🇧</div><div style="font-weight:800;font-size:.85rem;margin-top:4px;">Anglais</div>
+        </div>
+        <div class="ob-lang-btn" onclick="_obPickLang('es')" style="background:var(--card2);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;">
+          <div style="font-size:1.6rem;">🇪🇸</div><div style="font-weight:800;font-size:.85rem;margin-top:4px;">Espagnol</div>
+        </div>
+        <div class="ob-lang-btn" onclick="_obPickLang('de')" style="background:var(--card2);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;">
+          <div style="font-size:1.6rem;">🇩🇪</div><div style="font-weight:800;font-size:.85rem;margin-top:4px;">Allemand</div>
+        </div>
+        <div class="ob-lang-btn" onclick="_obPickLang('fr')" style="background:var(--card2);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;">
+          <div style="font-size:1.6rem;">🇫🇷</div><div style="font-weight:800;font-size:.85rem;margin-top:4px;">Français</div>
+        </div>
+        <div class="ob-lang-btn" onclick="_obPickLang('cs')" style="background:var(--card2);border:2px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;grid-column:span 2;">
+          <div style="font-size:1.6rem;">🇨🇿</div><div style="font-weight:800;font-size:.85rem;margin-top:4px;">Tchèque</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="ob-step-3" style="display:none;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:3rem;margin-bottom:8px;">🚀</div>
+        <div style="font-weight:900;font-size:1.2rem;">Tout est prêt !</div>
+        <div style="color:var(--muted);font-size:.82rem;margin-top:4px;">Tu apprends <span id="ob-lang-name" style="color:var(--accent);font-weight:900;"></span> depuis le français</div>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(236,72,153,.08));border:1px solid rgba(124,58,237,.2);border-radius:14px;padding:16px;margin-bottom:20px;font-size:.85rem;line-height:1.7;color:var(--muted);">
+        💡 <strong style="color:var(--text);">Conseil :</strong> commence par le <strong style="color:var(--accent);">Donjon A1</strong> — c'est gratuit et tu gagneras tes premières pièces dès la première session !
+      </div>
+      <button onclick="_obFinish()" class="btn btn-primary btn-lg" style="width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));">Entrer dans le donjon ⚔️</button>
+    </div>
+
+    <!-- Step dots -->
+    <div style="display:flex;justify-content:center;gap:6px;margin-top:16px;" id="ob-dots">
+      <div id="ob-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--accent);transition:all .2s;"></div>
+      <div id="ob-dot-2" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .2s;"></div>
+      <div id="ob-dot-3" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .2s;"></div>
+    </div>
+  </div>
+</div>
+
 </div><!-- #app -->
 
 <!-- ══════════════════ CHAT MODAL ══════════════════ -->

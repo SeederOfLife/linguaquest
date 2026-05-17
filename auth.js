@@ -181,6 +181,24 @@ function afterLogin(){
 
   if(typeof initSocial==='function') setTimeout(initSocial, 700);
   setTimeout(()=>{ _appReady = true; }, 1200);
+
+  // Show onboarding for brand new users (0 sessions, never seen it)
+  if(U && !U.hasSeenOnboarding && (U.sessions||0) <= 1 && !U.isGuest){
+    setTimeout(()=>{ if(typeof showOnboarding==='function') showOnboarding(); }, 800);
+  }
+
+  // Streak reminder — if user has a streak but hasn't played today
+  if(U && !U.isGuest && (U.streak||0) >= 2){
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now()-86400000).toDateString();
+    if(U.lastDay === yesterday){
+      // Hasn't played today yet — remind them
+      setTimeout(()=>{
+        if(typeof toast==='function')
+          toast(`🔥 Streak de ${U.streak} jours — joue aujourd'hui pour le garder !`);
+      }, 2500);
+    }
+  }
 }
 function showChrome(){$('top-bar').style.display='flex';$('nav-bar').style.display='flex';}
 function hideChrome(){$('top-bar').style.display='none';$('nav-bar').style.display='none';}
@@ -328,4 +346,120 @@ async function forgotStep2() {
   } finally {
     btn.textContent = orig; btn.disabled = false;
   }
+}
+
+// ══════════════════════════════════════════════
+// ONBOARDING FLOW — shown to brand new users
+// ══════════════════════════════════════════════
+function showOnboarding() {
+  const el = document.getElementById('onboarding-overlay');
+  if (!el) return;
+  el.style.display = 'flex';
+}
+
+function _obNext(step) {
+  [1,2,3].forEach(n => {
+    const s = document.getElementById('ob-step-'+n);
+    const d = document.getElementById('ob-dot-'+n);
+    if (s) s.style.display = n===step ? '' : 'none';
+    if (d) d.style.background = n===step ? 'var(--accent)' : 'rgba(255,255,255,.15)';
+  });
+}
+
+function _obPickLang(lang) {
+  // Set the target language
+  const names = {en:'Anglais',es:'Espagnol',de:'Allemand',fr:'Français',cs:'Tchèque'};
+  // Determine native lang — if user picks fr, use en as native
+  S.tL = lang;
+  S.nL = lang === 'fr' ? 'en' : 'fr';
+  const nameEl = document.getElementById('ob-lang-name');
+  if (nameEl) nameEl.textContent = names[lang] || lang;
+  // Highlight selection
+  document.querySelectorAll('.ob-lang-btn').forEach(b => {
+    b.style.borderColor = 'rgba(255,255,255,.08)';
+    b.style.background = 'var(--card2)';
+  });
+  event.currentTarget.style.borderColor = 'var(--accent)';
+  event.currentTarget.style.background = 'rgba(124,58,237,.15)';
+  setTimeout(() => _obNext(3), 350);
+}
+
+function _obFinish() {
+  const el = document.getElementById('onboarding-overlay');
+  if (el) el.style.display = 'none';
+  if (U) {
+    U.hasSeenOnboarding = true;
+    U.lastNL = S.nL;
+    U.lastTL = S.tL;
+    if (typeof saveU === 'function') saveU();
+  }
+  // Sync lang pair and go to levels
+  try {
+    if (typeof syncPair === 'function') syncPair();
+    if (typeof updateLangPill === 'function') updateLangPill();
+    if (typeof goToLevels === 'function') goToLevels();
+    else if (typeof navTo === 'function') navTo('learn');
+  } catch(e) { if (typeof navTo === 'function') navTo('learn'); }
+}
+
+function _obSkip() {
+  const el = document.getElementById('onboarding-overlay');
+  if (el) el.style.display = 'none';
+  if (U) { U.hasSeenOnboarding = true; if (typeof saveU === 'function') saveU(); }
+}
+
+// ══════════════════════════════════════════════
+// ONBOARDING FLOW — shown to brand new users
+// ══════════════════════════════════════════════
+function showOnboarding() {
+  const el = document.getElementById('onboarding-overlay');
+  if (!el) return;
+  el.style.display = 'flex';
+}
+
+function _obNext(step) {
+  [1,2,3].forEach(n => {
+    const s = document.getElementById('ob-step-'+n);
+    const d = document.getElementById('ob-dot-'+n);
+    if (s) s.style.display = n===step ? '' : 'none';
+    if (d) d.style.background = n===step ? 'var(--accent)' : 'rgba(255,255,255,.15)';
+  });
+}
+
+function _obPickLang(lang) {
+  const names = {en:'Anglais',es:'Espagnol',de:'Allemand',fr:'Français',cs:'Tchèque'};
+  S.tL = lang;
+  S.nL = lang === 'fr' ? 'en' : 'fr';
+  const nameEl = document.getElementById('ob-lang-name');
+  if (nameEl) nameEl.textContent = names[lang] || lang;
+  document.querySelectorAll('.ob-lang-btn').forEach(b => {
+    b.style.borderColor = 'rgba(255,255,255,.08)';
+    b.style.background = 'var(--card2)';
+  });
+  event.currentTarget.style.borderColor = 'var(--accent)';
+  event.currentTarget.style.background = 'rgba(124,58,237,.15)';
+  setTimeout(() => _obNext(3), 350);
+}
+
+function _obFinish() {
+  const el = document.getElementById('onboarding-overlay');
+  if (el) el.style.display = 'none';
+  if (U) {
+    U.hasSeenOnboarding = true;
+    U.lastNL = S.nL;
+    U.lastTL = S.tL;
+    if (typeof saveU === 'function') saveU();
+  }
+  try {
+    if (typeof syncPair === 'function') syncPair();
+    if (typeof updateLangPill === 'function') updateLangPill();
+    if (typeof goToLevels === 'function') goToLevels();
+    else if (typeof navTo === 'function') navTo('learn');
+  } catch(e) { if (typeof navTo === 'function') navTo('learn'); }
+}
+
+function _obSkip() {
+  const el = document.getElementById('onboarding-overlay');
+  if (el) el.style.display = 'none';
+  if (U) { U.hasSeenOnboarding = true; if (typeof saveU === 'function') saveU(); }
 }
