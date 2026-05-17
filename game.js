@@ -316,6 +316,11 @@ function showResults(){
   goTo('results');
   if(stars>=2) confetti();
   if(coinsEarned>0) floatCoin($('coin-reward-amount'),`+${coinsEarned} <span class="coin"></span>`);
+  // Portfolio nudge for new players
+  if(U && !U.hasSeenPortfolioNudge && Math.floor(U.coins)>=50){
+    U.hasSeenPortfolioNudge=true; saveU();
+    setTimeout(()=>{ if(typeof showPortfolioNudge==='function') showPortfolioNudge(); },1500);
+  }
   // Launch both post-exercise features
   setTimeout(()=>{
     renderResultGames();

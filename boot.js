@@ -78,7 +78,20 @@ applyUILang();
   }
 })();
 // Dividend tick every 60s while app is open
-setInterval(()=>{if(U){calcDividends();const db=$('div-banner');if(U.pendingDiv>=1&&db) db.style.display='flex';}},60000);
+setInterval(()=>{
+  if(!U) return;
+  calcDividends();
+  const db=$('div-banner');
+  if(U.pendingDiv>=1&&db){
+    db.style.display='flex';
+    // Show passive income toast every 5 minutes (5th tick)
+    if(!window._divTickCount) window._divTickCount=0;
+    window._divTickCount++;
+    if(window._divTickCount%5===0){
+      toast(`📈 Dividendes : +${Math.floor(U.pendingDiv)} 🪙 en attente → Portfolio`);
+    }
+  }
+},60000);
 
 // ── GUEST LOGIN ──
 function guestLogin(){

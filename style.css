@@ -1253,3 +1253,377 @@ mark.ph-hl-t{background:rgba(124,58,237,.25);border-radius:4px;padding:0 3px;
 .pr-pill{display:inline-flex;align-items:center;gap:4px;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
   border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:800;color:var(--muted);}
+
+/* ════════════════════════════════════════════════
+   MOBILE RESPONSIVE — complete overhaul
+   ════════════════════════════════════════════════ */
+
+/* Safe area for notched phones */
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+/* Nav bar — account for notch/home bar */
+.nav-bar {
+  padding-bottom: calc(12px + var(--safe-bottom));
+}
+
+/* Top bar — notch */
+.top-bar {
+  padding-top: calc(10px + var(--safe-top));
+}
+
+/* ── 480px and below ── */
+@media (max-width: 480px) {
+
+  /* Prevent text from overflowing on small screens */
+  body { overflow-x: hidden; }
+
+  /* Auth card — tighter on small phones */
+  .auth-card { padding: 24px 18px; margin: 0 8px; border-radius: 16px; }
+
+  /* Logo smaller */
+  .logo { font-size: 1.9rem; }
+  .tagline { font-size: .72rem; letter-spacing: 1.2px; }
+
+  /* Nav labels — keep them visible but small */
+  .nav-item { padding: 4px 6px; font-size: .6rem; }
+  .nav-item .ni { font-size: 1.15rem; }
+
+  /* Top bar — tighter */
+  .top-bar { padding: 8px 12px; gap: 8px; }
+  .top-bar-logo { font-size: 1.1rem; }
+  .coin-display { padding: 4px 9px; font-size: .8rem; }
+  #lang-flag-pill { padding: 4px 8px; font-size: .75rem; }
+  .avatar-btn { width: 30px; height: 30px; font-size: .78rem; }
+
+  /* Screens — tighter padding on phones */
+  .screen { padding: 14px 12px 80px; }
+  .screen-padded { padding-top: 58px; padding-bottom: calc(80px + var(--safe-bottom)); }
+
+  /* Section titles */
+  .section-title { font-size: 1.1rem; }
+
+  /* Cards */
+  .card { padding: 16px; border-radius: 14px; }
+
+  /* Levels grid — 2 cols on small phones */
+  .levels-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+  /* Quiz answers — 1 col on phones */
+  .answers-grid { grid-template-columns: 1fr; }
+  .answer-btn { padding: 13px 14px; font-size: .9rem; }
+
+  /* Game types — 1 col */
+  .game-types { grid-template-columns: 1fr; }
+  .game-type-card { padding: 14px; }
+
+  /* Match — 1 col */
+  .match-container { grid-template-columns: 1fr; }
+
+  /* Question card */
+  .question-card { padding: 16px 14px; }
+  .q-text { font-size: 1.15rem !important; }
+
+  /* Profile stats — 3 col stays but smaller */
+  .stats-grid { gap: 6px; }
+  .stat-card { padding: 10px 8px; }
+
+  /* Shop grid — 1 col on tiny phones */
+  .shop-grid { grid-template-columns: 1fr; }
+
+  /* Profile hero — stacked on small */
+  .profile-hero { flex-direction: column; text-align: center; gap: 12px; }
+  .profile-avatar { width: 56px; height: 56px; font-size: 1.3rem; }
+
+  /* Breadcrumb — smaller */
+  .breadcrumb { font-size: .68rem; }
+
+  /* Buttons — full width on phone where needed */
+  .btn-lg { font-size: .95rem; padding: 13px 22px; }
+
+  /* Mini-game buttons in game-select — 2x2 grid */
+  #screen-game-select .btn-qr-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  /* Wealth hero — smaller numbers */
+  .wealth-total { font-size: 1.6rem !important; }
+
+  /* Asset cards — full width always */
+  .asset-card { border-radius: 12px; }
+
+  /* Results stats */
+  .results-stats { gap: 6px; }
+  .results-score { font-size: 2.2rem !important; }
+
+  /* Coin reward banner */
+  .coin-reward-banner { padding: 12px 14px; }
+
+  /* Timer badge + score */
+  .timer-badge { font-size: .78rem; padding: 3px 8px; }
+  .score-badge { font-size: .78rem; }
+
+  /* Topic tabs — smaller */
+  .topic-tab { padding: 6px 10px; font-size: .75rem; }
+
+  /* Rank tabs — already has 480 breakpoint, reinforce */
+  .rank-tab { padding: 6px 9px; font-size: .68rem; }
+
+  /* Path nodes (dungeon) */
+  .path-node { padding: 10px 12px; }
+  .path-node-icon { width: 38px; height: 38px; font-size: 1.4rem; }
+  .path-node-title { font-size: .82rem; }
+
+  /* Modal box */
+  .modal-box { padding: 20px 16px; border-radius: 16px; }
+
+  /* Auth — stack login/register tabs nicely */
+  .auth-tabs { margin-bottom: 18px; }
+
+  /* Step dots for lang picker */
+  .step-dot { width: 28px; height: 28px; font-size: .78rem; }
+}
+
+/* ── 360px and below (very small phones) ── */
+@media (max-width: 360px) {
+  .nav-item { padding: 4px 4px; font-size: .55rem; }
+  .nav-item .ni { font-size: 1rem; }
+  .levels-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .section-title { font-size: 1rem; }
+  .auth-card { padding: 20px 14px; }
+  .lang-picker-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── 768px tablets — widen content ── */
+@media (min-width: 768px) {
+  .screen-padded { padding-top: 72px; }
+  .answers-grid { grid-template-columns: 1fr 1fr; }
+  .game-types { grid-template-columns: repeat(2, 1fr); }
+  .shop-grid { grid-template-columns: repeat(3, 1fr); }
+  .levels-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Touch-friendly tap targets ── */
+@media (hover: none) and (pointer: coarse) {
+  .btn { min-height: 44px; }
+  .answer-btn { min-height: 48px; }
+  .nav-item { min-width: 44px; }
+  .auth-input { font-size: 16px; } /* prevent iOS zoom on focus */
+  select, input[type="text"], input[type="email"],
+  input[type="password"] { font-size: 16px; } /* prevent iOS zoom */
+}
+
+/* ── Fix game-select mini-game button row ── */
+.mini-game-btn-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: 12px;
+}
+.mini-game-btn-row .btn-qr {
+  flex: 1 1 calc(50% - 6px);
+  min-width: 0;
+  justify-content: center;
+  font-size: .8rem;
+  padding: 8px 6px;
+}
+@media (min-width: 600px) {
+  .mini-game-btn-row .btn-qr { flex: 1; }
+}
+
+/* ── Portfolio intro nudge card ── */
+.portfolio-nudge {
+  width: 100%; max-width: 520px;
+  background: linear-gradient(135deg, rgba(251,191,36,.1), rgba(245,158,11,.06));
+  border: 1px solid rgba(251,191,36,.25);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  animation: nudge-in .4s ease;
+  cursor: pointer;
+}
+.portfolio-nudge:hover { border-color: rgba(251,191,36,.5); }
+@keyframes nudge-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.portfolio-nudge-icon { font-size: 1.8rem; flex-shrink: 0; }
+.portfolio-nudge-text { flex: 1; }
+.portfolio-nudge-title { font-weight: 900; font-size: .9rem; color: var(--gold); margin-bottom: 2px; }
+.portfolio-nudge-sub { font-size: .75rem; color: var(--muted); line-height: 1.4; }
+.portfolio-nudge-arrow { font-size: 1.2rem; color: var(--gold); opacity: .7; flex-shrink: 0; }
+
+/* ── Games hub screen ── */
+.games-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 700px;
+  margin: 12px 0;
+}
+@media (max-width: 480px) {
+  .games-hub-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+.game-hub-card {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.game-hub-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+.game-hub-card:hover { transform: translateY(-3px); border-color: rgba(124,58,237,.3); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+.game-hub-card:active { transform: translateY(0); }
+.game-hub-icon { font-size: 2.4rem; margin-bottom: 8px; }
+.game-hub-name { font-weight: 900; font-size: 1rem; margin-bottom: 4px; }
+.game-hub-desc { font-size: .75rem; color: var(--muted); line-height: 1.4; margin-bottom: 8px; }
+.game-hub-reward { display: inline-flex; align-items: center; gap: 4px; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.2); border-radius: 20px; padding: 3px 10px; font-size: .72rem; font-weight: 800; color: var(--gold); }
+
+/* ════════════════════════════════════════════════
+   MOBILE RESPONSIVE — complete overhaul
+   ════════════════════════════════════════════════ */
+
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+.nav-bar { padding-bottom: calc(12px + var(--safe-bottom)); }
+.top-bar { padding-top: calc(10px + var(--safe-top)); }
+
+@media (max-width: 480px) {
+  body { overflow-x: hidden; }
+  .auth-card { padding: 24px 18px; margin: 0 8px; border-radius: 16px; }
+  .logo { font-size: 1.9rem; }
+  .tagline { font-size: .72rem; letter-spacing: 1.2px; }
+  .nav-item { padding: 4px 6px; font-size: .6rem; }
+  .nav-item .ni { font-size: 1.15rem; }
+  .top-bar { padding: 8px 12px; gap: 8px; }
+  .top-bar-logo { font-size: 1.1rem; }
+  .coin-display { padding: 4px 9px; font-size: .8rem; }
+  #lang-flag-pill { padding: 4px 8px; font-size: .75rem; }
+  .avatar-btn { width: 30px; height: 30px; font-size: .78rem; }
+  .screen { padding: 14px 12px 80px; }
+  .screen-padded { padding-top: 58px; padding-bottom: calc(80px + var(--safe-bottom)); }
+  .section-title { font-size: 1.1rem; }
+  .card { padding: 16px; border-radius: 14px; }
+  .levels-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .answers-grid { grid-template-columns: 1fr; }
+  .answer-btn { padding: 13px 14px; font-size: .9rem; }
+  .game-types { grid-template-columns: 1fr; }
+  .game-type-card { padding: 14px; }
+  .match-container { grid-template-columns: 1fr; }
+  .question-card { padding: 16px 14px; }
+  .q-text { font-size: 1.15rem !important; }
+  .stats-grid { gap: 6px; }
+  .stat-card { padding: 10px 8px; }
+  .shop-grid { grid-template-columns: 1fr; }
+  .profile-hero { flex-direction: column; text-align: center; gap: 12px; }
+  .profile-avatar { width: 56px; height: 56px; font-size: 1.3rem; }
+  .breadcrumb { font-size: .68rem; }
+  .btn-lg { font-size: .95rem; padding: 13px 22px; }
+  .wealth-total { font-size: 1.6rem !important; }
+  .asset-card { border-radius: 12px; }
+  .results-stats { gap: 6px; }
+  .results-score { font-size: 2.2rem !important; }
+  .coin-reward-banner { padding: 12px 14px; }
+  .timer-badge { font-size: .78rem; padding: 3px 8px; }
+  .score-badge { font-size: .78rem; }
+  .topic-tab { padding: 6px 10px; font-size: .75rem; }
+  .rank-tab { padding: 6px 9px; font-size: .68rem; }
+  .path-node { padding: 10px 12px; }
+  .path-node-icon { width: 38px; height: 38px; font-size: 1.4rem; }
+  .path-node-title { font-size: .82rem; }
+  .modal-box { padding: 20px 16px; border-radius: 16px; }
+  .auth-tabs { margin-bottom: 18px; }
+  .step-dot { width: 28px; height: 28px; font-size: .78rem; }
+  .lang-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 360px) {
+  .nav-item { padding: 4px 4px; font-size: .55rem; }
+  .nav-item .ni { font-size: 1rem; }
+  .section-title { font-size: 1rem; }
+  .auth-card { padding: 20px 14px; }
+  .lang-picker-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .screen-padded { padding-top: 72px; }
+  .shop-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .btn { min-height: 44px; }
+  .answer-btn { min-height: 48px; }
+  .nav-item { min-width: 44px; }
+  .auth-input { font-size: 16px; }
+  select, input[type="text"], input[type="email"], input[type="password"] { font-size: 16px; }
+}
+
+/* ── Mini-game button row — responsive wrap ── */
+.mini-game-btn-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  width: 100%; max-width: 700px; margin-bottom: 12px;
+}
+.mini-game-btn-row .btn-qr {
+  flex: 1 1 calc(50% - 6px); min-width: 0;
+  justify-content: center; font-size: .8rem; padding: 8px 6px;
+}
+@media (min-width: 600px) { .mini-game-btn-row .btn-qr { flex: 1; } }
+
+/* ── Portfolio intro nudge ── */
+.portfolio-nudge {
+  width: 100%; max-width: 520px;
+  background: linear-gradient(135deg,rgba(251,191,36,.1),rgba(245,158,11,.06));
+  border: 1px solid rgba(251,191,36,.25); border-radius: 14px;
+  padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  margin-top: 12px; animation: nudge-in .4s ease; cursor: pointer;
+}
+.portfolio-nudge:hover { border-color: rgba(251,191,36,.5); }
+@keyframes nudge-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.portfolio-nudge-icon { font-size: 1.8rem; flex-shrink: 0; }
+.portfolio-nudge-text { flex: 1; }
+.portfolio-nudge-title { font-weight: 900; font-size: .9rem; color: var(--gold); margin-bottom: 2px; }
+.portfolio-nudge-sub { font-size: .75rem; color: var(--muted); line-height: 1.4; }
+.portfolio-nudge-arrow { font-size: 1.2rem; color: var(--gold); opacity: .7; flex-shrink: 0; }
+
+/* ── Games hub cards ── */
+.games-hub-grid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 12px; width: 100%; max-width: 700px; margin: 12px 0;
+}
+@media (max-width: 480px) { .games-hub-grid { grid-template-columns: 1fr; gap: 10px; } }
+.game-hub-card {
+  background: var(--card); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px; padding: 18px 16px; cursor: pointer;
+  transition: all .2s; text-align: center; position: relative; overflow: hidden;
+}
+.game-hub-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background: linear-gradient(90deg,var(--accent),var(--accent2));
+}
+.game-hub-card:hover { transform: translateY(-3px); border-color: rgba(124,58,237,.3); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+.game-hub-icon { font-size: 2.4rem; margin-bottom: 8px; }
+.game-hub-name { font-weight: 900; font-size: 1rem; margin-bottom: 4px; }
+.game-hub-desc { font-size: .75rem; color: var(--muted); line-height: 1.4; margin-bottom: 8px; }
+.game-hub-reward { display: inline-flex; align-items: center; gap: 4px; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.2); border-radius: 20px; padding: 3px 10px; font-size: .72rem; font-weight: 800; color: var(--gold); }

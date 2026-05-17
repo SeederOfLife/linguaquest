@@ -736,7 +736,7 @@ function selectRoomTopic(btn) {
 }
 
 function switchRankTab(tab) {
-  const zones = ['lb','duels','practice','friends','flappy','car','compost','bn'];
+  const zones = ['games','lb','duels','practice','friends','flappy','car','compost','bn'];
   zones.forEach(z => {
     const el = $('rank-'+z+'-zone');
     if (el) el.style.display = z===tab ? '' : 'none';
@@ -747,6 +747,30 @@ function switchRankTab(tab) {
   if (tab==='duels')    renderDuelsScreen();
   if (tab==='friends')  renderFriendsScreen();
   if (tab==='practice') { if(typeof renderPracticeModes==='function') renderPracticeModes(); }
+}
+
+// ── Portfolio nudge after first coins ──────────────────────────
+function showPortfolioNudge() {
+  // Only show on results screen
+  const resultsEl = $('screen-results');
+  if (!resultsEl || !resultsEl.classList.contains('active')) return;
+  // Don't show if already has one
+  if ($('portfolio-nudge-card')) return;
+  const nudge = document.createElement('div');
+  nudge.id = 'portfolio-nudge-card';
+  nudge.className = 'portfolio-nudge';
+  nudge.onclick = () => { nudge.remove(); navTo('portfolio'); };
+  nudge.innerHTML = `
+    <div class="portfolio-nudge-icon">📈</div>
+    <div class="portfolio-nudge-text">
+      <div class="portfolio-nudge-title">Investis tes pièces !</div>
+      <div class="portfolio-nudge-sub">Tu as assez de pièces pour acheter ton premier actif. Fais-les fructifier pendant que tu joues.</div>
+    </div>
+    <div class="portfolio-nudge-arrow">›</div>
+  `;
+  // Insert after coin reward banner
+  const banner = $('coin-reward-banner');
+  if (banner && banner.parentNode) banner.parentNode.insertBefore(nudge, banner.nextSibling);
 }
 
 // ══════════════════════════════════════════════
@@ -856,10 +880,19 @@ function openGame(type) {
     if(e.data.type==='saveFlappySkin'&&U&&!U.isGuest){U.flappySkin=e.data.skin;saveU();}
     if(e.data.type==='saveCarSkin'&&U&&!U.isGuest){U.carSkin=e.data.skin;saveU();}
     if(e.data.type==='gameResult'&&e.data.won&&U&&!U.isGuest){
-      const bonus=e.data.game==='car'?80:60;
-      U.coins=(U.coins||0)+bonus; saveU(); updateTopBar();
+      const rewards={car:80,flappy:60,bn:70,compost:50};
+      const bonus=rewards[e.data.game]||60;
+      const xpBonus=20;
+      U.coins=(U.coins||0)+bonus;
+      U.xp=(U.xp||0)+xpBonus;
+      saveU(); updateTopBar();
       if(typeof checkTrophies==='function') checkTrophies();
-      toast('🎉 Victoire ! +'+bonus+' 🪙');
+      toast(`🎉 Victoire ! +${bonus} 🪙  +${xpBonus} XP`);
+      // Show portfolio nudge if first time earning coins from a game
+      if(!U.hasSeenPortfolioNudge && Math.floor(U.coins)>=50){
+        U.hasSeenPortfolioNudge=true; saveU();
+        setTimeout(showPortfolioNudge,1200);
+      }
     }
   };
   window.addEventListener('message', window._minigameListener);
